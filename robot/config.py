@@ -2,10 +2,10 @@ import os
 
 USER_AGENT = "DondeVivoBot/1.0 (buscador de inmuebles de Paraguay; contacto: hola@dondevivo.com)"
 PAUSA_SEG = 3.0            # pausa entre pedidos a una misma página
-MINUTOS_MAX = 55           # tope por noche (GitHub gratis ~ 1 h/noche)
-MAX_NUEVOS = 400           # avisos nuevos a procesar por noche
-MAX_REVISAR = 500          # avisos activos a re-verificar por noche
-MAX_LISTADOS = 60          # páginas de ciudad/barrio a recorrer por noche
+MINUTOS_MAX = 330          # tope por noche (repo público: minutos ilimitados, máx. 6 h por corrida)
+MAX_NUEVOS = 1200          # avisos nuevos a procesar por noche
+MAX_REVISAR = 4000         # avisos activos a re-verificar por noche (todos, a diario)
+MAX_LISTADOS = 250         # páginas de ciudad/barrio a recorrer por noche
 MIN_FOTOS = 2
 
 META = {"asuncion": 1000, "central": 1100, "cde": 500, "resto": 400}  # 3.000 en total

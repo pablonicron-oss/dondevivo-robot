@@ -4,12 +4,12 @@
 3) Deja un resumen con el % de avance hacia la meta de 3.000."""
 import os, sys, time, json, traceback
 from datetime import datetime, timedelta, timezone
-from . import db, infocasas, fotos
+from . import db, infocasas, buscodepto, remax, fotos
 from .config import META, MAX_NUEVOS, MAX_REVISAR, MAX_LISTADOS, MINUTOS_MAX, MIN_FOTOS
 from .util import Bloqueado
 
 INICIO = time.time()
-FUENTES = {"infocasas": infocasas}
+FUENTES = {"infocasas": infocasas, "buscodepto": buscodepto, "remax": remax}
 
 
 def queda_tiempo():
@@ -63,7 +63,7 @@ def revisar_activos(stats):
                           {"precio": aviso["precio"], "moneda": aviso["moneda"], "ultima_revision": ahora()})
 
 
-def candidatos(stats):
+def _candidatos_infocasas(stats):
     urls = []
     try:
         urls += infocasas.avisos_del_rss()
@@ -72,7 +72,7 @@ def candidatos(stats):
     cola = db.leer("cola_listados", select="url", fuente="eq.infocasas",
                    order="prioridad.asc,ultima_vez.asc.nullsfirst", limit=MAX_LISTADOS)
     for c in cola:
-        if not queda_tiempo() or len(urls) > MAX_NUEVOS * 3:
+        if not queda_tiempo() or len(urls) > MAX_NUEVOS * 2:
             break
         try:
             urls += infocasas.avisos_de_listado(c["url"])
@@ -81,24 +81,48 @@ def candidatos(stats):
         except Exception as e:
             stats["notas"].append(f"error en listado {c['url']}: {e}")
         db.actualizar("cola_listados", {"url": f"eq.{c['url']}"}, {"ultima_vez": ahora()})
-    urls = list(dict.fromkeys(urls))
-    conocidos = db.ids_conocidos([infocasas.id_de(u) for u in urls])
-    return [u for u in urls if infocasas.id_de(u) not in conocidos]
+    return urls
+
+
+def candidatos(stats):
+    """Junta avisos nuevos de cada fuente y los intercala, para que haya variedad."""
+    por_fuente = {}
+    for nombre, mod in FUENTES.items():
+        try:
+            urls = _candidatos_infocasas(stats) if nombre == "infocasas" else mod.nuevos()
+        except Bloqueado as e:
+            stats["notas"].append(f"{nombre} pidió control antibots: {e}"); continue
+        except Exception as e:
+            stats["notas"].append(f"error buscando en {nombre}: {e}"); continue
+        urls = list(dict.fromkeys(urls))[:MAX_NUEVOS * 2]
+        conocidos = db.ids_conocidos([mod.id_de(u) for u in urls])
+        por_fuente[nombre] = [u for u in urls if mod.id_de(u) not in conocidos]
+        stats["notas"].append(f"{nombre}: {len(por_fuente[nombre])} avisos nuevos para revisar")
+    mezcla = []
+    while any(por_fuente.values()):
+        for nombre in list(por_fuente):
+            if por_fuente[nombre]:
+                mezcla.append((nombre, por_fuente[nombre].pop(0)))
+    return mezcla
 
 
 def sumar_nuevos(stats, prog):
     llenas = {r for r in META if prog[r] >= META[r]}
-    for url in candidatos(stats)[:MAX_NUEVOS]:
+    bloqueadas = set()
+    for nombre, url in candidatos(stats)[:MAX_NUEVOS]:
         if not queda_tiempo():
             break
+        if nombre in bloqueadas:
+            continue
+        mod = FUENTES[nombre]
         try:
-            aviso, motivo = infocasas.leer_aviso(url)
+            aviso, motivo = mod.leer_aviso(url)
         except Bloqueado as e:
-            stats["notas"].append(f"infocasas pidió control antibots en avisos: {e}"); break
+            bloqueadas.add(nombre); stats["notas"].append(f"{nombre} pidió control antibots en avisos: {e}"); continue
         except Exception as e:
             stats["notas"].append(f"error leyendo {url}: {e}"); continue
         if aviso is None:
-            db.upsert("descartados", {"id": infocasas.id_de(url), "motivo": motivo}); stats["descartados"] += 1; continue
+            db.upsert("descartados", {"id": mod.id_de(url), "motivo": motivo}); stats["descartados"] += 1; continue
         if aviso["region"] in llenas:
             continue   # esa zona ya llegó a su meta; lo dejamos para más adelante
         if aviso["fotos_total"] < MIN_FOTOS:
@@ -114,6 +138,8 @@ def sumar_nuevos(stats, prog):
         aviso["ultima_revision"] = ahora()
         db.upsert("avisos", aviso)
         stats["nuevos"] += 1
+        stats.setdefault("por_fuente", {}).setdefault(nombre, 0)
+        stats["por_fuente"][nombre] += 1
 
 
 def resumen(stats, prog):
@@ -122,6 +148,7 @@ def resumen(stats, prog):
            f"- Descartados: {stats['descartados']}\n- Revisados: {stats['revisados']}\n\n"
            f"### Avance hacia 3.000: **{prog['porcentaje']}%**\n\n"
            + "\n".join(f"- {r}: {prog[r]} / {META[r]}" for r in META)
+           + "\n\n### Nuevos por fuente\n" + "\n".join(f"- {k}: {v}" for k, v in stats.get("por_fuente", {}).items())
            + ("\n\n### Notas\n" + "\n".join(f"- {n}" for n in stats["notas"][:30]) if stats["notas"] else ""))
     print(txt)
     if os.environ.get("GITHUB_STEP_SUMMARY"):

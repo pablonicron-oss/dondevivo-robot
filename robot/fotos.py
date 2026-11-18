@@ -10,10 +10,10 @@ MAX_FOTOS_REVISAR = 8
 
 PROMPT = """Sos el editor de fotos de un portal inmobiliario. Para cada imagen, en orden,
 decidí si se puede publicar. Reglas:
-- OK: foto real de la propiedad, sin nada agregado encima. Una marca de agua muy chica y
-  transparente en una esquina también es OK.
+- OK: foto real de la propiedad, sin nada agregado encima. Una marca de agua chica y
+  semitransparente (por ejemplo el globito de RE/MAX, suave) también es OK si no tapa la foto.
 - OK: croquis o plano con pocos textos útiles (medidas, ambientes).
-- NO: marcos o bandas de diseño, logos grandes (RE/MAX, Century 21, inmobiliarias),
+- NO: marcos o bandas de diseño, logos grandes u opacos (RE/MAX, Century 21, inmobiliarias),
   teléfonos o WhatsApp sobre la foto, sellos, flyers, collages, renders con texto publicitario,
   capturas de pantalla, fotos borrosas o que no muestran la propiedad.
 Respondé solo JSON: {"fotos":[{"ok":true|false,"motivo":"..."}]} con una entrada por imagen."""

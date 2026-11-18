@@ -5,7 +5,7 @@
 import os, sys, time, json, traceback
 from datetime import datetime, timedelta, timezone
 from . import db, infocasas, buscodepto, remax, fotos
-from .config import META, MAX_NUEVOS, MAX_REVISAR, MAX_LISTADOS, MINUTOS_MAX, MIN_FOTOS
+from .config import GEMINI_KEY, SUPABASE_KEY, META, MAX_NUEVOS, MAX_REVISAR, MAX_LISTADOS, MINUTOS_MAX, MIN_FOTOS
 from .util import Bloqueado
 
 INICIO = time.time()
@@ -142,6 +142,14 @@ def sumar_nuevos(stats, prog):
         stats["por_fuente"][nombre] += 1
 
 
+def limpiar(txt):
+    """Nunca dejar claves en los informes."""
+    for k in (GEMINI_KEY, SUPABASE_KEY):
+        if k:
+            txt = txt.replace(k, "***")
+    return txt
+
+
 def resumen(stats, prog):
     txt = (f"## DóndeVivo · corrida del {datetime.now().strftime('%d/%m/%Y')}\n\n"
            f"- Nuevos: **{stats['nuevos']}**\n- Dados de baja: **{stats['bajas']}**\n"
@@ -150,6 +158,7 @@ def resumen(stats, prog):
            + "\n".join(f"- {r}: {prog[r]} / {META[r]}" for r in META)
            + "\n\n### Nuevos por fuente\n" + "\n".join(f"- {k}: {v}" for k, v in stats.get("por_fuente", {}).items())
            + ("\n\n### Notas\n" + "\n".join(f"- {n}" for n in stats["notas"][:30]) if stats["notas"] else ""))
+    txt = limpiar(txt)
     print(txt)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         open(os.environ["GITHUB_STEP_SUMMARY"], "a").write(txt)
@@ -163,9 +172,13 @@ def main():
         sumar_nuevos(stats, progreso())
     except Exception:
         stats["notas"].append(traceback.format_exc()[-800:])
+    try:
+        stats["notas"].insert(0, f"modelo de fotos: {fotos._modelo or 'sin usar'}")
+    except Exception:
+        pass
     prog = progreso()
     db.upsert("corridas", {"nuevos": stats["nuevos"], "bajas": stats["bajas"], "descartados": stats["descartados"],
-                           "revisados": stats["revisados"], "progreso": prog, "notas": "\n".join(stats["notas"])[:5000]})
+                           "revisados": stats["revisados"], "progreso": prog, "notas": limpiar("\n".join(stats["notas"]))[:5000]})
     resumen(stats, prog)
 
 

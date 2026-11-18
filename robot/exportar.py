@@ -1,6 +1,7 @@
 """Exporta los avisos activos a web/data/avisos.json para la web estática.
 La web no tiene claves: solo lee este archivo público."""
-import json, os, requests
+import json, os, re, html, requests
+from datetime import datetime, timedelta, timezone
 from .config import SUPABASE_URL, SUPABASE_KEY
 
 CAMPOS = ("id,fuente,url,titulo,descripcion,operacion,tipo,estado_obra,precio,moneda,dormitorios,banos,"
@@ -21,22 +22,44 @@ def todos():
         desde += paso
 
 
+def texto_limpio(t):
+    """Algunas páginas mandan la descripción con etiquetas HTML: las pasamos a texto común."""
+    t = t or ""
+    t = re.sub(r"(?i)<br\s*/?>|</p\s*>|</div\s*>|</li\s*>", "\n", t)
+    t = re.sub(r"(?i)<li[^>]*>", "• ", t)
+    t = re.sub(r"<[^>]+>", "", t)
+    t = html.unescape(t).replace("\xa0", " ")
+    t = re.sub(r"[ \t]+", " ", t)
+    t = re.sub(r" *\n *", "\n", t)
+    t = re.sub(r"\n{3,}", "\n\n", t)
+    return t.strip()
+
+
 def corto(a):
     return {
         "id": a["id"], "f": a["fuente"], "u": a["url"], "t": a["titulo"],
-        "d": (a.get("descripcion") or "")[:1500], "op": a["operacion"], "tp": a["tipo"], "eo": a.get("estado_obra"),
+        "d": texto_limpio(a.get("descripcion"))[:1500], "op": a["operacion"], "tp": a["tipo"], "eo": a.get("estado_obra"),
         "p": a.get("precio"), "m": a.get("moneda"), "dor": a.get("dormitorios"), "ban": a.get("banos"),
         "m2": a.get("m2"), "c": a.get("ciudad"), "b": a.get("barrio"), "r": a.get("region"),
         "lat": a.get("lat"), "lng": a.get("lng"), "ph": (a.get("fotos") or [])[:12],
-        "g": a.get("garantia"), "ms": a.get("mascotas"), "n": (a.get("primera_vez") or "")[:10],
+        "g": a.get("garantia"), "ms": a.get("mascotas"), "n": (a.get("primera_vez") or "")[:19],
     }
 
 
 def main():
-    avisos = [corto(a) for a in todos()]
+    filas = todos()
+    avisos = [corto(a) for a in filas]
+    hace24 = datetime.now(timezone.utc) - timedelta(hours=24)
+    def fecha(x):
+        try:
+            return datetime.fromisoformat((x or "").replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    ultimas24 = sum(1 for a in filas if (fecha(a.get("primera_vez")) or hace24) > hace24)
     os.makedirs("web/data", exist_ok=True)
     with open("web/data/avisos.json", "w", encoding="utf-8") as f:
-        json.dump({"actualizado": __import__("datetime").datetime.utcnow().isoformat() + "Z", "avisos": avisos},
+        json.dump({"actualizado": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                   "total": len(avisos), "ultimas24": ultimas24, "avisos": avisos},
                   f, ensure_ascii=False, separators=(",", ":"))
     print(f"Exportados {len(avisos)} avisos")
 

@@ -2,10 +2,10 @@
 1) Re-verifica avisos activos y da de baja los vendidos o borrados.
 2) Busca avisos nuevos, filtra (fotos, vendidos) y los guarda.
 3) Deja un resumen con el % de avance hacia la meta de 3.000."""
-import os, sys, time, json, traceback
+import os, sys, time, json, traceback, requests
 from datetime import datetime, timedelta, timezone
 from . import db, infocasas, buscodepto, remax, fotos
-from .config import GEMINI_KEY, SUPABASE_KEY, META, MAX_NUEVOS, MAX_REVISAR, MAX_LISTADOS, MINUTOS_MAX, MIN_FOTOS
+from .config import GEMINI_KEY, SUPABASE_KEY, CENTRAL, CDE, META, MAX_NUEVOS, MAX_REVISAR, MAX_LISTADOS, MINUTOS_MAX, MIN_FOTOS
 from .util import Bloqueado
 
 INICIO = time.time()
@@ -25,6 +25,35 @@ def progreso():
     p["total"] = sum(p.values())
     p["porcentaje"] = round(100 * sum(min(p[r], META[r]) for r in META) / sum(META.values()), 1)
     return p
+
+
+def actualizar_web(stats=None):
+    """Le pide a GitHub que vuelva a publicar la web con los avisos nuevos."""
+    tok, repo = os.environ.get("GITHUB_TOKEN"), os.environ.get("GITHUB_REPOSITORY")
+    if not tok or not repo:
+        return
+    try:
+        r = requests.post(f"https://api.github.com/repos/{repo}/actions/workflows/web.yml/dispatches", timeout=30,
+                          headers={"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"},
+                          json={"ref": "main"})
+        if r.status_code >= 300 and stats is not None:
+            stats["notas"].append(f"no se pudo actualizar la web: {r.status_code}")
+    except requests.RequestException:
+        pass
+
+
+def _peso(url):
+    """Primero alquileres en Asunción, después Central, Ciudad del Este y el resto del país."""
+    u = url.lower().replace("-", " ")
+    if "asuncion" in u:
+        z = 0
+    elif any(c in u for c in CENTRAL):
+        z = 2
+    elif any(c in u for c in CDE):
+        z = 4
+    else:
+        z = 6
+    return z + (0 if "alquiler" in u else 1)
 
 
 def preparar_cola():
@@ -94,7 +123,7 @@ def candidatos(stats):
             stats["notas"].append(f"{nombre} pidió control antibots: {e}"); continue
         except Exception as e:
             stats["notas"].append(f"error buscando en {nombre}: {e}"); continue
-        urls = list(dict.fromkeys(urls))[:MAX_NUEVOS * 2]
+        urls = sorted(dict.fromkeys(urls), key=_peso)[:MAX_NUEVOS * 2]
         conocidos = db.ids_conocidos([mod.id_de(u) for u in urls])
         por_fuente[nombre] = [u for u in urls if mod.id_de(u) not in conocidos]
         stats["notas"].append(f"{nombre}: {len(por_fuente[nombre])} avisos nuevos para revisar")
@@ -109,9 +138,12 @@ def candidatos(stats):
 def sumar_nuevos(stats, prog):
     llenas = {r for r in META if prog[r] >= META[r]}
     bloqueadas = set()
+    ultima_web = time.time()
     for nombre, url in candidatos(stats)[:MAX_NUEVOS]:
         if not queda_tiempo():
             break
+        if time.time() - ultima_web > 40 * 60:   # cada 40 minutos la web muestra lo nuevo
+            actualizar_web(stats); ultima_web = time.time()
         if nombre in bloqueadas:
             continue
         mod = FUENTES[nombre]
@@ -180,6 +212,7 @@ def main():
     db.upsert("corridas", {"nuevos": stats["nuevos"], "bajas": stats["bajas"], "descartados": stats["descartados"],
                            "revisados": stats["revisados"], "progreso": prog, "notas": limpiar("\n".join(stats["notas"]))[:5000]})
     resumen(stats, prog)
+    actualizar_web()
 
 
 if __name__ == "__main__":

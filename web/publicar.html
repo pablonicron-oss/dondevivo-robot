@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Publicá sin costo · DóndeVivo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M7 29L32 9l25 20' fill='none' stroke='%231F4FE0' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='21' cy='44' r='9.5' fill='%23fff' stroke='%23101828' stroke-width='1.8'/%3E%3Ccircle cx='21' cy='45' r='4.8' fill='%23101828'/%3E%3Ccircle cx='43' cy='44' r='9.5' fill='%23fff' stroke='%23101828' stroke-width='1.8'/%3E%3Ccircle cx='43' cy='45' r='4.8' fill='%23101828'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@700;800&display=swap">
+<style>
+body{margin:0}
+.p{animation:look 7s infinite ease-in-out}
+@keyframes look{0%,12%{transform:translate(0,0)}18%,30%{transform:translate(-2.4px,0.3px)}36%,48%{transform:translate(2.4px,0.3px)}54%,68%{transform:translate(1.4px,-2.4px)}74%,100%{transform:translate(0,0)}}
+.e{transform-box:fill-box;transform-origin:center;animation:blink 7s infinite}
+@keyframes blink{0%,86%{transform:scaleY(1)}88%{transform:scaleY(.12)}90%,100%{transform:scaleY(1)}}
+.brow{transform-box:fill-box;transform-origin:center bottom;animation:brow 7s infinite ease-in-out}
+@keyframes brow{0%,12%{transform:translateY(0) rotate(0)}18%,30%{transform:rotate(-5deg)}36%,48%{transform:rotate(5deg)}54%,58%{transform:translateY(-4px)}60%{transform:translateY(-2px)}62%,68%{transform:translateY(-4px)}74%,100%{transform:translateY(0) rotate(0)}}
+@media (prefers-reduced-motion: reduce){.p,.e,.brow{animation:none}}
+
+a{color:#101828}a:hover{color:#1F4FE0}
+.in{animation:inB .35s ease both}
+@keyframes inB{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.opt{transition:transform .15s ease, border-color .15s ease, background .15s ease}.opt:hover{transform:translateY(-2px)}
+input,select,textarea{font:inherit}
+@media (prefers-reduced-motion: reduce){.in{animation:none}}
+</style>
+</head>
+<body>
+<div id="raiz"></div>
+<template id="dc">
+<div style="min-height: 100vh; background: #EEF1F6; color: #101828; font-family: 'Manrope', system-ui, sans-serif; box-sizing: border-box">
+<div style="max-width: 1180px; margin: 0 auto; padding: 0 24px 56px">
+
+<nav style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0">
+<a href="./" style="text-decoration: none; font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 8px; min-height: 44px"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>Volver al inicio</a>
+<a href="./" aria-label="DóndeVivo, inicio" style="text-decoration: none; display: flex; align-items: center; gap: 10px"><svg aria-hidden="true" style="margin-top: 6px" width="50" height="50" viewBox="0 0 64 64"><path class="brow" d="M7 29L32 9l25 20" fill="none" stroke="#1F4FE0" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path><g class="e"><circle cx="21" cy="44" r="9.5" fill="#FFFFFF" stroke="#101828" stroke-width="1.8"></circle><g class="p"><circle cx="21" cy="45" r="4.8" fill="#101828"></circle></g></g><g class="e"><circle cx="43" cy="44" r="9.5" fill="#FFFFFF" stroke="#101828" stroke-width="1.8"></circle><g class="p"><circle cx="43" cy="45" r="4.8" fill="#101828"></circle></g></g></svg><span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 34px; letter-spacing: -0.045em; line-height: 1; white-space: nowrap"><span style="color: #101828">dónde</span><span style="color: #1F4FE0">vivo</span></span></a>
+<div style="font-size: 14px; font-weight: 700; color: #475467">Publicar es gratis</div>
+</nav>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+<aside style="flex: 1 1 250px; max-width: 100%; background: #FFFFFF; border-radius: 28px; padding: 22px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box">
+<div style="font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #667085; padding: 0 8px 8px">Tu publicación</div>
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="9">
+<button onClick="{{s.go}}" style="border: 0; cursor: pointer; font: inherit; text-align: left; display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 10px; border-radius: 14px; background: {{s.bg}}; color: #101828">
+<span style="flex: none; width: 28px; height: 28px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; background: {{s.dotBg}}; color: {{s.dotFg}}">{{s.num}}</span>
+<span style="font-size: 15px; font-weight: {{s.weight}}">{{s.name}}</span>
+</button>
+</sc-for>
+<div style="margin: 10px 8px 0; height: 8px; border-radius: 999px; background: #EAECF0; overflow: hidden"><div style="height: 100%; border-radius: 999px; background: {{accent}}; width: {{progress}}%; transition: width .4s ease"></div></div>
+</aside>
+
+<main style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border-radius: 32px; padding: clamp(22px, 3.5vw, 40px); box-sizing: border-box; display: flex; flex-direction: column; gap: 26px">
+
+<sc-if value="{{s0}}" hint-placeholder-val="{{true}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 22px; max-width: 520px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 800">Creá tu cuenta para publicar</h1>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #475467">Así te avisamos cuando tu inmueble esté publicado y te mandamos cada mes cuánta gente lo vio y te escribió.</p>
+</div>
+<button onClick="{{next}}" class="opt" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 16px; min-height: 54px; border-radius: 16px; border: 2px solid #D0D5DD; background: #FFFFFF; color: #101828; display: flex; align-items: center; justify-content: center; gap: 10px"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.3c0-.8-.1-1.5-.2-2.3H12v4.3h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8z"></path><path fill="#34A853" d="M12 23c3 0 5.5-1 7.2-2.7l-3.5-2.7c-1 .7-2.2 1-3.7 1-2.9 0-5.3-1.9-6.2-4.5H2.2v2.8A11 11 0 0 0 12 23z"></path><path fill="#FBBC05" d="M5.8 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2.2a11 11 0 0 0 0 9.8z"></path><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.1-3.1A11 11 0 0 0 2.2 7.1l3.6 2.8C6.7 7.3 9.1 5.4 12 5.4z"></path></svg>Continuar con Google</button>
+<div style="display: flex; align-items: center; gap: 12px; color: #98A2B3; font-size: 14px; font-weight: 700"><span style="flex: 1; height: 1px; background: #EAECF0"></span>o con tu correo<span style="flex: 1; height: 1px; background: #EAECF0"></span></div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pmail" style="font-size: 14px; font-weight: 700">Correo</label>
+<input id="pmail" type="email" placeholder="vos@correo.com" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="ppass" style="font-size: 14px; font-weight: 700">Contraseña</label>
+<input id="ppass" type="password" placeholder="Mínimo 8 caracteres" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
+</div>
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; color: #475467; cursor: pointer"><input type="checkbox" checked style="width: 20px; height: 20px; margin: 0; flex: none; accent-color: #1F4FE0">Quiero recibir el informe mensual de mis avisos y novedades. Podés darte de baja cuando quieras.</label>
+</div>
+</sc-if>
+
+<sc-if value="{{s1}}" hint-placeholder-val="{{false}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 24px">
+<h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">¿Qué querés publicar?</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 12px">
+<sc-for list="{{ops}}" as="o" hint-placeholder-count="2">
+<button class="opt" onClick="{{o.pick}}" style="cursor: pointer; font: inherit; text-align: left; border: 3px solid {{o.bd}}; background: {{o.bg}}; border-radius: 22px; padding: 22px; display: flex; flex-direction: column; gap: 6px; color: #101828">
+<span style="font-size: 22px; font-weight: 800; letter-spacing: -0.02em">{{o.label}}</span>
+<span style="font-size: 14px; color: #475467">{{o.sub}}</span>
+</button>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 15px; font-weight: 800">Tipo de inmueble</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{tipos}}" as="c" hint-placeholder-count="8">
+<button class="opt" onClick="{{c.pick}}" style="cursor: pointer; font: inherit; font-weight: 700; font-size: 15px; min-height: 46px; padding: 0 18px; border-radius: 999px; border: 2px solid {{c.bd}}; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 15px; font-weight: 800">¿Quién publica?</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{quien}}" as="c" hint-placeholder-count="2">
+<button class="opt" onClick="{{c.pick}}" style="cursor: pointer; font: inherit; font-weight: 700; font-size: 15px; min-height: 46px; padding: 0 18px; border-radius: 999px; border: 2px solid {{c.bd}}; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s2}}" hint-placeholder-val="{{false}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 22px">
+<h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">¿Dónde queda?</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pcity" style="font-size: 14px; font-weight: 700">Ciudad</label>
+<select id="pcity" onChange="{{setCity}}" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 14px; font-size: 16px; font-weight: 700; color: #101828; background: #FFFFFF">
+<option>Asunción</option><option>Luque</option><option>San Lorenzo</option><option>Lambaré</option><option>Fernando de la Mora</option><option>Mariano Roque Alonso</option><option>Capiatá</option><option>Ñemby</option><option>Limpio</option><option>San Bernardino</option><option>Areguá</option><option>Encarnación</option><option>Ciudad del Este</option>
+</select>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pbarrio" style="font-size: 14px; font-weight: 700">Barrio</label>
+<input id="pbarrio" type="text" placeholder="Ej. Villa Morra" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pdir" style="font-size: 14px; font-weight: 700">Dirección, calle o referencia</label>
+<input id="pdir" type="text" placeholder="Ej. Senador Long casi Austria" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
+</div>
+<div style="position: relative; height: 230px; border-radius: 22px; overflow: hidden; background-color: #E8EEF6; background-image: linear-gradient(#D6E0EC 2px, transparent 2px), linear-gradient(90deg, #D6E0EC 2px, transparent 2px); background-size: 46px 46px">
+<div style="position: absolute; left: 0; right: 0; top: 46%; height: 14px; background: #FFFFFF"></div>
+<div style="position: absolute; top: 0; bottom: 0; left: 38%; width: 14px; background: #FFFFFF"></div>
+<div style="position: absolute; left: 44%; top: 22%; width: 120px; height: 120px; border-radius: 999px; background: rgba(31,79,224,.14); border: 2px solid rgba(31,79,224,.4)"></div>
+<div style="position: absolute; left: 50%; top: 35%; transform: translate(-50%, -100%); background: #101828; color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 8px 12px; border-radius: 12px; white-space: nowrap">Tu inmueble está acá</div>
+<div style="position: absolute; left: 12px; bottom: 12px; font-size: 13px; font-weight: 700; color: #475467; background: #FFFFFF; padding: 8px 12px; border-radius: 999px">Arrastrá el mapa para ajustar el punto</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 15px; font-weight: 800">¿Cómo mostramos la ubicación?</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{ubic}}" as="c" hint-placeholder-count="2">
+<button class="opt" onClick="{{c.pick}}" style="cursor: pointer; font: inherit; font-weight: 700; font-size: 15px; min-height: 46px; padding: 0 18px; border-radius: 999px; border: 2px solid {{c.bd}}; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
+</sc-for>
+</div>
+<div style="font-size: 14px; color: #475467">Con la ubicación te mostramos solos qué hay cerca, como súper, colegios, hospitales y paradas de bus.</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 22px">
+<h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">¿Cómo es por dentro?</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 12px">
+<sc-for list="{{counters}}" as="k" hint-placeholder-count="4">
+<div style="border: 2px solid #EAECF0; border-radius: 20px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<span style="font-size: 16px; font-weight: 800">{{k.label}}</span>
+<div style="display: flex; align-items: center; gap: 10px">
+<button onClick="{{k.minus}}" aria-label="{{k.ariaMinus}}" style="width: 44px; height: 44px; border-radius: 999px; border: 2px solid #D0D5DD; background: #FFFFFF; cursor: pointer; font: inherit; font-size: 22px; font-weight: 800; color: #101828">−</button>
+<span style="min-width: 44px; text-align: center; font-size: 20px; font-weight: 800">{{k.val}}</span>
+<button onClick="{{k.plus}}" aria-label="{{k.ariaPlus}}" style="width: 44px; height: 44px; border-radius: 999px; border: 0; background: #101828; cursor: pointer; font: inherit; font-size: 22px; font-weight: 800; color: #FFFFFF">+</button>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s4}}" hint-placeholder-val="{{false}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">Unas preguntas rápidas</h2>
+<p style="margin: 0; font-size: 15px; color: #475467">Respondé con un toque. Esto es lo que la gente más busca y lo que más pregunta.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{qs}}" as="q" hint-placeholder-count="9">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px 12px 18px; border-radius: 18px; background: #F5F7FB">
+<span style="font-size: 16px; font-weight: 700">{{q.label}}</span>
+<div style="display: flex; gap: 6px">
+<sc-for list="{{q.opts}}" as="o" hint-placeholder-count="3">
+<button onClick="{{o.pick}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 14px; min-height: 44px; min-width: 64px; padding: 0 14px; border-radius: 12px; border: 2px solid {{o.bd}}; background: {{o.bg}}; color: {{o.fg}}">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{showPets}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 18px; border-radius: 18px; border: 2px dashed #12B76A">
+<span style="font-size: 15px; font-weight: 800">¿Qué mascotas aceptás?</span>
+<sc-for list="{{petOpts}}" as="c" hint-placeholder-count="3">
+<button onClick="{{c.pick}}" style="cursor: pointer; font: inherit; font-weight: 700; font-size: 14px; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 2px solid {{c.bd}}; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{s5}}" hint-placeholder-val="{{false}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 22px">
+<h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">{{priceTitle}}</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end">
+<div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 6px">
+<label for="pprice" style="font-size: 14px; font-weight: 700">{{priceLabel}}</label>
+<input id="pprice" type="text" inputmode="numeric" value="{{priceTxt}}" onInput="{{setPrice}}" placeholder="Ej. 3.500.000" style="min-height: 56px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 20px; font-weight: 800; color: #101828">
+</div>
+<div style="display: flex; gap: 4px; background: #F2F4F7; padding: 5px; border-radius: 14px">
+<sc-for list="{{curr}}" as="c" hint-placeholder-count="2">
+<button onClick="{{c.pick}}" style="border: 0; cursor: pointer; font: inherit; font-weight: 800; font-size: 15px; min-height: 46px; padding: 0 18px; border-radius: 10px; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{isRent}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 15px; font-weight: 800">¿Pedís garantía para entrar?</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{gar}}" as="c" hint-placeholder-count="4">
+<button class="opt" onClick="{{c.pick}}" style="cursor: pointer; font: inherit; font-weight: 700; font-size: 15px; min-height: 46px; padding: 0 18px; border-radius: 999px; border: 2px solid {{c.bd}}; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 15px; font-weight: 800">¿Se cobra comisión inmobiliaria al que entra?</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{com}}" as="c" hint-placeholder-count="4">
+<button class="opt" onClick="{{c.pick}}" style="cursor: pointer; font: inherit; font-weight: 700; font-size: 15px; min-height: 46px; padding: 0 18px; border-radius: 999px; border: 2px solid {{c.bd}}; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="border-radius: 20px; background: #F5F7FB; padding: 18px 20px; display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #667085">Así lo va a ver la gente</div>
+<div style="font-size: 17px; line-height: 1.45; font-weight: 700">{{entryText}}</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isSale}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 15px; font-weight: 800">¿Aceptás financiación o crédito bancario?</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{fin}}" as="c" hint-placeholder-count="3">
+<button class="opt" onClick="{{c.pick}}" style="cursor: pointer; font: inherit; font-weight: 700; font-size: 15px; min-height: 46px; padding: 0 18px; border-radius: 999px; border: 2px solid {{c.bd}}; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{s6}}" hint-placeholder-val="{{false}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">Sumá fotos</h2>
+<p style="margin: 0; font-size: 15px; color: #475467">Mínimo 3. Con luz natural y de cada ambiente se ven mucho mejor. Evitá poner teléfonos o logos encima de las fotos.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px">
+<sc-for list="{{photos}}" as="f" hint-placeholder-count="6">
+<div style="aspect-ratio: 4 / 3; border-radius: 18px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 14px; font-weight: 800; background: {{f.bg}}; color: {{f.fg}}; border: 2px dashed {{f.bd}}">{{f.label}}</div>
+</sc-for>
+</div>
+<button onClick="{{addPhoto}}" class="opt" style="align-self: flex-start; cursor: pointer; font: inherit; font-weight: 800; font-size: 15px; min-height: 50px; padding: 0 22px; border-radius: 14px; border: 2px solid #101828; background: #FFFFFF; color: #101828">Agregar fotos</button>
+</div>
+</sc-if>
+
+<sc-if value="{{s7}}" hint-placeholder-val="{{false}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 20px">
+<h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">Contanos algo más</h2>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pdesc" style="font-size: 14px; font-weight: 700">Descripción del aviso (opcional)</label>
+<textarea id="pdesc" rows="3" placeholder="Lo que querés que se lea en tu publicación" style="border: 2px solid #D0D5DD; border-radius: 14px; padding: 14px 16px; font-size: 16px; color: #101828; resize: vertical"></textarea>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; border-radius: 22px; padding: 18px; background: #F0F4FF">
+<label for="pia" style="font-size: 16px; font-weight: 800">Ayudá a nuestra IA a encontrar a tu inquilino ideal</label>
+<div style="font-size: 14px; line-height: 1.5; color: #475467">Esto no se publica. Lo usamos para mostrar tu inmueble a quien lo busca con esas palabras.</div>
+<textarea id="pia" rows="4" placeholder="Ej. Entra mucha luz a la mañana, la cuadra es tranquila, el súper está a 2 cuadras, ideal para alguien que trabaja desde casa" style="border: 2px solid #C7D7FE; border-radius: 14px; padding: 14px 16px; font-size: 16px; color: #101828; background: #FFFFFF; resize: vertical"></textarea>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; max-width: 360px">
+<label for="pwa" style="font-size: 14px; font-weight: 700">WhatsApp para que te escriban</label>
+<input id="pwa" type="tel" placeholder="0981 000 000" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s8}}" hint-placeholder-val="{{false}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 20px">
+<h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">Así se va a ver</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<article style="flex: 0 1 340px; background: #FFFFFF; border: 2px solid #EAECF0; border-radius: 26px; padding: 12px; display: flex; flex-direction: column; gap: 12px">
+<div style="height: 190px; border-radius: 18px; background: #D9E0EC; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #475467">Tu primera foto</div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 0 8px 8px">
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{badges}}" as="b" hint-placeholder-count="3">
+<span style="font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 999px; background: {{b.bg}}; color: {{b.fg}}">{{b.t}}</span>
+</sc-for>
+</div>
+<div style="font-size: 21px; font-weight: 800">{{priceShow}}</div>
+<div style="font-size: 15px; color: #475467">{{titleShow}}</div>
+<div style="font-size: 14px; line-height: 1.5; background: #F5F7FB; border-radius: 14px; padding: 12px">{{entryText}}</div>
+<div style="text-align: center; font-weight: 800; font-size: 14px; background: #0B7A5E; color: #FFFFFF; padding: 13px 16px; border-radius: 999px">Escribirle por WhatsApp</div>
+</div>
+</article>
+<div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 16px; line-height: 1.5; color: #475467">Revisamos cada inmueble antes de publicarlo para que todo lo que se ve acá sea real. Te avisamos por correo apenas esté aprobado.</div>
+<button onClick="{{send}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 17px; min-height: 58px; padding: 0 28px; border-radius: 16px; border: 0; background: {{accent}}; color: #FFFFFF">Enviar a revisión</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s9}}" hint-placeholder-val="{{false}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="width: 64px; height: 64px; border-radius: 999px; background: #D1FADF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0B7A5E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></div>
+<h2 style="margin: 0; font-size: clamp(28px, 3.2vw, 40px); letter-spacing: -0.035em; font-weight: 800">¡Listo! Tu inmueble está en revisión</h2>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #475467; max-width: 560px">Lo revisamos en menos de 24 horas y te mandamos un correo apenas esté publicado.</p>
+</div>
+<div style="border-radius: 26px; background: #101828; color: #FFFFFF; padding: 26px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 24px; font-weight: 800; letter-spacing: -0.02em">¿Querés que lo vea más gente?</div>
+<div style="font-size: 15px; color: #D0D5DD">Destacado aparece primero en las búsquedas que coinciden con tu inmueble, con la etiqueta Destacado.</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 10px">
+<sc-for list="{{plans}}" as="pl" hint-placeholder-count="3">
+<button onClick="{{pl.pick}}" class="opt" style="cursor: pointer; font: inherit; text-align: left; border-radius: 20px; padding: 18px; border: 2px solid {{pl.bd}}; background: {{pl.bg}}; color: #FFFFFF; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 18px; font-weight: 800">{{pl.days}}</span>
+<span style="font-size: 26px; font-weight: 800; color: #C8F250">{{pl.reach}}</span>
+<span style="font-size: 14px; color: #D0D5DD">{{pl.price}}</span>
+</button>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between">
+<span style="font-size: 14px; color: #D0D5DD">Pagás por transferencia y lo activamos al toque.</span>
+<div style="display: flex; gap: 10px">
+<a href="./" style="text-decoration: none; font-weight: 800; font-size: 15px; color: #FFFFFF; padding: 15px 18px; border-radius: 14px">Ahora no</a>
+<a href="#destacar" style="text-decoration: none; font-weight: 800; font-size: 15px; background: #FFFFFF; color: #101828; padding: 15px 22px; border-radius: 14px">Destacar por WhatsApp</a>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{showNav}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; border-top: 2px solid #F2F4F7; padding-top: 20px">
+<button onClick="{{prev}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 15px; min-height: 50px; padding: 0 20px; border-radius: 14px; border: 2px solid #D0D5DD; background: #FFFFFF; color: #101828; visibility: {{prevVis}}">Atrás</button>
+<sc-if value="{{showNext}}" hint-placeholder-val="{{true}}">
+<button onClick="{{next}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 16px; min-height: 54px; padding: 0 30px; border-radius: 16px; border: 0; background: #101828; color: #FFFFFF">{{nextLabel}}</button>
+</sc-if>
+</div>
+</sc-if>
+
+</main>
+</div>
+</div>
+</div>
+</template>
+<script src="dc.js"></script>
+<script>
+class Component extends DCLogic {
+renderVals() {
+var st = this.state || {}, step = st.step || 0;
+var set = (o) => this.setState(o);
+var rent = (st.op || 'rent') === 'rent';
+var accent = rent ? '#1F4FE0' : '#0B7A5E';
+var names = ['Tu cuenta', 'Qué publicás', 'Dónde queda', 'Cómo es', 'Preguntas rápidas', rent ? 'Precio y entrada' : 'Precio', 'Fotos', 'Algo más', 'Vista previa'];
+var steps = names.map((n, i) => ({
+name: n, num: i < step ? '✓' : String(i + 1), go: () => set({ step: i }),
+bg: i === step ? '#F0F4FF' : 'transparent', weight: i === step ? 800 : 600,
+dotBg: i < step ? '#12B76A' : (i === step ? accent : '#F2F4F7'), dotFg: i <= step ? '#FFFFFF' : '#667085'
+}));
+var chip = (labels, cur, key, extra) => labels.map((l) => {
+var on = cur === l;
+return { label: l, bd: on ? '#101828' : '#D0D5DD', bg: on ? '#101828' : '#FFFFFF', fg: on ? '#FFFFFF' : '#101828', pick: () => { var o = {}; o[key] = l; set(Object.assign(o, extra || {})); } };
+});
+var ops = [{ k: 'rent', label: 'Alquiler', sub: 'Para quien busca dónde vivir o trabajar' }, { k: 'sale', label: 'Venta', sub: 'Casas, deptos, terrenos y quintas' }].map((o) => {
+var on = (st.op || 'rent') === o.k;
+return { label: o.label, sub: o.sub, bd: on ? accent : '#EAECF0', bg: on ? (o.k === 'rent' ? '#F0F4FF' : '#ECFDF3') : '#FFFFFF', pick: () => set({ op: o.k }) };
+});
+var tipo = st.tipo || 'Departamento';
+var tipos = chip(['Departamento', 'Casa', 'Dúplex', 'Monoambiente', 'Terreno', 'Casa quinta', 'Local', 'Oficina'], tipo, 'tipo');
+var quien = chip(['Soy el dueño', 'Soy inmobiliaria'], st.quien || 'Soy el dueño', 'quien');
+var ubic = chip(['Ubicación exacta', 'Solo la zona aproximada'], st.ubic || 'Solo la zona aproximada', 'ubic');
+var cnt = st.cnt || { hab: 2, bano: 1, coch: 1, m2: 70 };
+var mk = (key, label, stepN, min) => ({
+label: label, val: cnt[key] + (key === 'm2' ? ' m²' : ''), ariaMinus: 'Menos ' + label, ariaPlus: 'Más ' + label,
+minus: () => { var c = Object.assign({}, cnt); c[key] = Math.max(min, c[key] - stepN); set({ cnt: c }); },
+plus: () => { var c = Object.assign({}, cnt); c[key] = c[key] + stepN; set({ cnt: c }); }
+});
+var counters = [mk('hab', 'Habitaciones', 1, 0), mk('bano', 'Baños', 1, 0), mk('coch', 'Cocheras', 1, 0), mk('m2', 'Metros', 5, 10)];
+var ans = st.ans || {};
+var qlist = [['mascotas', '¿Se aceptan mascotas?'], ['amoblado', '¿Está amoblado?'], ['aire', '¿Tiene aire acondicionado?'], ['balcon', '¿Tiene balcón?'], ['patio', '¿Tiene patio o jardín?'], ['parrilla', '¿Tiene parrilla o quincho?'], ['pileta', '¿Tiene pileta?'], ['ascensor', '¿El edificio tiene ascensor?'], ['seguridad', '¿Tiene seguridad o portería?']];
+var qs = qlist.map((q) => ({
+label: q[1],
+opts: [['si', 'Sí'], ['no', 'No'], ['ns', 'No sé']].map((o) => {
+var on = ans[q[0]] === o[0], col = o[0] === 'si' ? '#0B7A5E' : (o[0] === 'no' ? '#B42318' : '#475467');
+return { label: o[1], bd: on ? col : '#D0D5DD', bg: on ? col : '#FFFFFF', fg: on ? '#FFFFFF' : '#101828', pick: () => { var a = Object.assign({}, ans); a[q[0]] = o[0]; set({ ans: a }); } };
+})
+}));
+var petOpts = chip(['Perros y gatos', 'Solo gatos', 'Solo perros chicos'], st.pets || 'Perros y gatos', 'pets');
+var cur = st.cur || 'Gs';
+var curr = ['Gs', 'USD'].map((c) => ({ label: c, bg: cur === c ? '#101828' : 'transparent', fg: cur === c ? '#FFFFFF' : '#101828', pick: () => set({ cur: c }) }));
+var priceTxt = st.price || '';
+var num = parseInt(String(priceTxt).replace(/\D/g, ''), 10) || 0;
+var fmt = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+var garV = st.gar || 'No pido', comV = st.com || 'No se cobra';
+var gar = chip(['No pido', '1 mes', '2 meses', 'Otra'], garV, 'gar');
+var com = chip(['No se cobra', '50% de un mes', '1 mes entero'], comV, 'com');
+var fin = chip(['Sí', 'No', 'A conversar'], st.fin || 'A conversar', 'fin');
+var gm = garV === '1 mes' ? 1 : (garV === '2 meses' ? 2 : 0), cm = comV === '50% de un mes' ? 0.5 : (comV === '1 mes entero' ? 1 : 0);
+var money = (n) => (cur === 'USD' ? 'USD ' : '') + fmt(n) + (cur === 'Gs' ? ' Gs' : '');
+var parts = [];
+if (gm) parts.push(gm + (gm > 1 ? ' meses' : ' mes') + ' de garantía');
+if (cm) parts.push((cm === 0.5 ? '50%' : '1 mes') + ' de comisión');
+var entryText;
+if (!rent) entryText = 'Precio de venta publicado por el propietario.';
+else if (garV === 'Otra') entryText = 'Este propietario pide una garantía especial. Conviene consultarle.';
+else if (!parts.length) entryText = 'No hace falta garantía para entrar y no se cobra comisión.';
+else entryText = 'Este propietario pide ' + parts.join(' y ') + '.' + (num ? ' En total, ' + money(num * (1 + gm + cm)) + ' para entrar, con el primer mes incluido.' : '');
+var nPh = st.ph || 0;
+var photos = [0, 1, 2, 3, 4, 5].map((i) => i < nPh ? { label: 'Foto ' + (i + 1), bg: ['#D9E0EC', '#EAD9C2', '#CFE0D0', '#E9ECF1', '#DCEBFA', '#EEE6F8'][i], fg: '#475467', bd: 'transparent' } : { label: i === nPh ? '+ Soltá o tocá' : '', bg: '#FFFFFF', fg: '#667085', bd: '#D0D5DD' });
+var badges = [];
+if (ans.mascotas === 'si') badges.push({ t: 'Acepta mascotas', bg: '#D1FADF', fg: '#05603A' });
+if (ans.mascotas === 'no') badges.push({ t: 'No acepta mascotas', bg: '#FEE4E2', fg: '#912018' });
+badges.push({ t: cnt.hab + (cnt.hab === 1 ? ' habitación' : ' habitaciones'), bg: '#F2F4F7', fg: '#344054' });
+if (ans.amoblado === 'si') badges.push({ t: 'Amoblado', bg: '#F2F4F7', fg: '#344054' });
+badges.push({ t: 'Publicado acá', bg: '#F0F4FF', fg: '#1F4FE0' });
+var planSel = st.plan || 1;
+var plans = [['7 días', 'Más visitas', 'Precio por WhatsApp'], ['15 días', 'Más visitas', 'Precio por WhatsApp'], ['30 días', 'Más visitas', 'Precio por WhatsApp']].map((p, i) => ({ days: p[0], reach: p[1], price: p[2], bd: planSel === i ? '#C8F250' : '#344054', bg: planSel === i ? '#1D2939' : 'transparent', pick: () => set({ plan: i }) }));
+var flags = {};
+for (var i = 0; i < 10; i++) flags['s' + i] = step === i;
+return Object.assign(flags, {
+accent: accent, steps: steps, progress: Math.round(Math.min(step, 9) / 9 * 100),
+ops: ops, tipos: tipos, quien: quien, ubic: ubic, counters: counters, qs: qs,
+showPets: ans.mascotas === 'si', petOpts: petOpts,
+isRent: rent, isSale: !rent, priceTitle: rent ? 'Precio y lo que se paga para entrar' : 'Precio de venta',
+priceLabel: rent ? 'Alquiler por mes' : 'Precio', priceTxt: priceTxt, curr: curr,
+setPrice: (e) => set({ price: e.target.value }), gar: gar, com: com, fin: fin, entryText: entryText,
+photos: photos, addPhoto: () => set({ ph: Math.min(6, nPh + 1) }),
+badges: badges, priceShow: num ? money(num) + (rent ? ' por mes' : '') : 'Precio a convenir',
+titleShow: tipo + ' en ' + (st.city || 'Asunción'), setCity: (e) => set({ city: e.target.value }),
+plans: plans,
+showNav: step < 9, showNext: step < 8, prevVis: step > 0 ? 'visible' : 'hidden',
+nextLabel: step === 0 ? 'Crear cuenta' : 'Siguiente',
+next: () => set({ step: Math.min(9, step + 1) }), prev: () => set({ step: Math.max(0, step - 1) }),
+send: () => set({ step: 9 })
+});
+}
+}
+DC.montar(Component);
+</script>
+</body>
+</html>

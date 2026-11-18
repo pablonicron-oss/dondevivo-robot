@@ -5,10 +5,12 @@
   var DATA = [], ACT = "";
   var FUENTES = { infocasas: "InfoCasas", remax: "RE/MAX", buscodepto: "BuscoDepto", century21: "Century 21" };
   var EJ = {
-    alquiler: ["Tengo un gato y busco un depto en Luque", "Dos habitaciones en Asunción, una para mi oficina", "Monoambiente amoblado en Asunción",
-      "Que acepte perros y tenga patio en San Lorenzo", "Casa de 3 dormitorios en Lambaré", "Depto de 1 dormitorio en Fernando de la Mora"],
-    venta: ["Mi primera casa en Luque", "Depto en pozo en Asunción para invertir", "Dúplex a estrenar en San Lorenzo",
-      "Casa de 3 dormitorios en Ciudad del Este", "Depto a estrenar en Villa Morra", "Casa con patio en Encarnación"]
+    alquiler: ["Tengo un gato y busco un depto en Luque", "Dos habitaciones, una para mi oficina", "Algo para compartir con mi roomie cerca de la facu",
+      "Monoambiente amoblado cerca de una parada", "Que acepte perros grandes y tenga patio", "Una casa quinta en San Bernardino para el verano",
+      "Depto con balcón y vista al río en Asunción", "Sin garantía para entrar, en Fernando de la Mora"],
+    venta: ["Mi primera casa en Luque, con patio", "Un terreno de 360 m² en San Lorenzo", "Depto en pozo en Villa Morra para invertir",
+      "Tengo 2 hijos, cerca de un buen colegio privado", "Dúplex con quincho y lugar para pileta", "Una casa quinta cerca de un arroyo",
+      "Terreno con salida al lago en Areguá", "Casa en Encarnación cerca de la costanera"]
   };
   var estado = { op: "alquiler" };
 
@@ -70,7 +72,7 @@
   function tarjeta(a) {
     var tags = [];
     if (a.dor) tags.push("<span>" + a.dor + " dorm.</span>");
-    if (a.m2) tags.push("<span>" + Math.round(a.m2) + " m²</span>");
+    if (a.m2 >= 10) tags.push("<span>" + Math.round(a.m2) + " m²</span>");
     if (a.ms === "si") tags.push('<span class="si">Acepta mascotas</span>');
     if (a.ms === "no") tags.push('<span class="no">Sin mascotas</span>');
     if (a.eo === "en_pozo") tags.push("<span>En pozo</span>");
@@ -81,29 +83,60 @@
   }
 
   /* ---------- pantallas ---------- */
+  /* maqueta 3D de la tarjeta Armá tu lugar (igual que en el diseño) */
+  function shade(hex, a) {
+    var n = parseInt(hex.slice(1), 16), t = a < 0 ? 0 : 255, p = Math.abs(a);
+    var m = function (c) { return Math.round(c + (t - c) * p); };
+    return "rgb(" + m((n >> 16) & 255) + "," + m((n >> 8) & 255) + "," + m(n & 255) + ")";
+  }
+  function caras(boxes, ox, oy) {
+    var h = "";
+    boxes.forEach(function (b) {
+      var x = b[0] + ox, y = b[1] + oy, z = b[2], w = b[3], d = b[4], al = b[5], c = b[6];
+      h += '<span style="left:' + x + "px;top:" + (y + d - al) + "px;width:" + w + "px;height:" + al + "px;background:" + shade(c, -0.06) + ";transform-origin:50% 100%;transform:translateZ(" + z + 'px) rotateX(-90deg)"></span>';
+      h += '<span style="left:' + (x + w - al) + "px;top:" + y + "px;width:" + al + "px;height:" + d + "px;background:" + shade(c, -0.22) + ";transform-origin:100% 50%;transform:translateZ(" + z + 'px) rotateY(90deg)"></span>';
+      h += '<span style="left:' + x + "px;top:" + y + "px;width:" + w + "px;height:" + d + "px;background:" + shade(c, 0.1) + ";transform-origin:50% 50%;transform:translateZ(" + (z + al) + 'px)"></span>';
+    });
+    return h;
+  }
+  var W = "#F4F5F7";
+  var PREVIEW = caras([
+    [0, 0, 0, 160, 130, 6, "#EFE2CF"], [0, 0, 6, 160, 5, 22, "#475467"], [0, 5, 6, 5, 125, 22, "#475467"],
+    [20, 14, 6, 70, 6, 34, "#7A5230"], [20, 20, 6, 70, 92, 13, "#9C6B3F"], [23, 22, 19, 64, 88, 8, W], [23, 56, 27, 64, 54, 3, "#1F4FE0"],
+    [112, 70, 6, 6, 6, 10, "#B9772E"], [128, 70, 6, 6, 6, 10, "#B9772E"], [112, 96, 6, 6, 6, 10, "#B9772E"], [128, 96, 6, 6, 6, 10, "#B9772E"],
+    [112, 68, 16, 22, 36, 16, "#D99A4E"], [111, 96, 26, 24, 20, 20, "#D99A4E"], [117, 116, 27, 12, 9, 9, "#F3DDB7"], [111, 97, 46, 6, 7, 9, "#8A5A22"], [129, 97, 46, 6, 7, 9, "#8A5A22"],
+    [131, 12, 6, 14, 14, 12, "#C8553D"], [129, 10, 18, 18, 18, 10, "#12B76A"], [132, 13, 28, 12, 12, 10, "#32D583"], [135, 16, 38, 6, 6, 6, "#12B76A"],
+    [178, 0, 0, 76, 136, 4, "#667085"], [184, 4, 4, 4, 128, 1, "#FDE68A"], [244, 4, 4, 4, 128, 1, "#FDE68A"],
+    [186, 24, 4, 6, 22, 14, "#0B0F17"], [244, 24, 4, 6, 22, 14, "#0B0F17"], [186, 92, 4, 6, 22, 14, "#0B0F17"], [244, 92, 4, 6, 22, 14, "#0B0F17"],
+    [188, 8, 11, 60, 120, 17, "#E5484D"], [193, 38, 28, 50, 58, 15, "#C7D7FE"], [193, 38, 43, 50, 58, 2, "#E5484D"], [196, 126, 16, 10, 3, 6, "#FDE68A"], [230, 126, 16, 10, 3, 6, "#FDE68A"]
+  ], -127, -68);
+
+  /* ---------- pantallas ---------- */
   function inicio() {
-    var cs = ciudades(), ej = EJ[estado.op];
-    var porFuente = {}; DATA.forEach(function (a) { porFuente[a.f] = 1; });
+    var cs = ciudades(), ej = EJ[estado.op], rent = estado.op === "alquiler";
     $app.innerHTML =
       '<section class="hero"><div class="card-hero">' +
-      '<div class="toggle" role="group" aria-label="Qué buscás"><button data-op="alquiler" aria-pressed="' + (estado.op === "alquiler") + '">Busco alquilar</button><button data-op="venta" aria-pressed="' + (estado.op === "venta") + '">Busco comprar</button></div>' +
+      '<div class="toggle" role="group" aria-label="Qué buscás"><button data-op="alquiler" aria-pressed="' + rent + '">Busco alquilar</button><button data-op="venta" aria-pressed="' + !rent + '">Busco comprar</button></div>' +
       '<h1>Contanos qué buscás. <span class="ac">Nosotros lo encontramos.</span></h1>' +
-      '<form class="buscador" id="fb"><label class="sr" for="qB" style="position:absolute;left:-9999px">Describí lo que buscás</label><input id="qB" placeholder="' + esc(ej[0]) + '" autocomplete="off">' +
+      '<div style="display:flex;flex-direction:column;gap:14px">' +
+      '<form class="buscador" id="fb"><label for="qB" style="position:absolute;left:-9999px">Describí lo que buscás</label><input id="qB" placeholder="' + (rent ? "Busco un depto en Luque, tengo un gato" : "Quiero comprar una casa con patio en Luque") + '" autocomplete="off">' +
       '<label for="cB" style="position:absolute;left:-9999px">Ciudad</label><select id="cB"><option value="">Todo Paraguay</option>' + cs.map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("") + "</select>" +
       '<button class="btn">Buscar</button></form>' +
-      '<div class="proba"><b>Probá con</b><button type="button" id="ej">' + esc(ej[Math.floor(Math.random() * ej.length)]) + "</button></div>" +
-      '<div class="chips"><button class="chip" data-chip="masc">Amigos de las mascotas</button><button class="chip" data-chip="pozo">En pozo, para invertir</button><button class="chip" data-chip="estrenar">A estrenar</button><button class="chip" data-chip="1dorm">Para arrancar solo</button></div>' +
+      '<div class="proba"><b>Probá con</b><div class="rot">' + ej.map(function (t) { return '<button type="button">' + esc(t) + "</button>"; }).join("") + "</div></div></div>" +
+      '<div class="chips"><button class="chip" data-chip="masc">Amigos de las mascotas</button><button class="chip" data-chip="office">Home office friendly</button><button class="chip" data-chip="1dorm">Para arrancar solo</button><button class="chip" data-chip="pozo">En pozo, para invertir</button><button class="chip" data-chip="estrenar">A estrenar</button></div>' +
       "</div>" +
-      '<div class="lado"><div class="mini">Hoy en DóndeVivo</div><div class="num">' + DATA.length.toLocaleString("es-PY") + '</div><div style="font-size:16px;color:#D0D5DD;line-height:1.5">casas y departamentos de varias páginas, revisados todos los días. Los vendidos y alquilados salen solos.</div>' +
-      '<div class="fuentes">' + Object.keys(porFuente).map(function (f) { return "<span>" + esc(FUENTES[f] || f) + "</span>"; }).join("") + "</div></div></section>" +
+      '<div class="lado"><div style="display:flex;flex-direction:column;gap:8px"><div class="mini">O buscá de otra forma</div><div class="grande">Armá tu lugar desde cero</div><div style="font-size:15px;line-height:1.5;color:#D0D5DD">Personalizá tu lugar con habitaciones, tu perro, el sofá o el auto. Te buscamos lo más parecido.</div></div>' +
+      '<div class="float" aria-hidden="true"><div class="iso">' + PREVIEW + '</div></div>' +
+      '<a class="cta" href="armar.html">Empezar a armar</a></div></section>' +
       '<section class="sec"><h2>Lo que otras plataformas esconden, acá se ve</h2><div class="grid4">' +
-      '<div class="caja"><h3>El costo real de mudarte</h3><p>El alquiler es solo una parte. Te mostramos la garantía y la comisión cuando el aviso las menciona, y te avisamos cuando conviene consultarlas.</p></div>' +
+      '<div class="caja"><h3>El costo real de mudarte</h3><p>El alquiler es solo una parte. Te mostramos el total para entrar, con garantía y comisión incluidas cuando el aviso las menciona.</p></div>' +
       '<div class="caja"><h3>Mascotas, sí o no</h3><p>Lo que está permitido y lo que no, bien arriba y sin letra chica.</p></div>' +
       '<div class="caja"><h3>Todas las páginas juntas</h3><p>InfoCasas, RE/MAX, BuscoDepto y más, en un solo lugar. Cada aviso te lleva a su página original.</p></div>' +
-      '<div class="caja"><h3>Fotos de verdad</h3><p>Solo publicamos avisos con varias fotos reales, sin marcos ni teléfonos encima.</p></div>' +
-      "</div></section>";
+      '<div class="caja"><h3>Fotos de verdad</h3><p>Solo mostramos avisos con varias fotos reales, sin marcos ni teléfonos encima.</p></div>' +
+      "</div></section>" +
+      '<section class="banda"><div>¿Tenés un inmueble? Publicá sin costo.</div><a href="publicar.html">Agregar mi inmueble</a></section>';
     $app.querySelectorAll("[data-op]").forEach(function (b) { b.onclick = function () { setOp(b.dataset.op); inicio(); }; });
-    document.getElementById("ej").onclick = function () { document.getElementById("qB").value = this.textContent; document.getElementById("fb").requestSubmit(); };
+    $app.querySelectorAll(".rot button").forEach(function (b) { b.onclick = function () { document.getElementById("qB").value = b.textContent; document.getElementById("fb").requestSubmit(); }; });
     document.getElementById("fb").onsubmit = function (e) {
       e.preventDefault();
       var f = entender(document.getElementById("qB").value, { op: estado.op });
@@ -115,6 +148,7 @@
         var f = { op: estado.op }, k = b.dataset.chip;
         if (k === "masc") f.masc = "confirmado"; if (k === "pozo") { f.op = "venta"; f.estado = "en_pozo"; }
         if (k === "estrenar") f.estado = "a_estrenar"; if (k === "1dorm") { f.tipo = "departamento"; f.dor = "1"; }
+        if (k === "office") f.dor = "2";
         location.hash = "#/buscar?" + q(f);
       };
     });
@@ -166,7 +200,7 @@
       '<div class="galeria"><div class="grande" id="gr" style="background-image:url(\'' + esc(seguro(a.ph[0])) + '\')"></div><div class="miniaturas">' +
       a.ph.map(function (u, i) { return '<button aria-label="Foto ' + (i + 1) + '" aria-current="' + (i === 0) + '" data-u="' + esc(seguro(u)) + '" style="background-image:url(\'' + esc(seguro(u)) + '\')"></button>'; }).join("") + "</div></div>" +
       '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div><h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' +
-      '<div class="datos">' + [tipoTxt(a.tp), a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 ? Math.round(a.m2) + " m²" : "", a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
+      '<div class="datos">' + [tipoTxt(a.tp), a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
       '<a class="ir" href="' + esc(seguro(a.u)) + '" target="_blank" rel="noopener nofollow" id="ir">Escribir al anunciante <small>· en ' + esc(fu) + "</small></a>" +
       '<div class="bloque"><h2>Lo que cuesta entrar</h2>' + costo + "</div>" +
       '<div class="bloque"><h2>Mascotas</h2>' + masc + "</div>" +
@@ -179,15 +213,15 @@
     window.scrollTo(0, 0);
   }
 
-  function publicar() {
-    $app.innerHTML = '<div class="vacio" style="text-align:left;max-width:640px;margin:24px auto"><h1 style="font-size:36px">Publicá sin costo</h1><p style="font-size:17px;line-height:1.6">Muy pronto vas a poder cargar tu casa o departamento en DóndeVivo, gratis y con contacto directo por WhatsApp. Estamos terminando los últimos detalles.</p><a class="volver" href="#/">← Volver al inicio</a></div>';
-  }
-
   function ruta() {
     var h = location.hash.replace(/^#/, "") || "/";
     if (h.indexOf("/aviso/") === 0) return ficha(decodeURIComponent(h.slice(7)));
-    if (h.indexOf("/buscar") === 0) return buscar(leerQ(h.split("?")[1]));
-    if (h.indexOf("/publicar") === 0) return publicar();
+    if (h.indexOf("/buscar") === 0) {
+      var f = leerQ(h.split("?")[1]);
+      if (f.q) { var t = f.q; delete f.q; f = entender(t, f); if (leerQ(h.split("?")[1]).ciudad) f.ciudad = leerQ(h.split("?")[1]).ciudad; history.replaceState(null, "", "#/buscar?" + q(f)); }
+      return buscar(f);
+    }
+    if (h.indexOf("/publicar") === 0) { location.replace("publicar.html"); return; }
     mostrados = 24; inicio();
   }
 

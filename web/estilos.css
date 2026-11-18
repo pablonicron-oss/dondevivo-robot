@@ -39,7 +39,23 @@ h1 .ac{color:var(--ac)}
 .chip[aria-pressed=true]{background:var(--ink);color:#fff}
 .lado{flex:1 1 300px;min-width:0;background:var(--ink);color:#fff;border-radius:36px;padding:32px;display:flex;flex-direction:column;gap:14px;justify-content:space-between}
 .lado .mini{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#98A2B3}
-.lado .num{font-family:'Outfit',sans-serif;font-size:64px;line-height:1;font-weight:800;letter-spacing:-.04em}
+.lado{gap:22px;overflow:hidden}
+.lado .grande{font-size:32px;line-height:1.05;font-weight:800;letter-spacing:-.03em}
+.float{position:relative;height:190px;animation:floatB 6s ease-in-out infinite}
+@keyframes floatB{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.iso{position:absolute;left:50%;top:62%;width:0;height:0;transform:scale(.72) rotateX(60deg) rotateZ(45deg);transform-style:preserve-3d}
+.iso span{position:absolute}
+.cta{text-decoration:none;text-align:center;font-weight:800;font-size:16px;background:#fff;color:var(--ink);padding:17px 22px;border-radius:16px;transition:transform .18s}
+.cta:hover{transform:translateY(-3px)}
+.rot{position:relative;flex:1;min-width:0;height:30px;overflow:hidden}
+.rot button{position:absolute;left:0;top:0;height:30px;line-height:30px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;opacity:0;visibility:hidden;animation:rotB 32s infinite;text-decoration:none}
+.rot button:hover{text-decoration:underline}
+.rot button:nth-child(2){animation-delay:4s}.rot button:nth-child(3){animation-delay:8s}.rot button:nth-child(4){animation-delay:12s}.rot button:nth-child(5){animation-delay:16s}.rot button:nth-child(6){animation-delay:20s}.rot button:nth-child(7){animation-delay:24s}.rot button:nth-child(8){animation-delay:28s}
+@keyframes rotB{0%{opacity:0;transform:translateY(16px);visibility:visible}1.8%{opacity:1;transform:translateY(0)}10.8%{opacity:1;transform:translateY(0)}12.5%{opacity:0;transform:translateY(-16px);visibility:hidden}100%{opacity:0;visibility:hidden}}
+.proba b{line-height:30px}
+.banda{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;background:var(--ink);color:#fff;border-radius:28px;padding:32px 36px;margin-top:48px}
+.banda div{font-size:26px;font-weight:800;letter-spacing:-.02em;flex:1 1 320px}
+.banda a{text-decoration:none;font-weight:800;font-size:15px;background:#fff;color:var(--ink);padding:16px 26px;border-radius:14px}
 .fuentes{display:flex;flex-wrap:wrap;gap:8px}
 .fuentes span{background:#1D2939;border-radius:999px;padding:8px 12px;font-weight:700;font-size:13px}
 
@@ -95,5 +111,5 @@ h1 .ac{color:var(--ac)}
 .desc{white-space:pre-line}
 .volver{display:inline-flex;align-items:center;gap:6px;font-weight:700;text-decoration:none;margin-top:8px}
 .pie{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:48px 0 32px;font-size:13px;color:var(--gris)}
-@media (prefers-reduced-motion:reduce){.p,.e,.brow{animation:none}.tarjeta,.chip{transition:none}}
-@media (max-width:520px){.wm{font-size:28px}.logo svg{width:42px;height:42px}.toggle button{padding:0 14px;font-size:15px;white-space:nowrap}.btn{flex:1}.buscador select{flex:1}.lado .num{font-size:52px}}
+@media (prefers-reduced-motion:reduce){.p,.e,.brow,.float{animation:none}.rot button{animation:none}.rot button:first-child{opacity:1}.tarjeta,.chip{transition:none}}
+@media (max-width:520px){.wm{font-size:28px}.logo svg{width:42px;height:42px}.toggle button{padding:0 14px;font-size:15px;white-space:nowrap}.btn{flex:1}.buscador select{flex:1}.lado .grande{font-size:28px}}

@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Armá tu lugar · DóndeVivo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M7 29L32 9l25 20' fill='none' stroke='%231F4FE0' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='21' cy='44' r='9.5' fill='%23fff' stroke='%23101828' stroke-width='1.8'/%3E%3Ccircle cx='21' cy='45' r='4.8' fill='%23101828'/%3E%3Ccircle cx='43' cy='44' r='9.5' fill='%23fff' stroke='%23101828' stroke-width='1.8'/%3E%3Ccircle cx='43' cy='45' r='4.8' fill='%23101828'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@700;800&display=swap">
+<style>
+body{margin:0}
+.p{animation:look 7s infinite ease-in-out}
+@keyframes look{0%,12%{transform:translate(0,0)}18%,30%{transform:translate(-2.4px,0.3px)}36%,48%{transform:translate(2.4px,0.3px)}54%,68%{transform:translate(1.4px,-2.4px)}74%,100%{transform:translate(0,0)}}
+.e{transform-box:fill-box;transform-origin:center;animation:blink 7s infinite}
+@keyframes blink{0%,86%{transform:scaleY(1)}88%{transform:scaleY(.12)}90%,100%{transform:scaleY(1)}}
+.brow{transform-box:fill-box;transform-origin:center bottom;animation:brow 7s infinite ease-in-out}
+@keyframes brow{0%,12%{transform:translateY(0) rotate(0)}18%,30%{transform:rotate(-5deg)}36%,48%{transform:rotate(5deg)}54%,58%{transform:translateY(-4px)}60%{transform:translateY(-2px)}62%,68%{transform:translateY(-4px)}74%,100%{transform:translateY(0) rotate(0)}}
+@media (prefers-reduced-motion: reduce){.p,.e,.brow{animation:none}}
+
+a{color:#101828}a:hover{color:#1F4FE0}
+.drop{animation:dropB .65s cubic-bezier(.3,1.45,.5,1) both}
+@keyframes dropB{0%{transform:translateY(-140px)}60%{transform:translateY(0)}78%{transform:translateY(-10px)}100%{transform:translateY(0)}}
+.tile{transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease}
+.tile:hover{transform:translateY(-4px);box-shadow:0 12px 24px rgba(16,24,40,.12)}
+.tile:active{cursor:grabbing}
+@media (prefers-reduced-motion: reduce){.drop{animation:none}}
+</style>
+</head>
+<body>
+<div id="raiz"></div>
+<template id="dc">
+<div style="min-height: 100vh; background: #FFFFFF; color: #101828; font-family: 'Manrope', system-ui, sans-serif; box-sizing: border-box">
+<div style="max-width: 1240px; margin: 0 auto; padding: 0 24px">
+
+<nav style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0">
+<a href="./" style="text-decoration: none; font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 8px; min-height: 44px"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>Volver al buscador</a>
+<a href="./" aria-label="DóndeVivo, inicio" style="text-decoration: none; display: flex; align-items: center; gap: 10px"><svg aria-hidden="true" style="margin-top: 6px" width="50" height="50" viewBox="0 0 64 64"><path class="brow" d="M7 29L32 9l25 20" fill="none" stroke="#1F4FE0" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path><g class="e"><circle cx="21" cy="44" r="9.5" fill="#FFFFFF" stroke="#101828" stroke-width="1.8"></circle><g class="p"><circle cx="21" cy="45" r="4.8" fill="#101828"></circle></g></g><g class="e"><circle cx="43" cy="44" r="9.5" fill="#FFFFFF" stroke="#101828" stroke-width="1.8"></circle><g class="p"><circle cx="43" cy="45" r="4.8" fill="#101828"></circle></g></g></svg><span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 34px; letter-spacing: -0.045em; line-height: 1; white-space: nowrap"><span style="color: #101828">dónde</span><span style="color: #1F4FE0">vivo</span></span></a>
+<div style="display: flex; gap: 4px; background: #F2F4F7; padding: 5px; border-radius: 16px">
+<button onClick="{{setRent}}" style="border: 0; cursor: pointer; font: inherit; font-weight: 700; font-size: 15px; min-height: 44px; padding: 0 20px; border-radius: 12px; background: {{rentBg}}; color: {{rentFg}}">Alquilar</button>
+<button onClick="{{setBuy}}" style="border: 0; cursor: pointer; font: inherit; font-weight: 700; font-size: 15px; min-height: 44px; padding: 0 20px; border-radius: 12px; background: {{buyBg}}; color: {{buyFg}}">Comprar</button>
+</div>
+</nav>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch; padding-bottom: 48px">
+
+<aside style="flex: 1 1 300px; max-width: 100%; display: flex; flex-direction: column; gap: 22px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-size: 34px; line-height: 1.05; letter-spacing: -0.035em; font-weight: 800">Armá tu lugar</h1>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #475467">Tocá ambientes y cosas para sumarlos a tu lugar. Te buscamos lo más parecido.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="ciudadArmar" style="font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #667085">¿Dónde?</label>
+<select id="ciudadArmar" onChange="{{setCity}}" style="font: inherit; font-weight: 700; font-size: 16px; color: #101828; border: 2px solid #101828; background: #FFFFFF; border-radius: 14px; min-height: 50px; padding: 0 14px; cursor: pointer">
+<option>Todo Paraguay</option><option>Asunción</option><option>Luque</option><option>San Lorenzo</option><option>Lambaré</option><option>Fernando de la Mora</option><option>Mariano Roque Alonso</option><option>Capiatá</option><option>Ñemby</option><option>Limpio</option><option>Encarnación</option><option>Ciudad del Este</option>
+</select>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #667085">Ambientes</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{roomTiles}}" as="p" hint-placeholder-count="9">
+<div style="position: relative; display: flex">
+<button class="tile" draggable="true" onDragStart="{{p.start}}" onDragEnd="{{dragEnd}}" onClick="{{p.add}}" aria-label="{{p.aria}}" style="flex: 1; position: relative; cursor: grab; font: inherit; border: 2px solid {{p.line}}; background: #FFFFFF; border-radius: 16px; padding: 6px 4px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: {{p.op}}">
+<span aria-hidden="true" style="position: relative; display: block; width: 80px; height: 58px; pointer-events: none">
+<span style="position: absolute; left: 50%; top: 66%; width: 0; height: 0; transform: {{p.tf}}; transform-style: preserve-3d">
+<sc-for list="{{p.faces}}" as="f" hint-placeholder-count="3">
+<span style="position: absolute; left: {{f.l}}px; top: {{f.t}}px; width: {{f.w}}px; height: {{f.h}}px; background: {{f.c}}; transform-origin: {{f.o}}; transform: {{f.tf}}"></span>
+</sc-for>
+</span>
+</span>
+<span style="font-size: 12px; font-weight: 800; pointer-events: none">{{p.name}}</span>
+<sc-if value="{{p.has}}" hint-placeholder-val="{{false}}">
+<span style="position: absolute; top: 5px; right: 5px; min-width: 20px; height: 20px; box-sizing: border-box; padding: 0 5px; border-radius: 999px; background: #101828; color: #FFFFFF; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; pointer-events: none">{{p.count}}</span>
+</sc-if>
+</button>
+<sc-if value="{{p.has}}" hint-placeholder-val="{{false}}">
+<button onClick="{{p.remove}}" aria-label="{{p.ariaRemove}}" style="position: absolute; top: -8px; left: -8px; width: 30px; height: 30px; border-radius: 999px; border: 2px solid #FFFFFF; background: #E5484D; color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: 0 4px 10px rgba(16,24,40,.18)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #667085">Lo que traés</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{itemTiles}}" as="p" hint-placeholder-count="13">
+<div style="position: relative; display: flex">
+<button class="tile" draggable="true" onDragStart="{{p.start}}" onDragEnd="{{dragEnd}}" onClick="{{p.add}}" aria-label="{{p.aria}}" style="flex: 1; position: relative; cursor: grab; font: inherit; border: 2px solid {{p.line}}; background: #FFFFFF; border-radius: 16px; padding: 6px 4px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: {{p.op}}">
+<span aria-hidden="true" style="position: relative; display: block; width: 80px; height: 58px; pointer-events: none">
+<span style="position: absolute; left: 50%; top: 70%; width: 0; height: 0; transform: {{p.tf}}; transform-style: preserve-3d">
+<sc-for list="{{p.faces}}" as="f" hint-placeholder-count="3">
+<span style="position: absolute; left: {{f.l}}px; top: {{f.t}}px; width: {{f.w}}px; height: {{f.h}}px; background: {{f.c}}; transform-origin: {{f.o}}; transform: {{f.tf}}"></span>
+</sc-for>
+</span>
+</span>
+<span style="font-size: 12px; font-weight: 800; pointer-events: none">{{p.name}}</span>
+<sc-if value="{{p.has}}" hint-placeholder-val="{{false}}">
+<span style="position: absolute; top: 5px; right: 5px; min-width: 20px; height: 20px; box-sizing: border-box; padding: 0 5px; border-radius: 999px; background: #101828; color: #FFFFFF; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; pointer-events: none">{{p.count}}</span>
+</sc-if>
+</button>
+<sc-if value="{{p.has}}" hint-placeholder-val="{{false}}">
+<button onClick="{{p.remove}}" aria-label="{{p.ariaRemove}}" style="position: absolute; top: -8px; left: -8px; width: 30px; height: 30px; border-radius: 999px; border: 2px solid #FFFFFF; background: #E5484D; color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: 0 4px 10px rgba(16,24,40,.18)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</aside>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; justify-content: space-between; background: #F5F7FB; border-radius: 22px; padding: 18px 20px">
+<div style="flex: 1 1 360px; font-size: clamp(18px, 2vw, 22px); line-height: 1.35; font-weight: 800; letter-spacing: -0.015em; text-wrap: pretty">{{phrase}}</div>
+<div style="display: flex; gap: 8px">
+<button onClick="{{undo}}" style="border: 2px solid #D0D5DD; background: #FFFFFF; cursor: pointer; font: inherit; font-weight: 700; font-size: 14px; color: #101828; min-height: 44px; padding: 0 14px; border-radius: 12px">Deshacer</button>
+<button onClick="{{reset}}" style="border: 2px solid #D0D5DD; background: #FFFFFF; cursor: pointer; font: inherit; font-weight: 700; font-size: 14px; color: #101828; min-height: 44px; padding: 0 14px; border-radius: 12px">Vaciar</button>
+</div>
+</div>
+
+<div data-stage="1" onDragOver="{{over}}" onDragLeave="{{leave}}" onDrop="{{drop}}" style="position: relative; height: 620px; overflow: hidden; border-radius: 28px; background-color: #FFFFFF; background-image: radial-gradient(#E4E7EC 1.4px, transparent 1.4px); background-size: 24px 24px; border: 3px dashed {{stageLine}}; transition: border-color .2s ease">
+
+<sc-if value="{{empty}}" hint-placeholder-val="{{true}}">
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 24px; pointer-events: none">
+<div style="font-size: 22px; font-weight: 800; letter-spacing: -0.02em">Tu lugar empieza acá</div>
+<div style="font-size: 15px; color: #475467; max-width: 340px; line-height: 1.5">Arrastrá una habitación para arrancar. Después sumá baño, cocina, patio o lo que quieras.</div>
+</div>
+</sc-if>
+
+<div style="position: absolute; left: {{ox}}px; top: {{oy}}px; width: 0; height: 0; transform: scale({{k}}); transform-origin: 0 0">
+<sc-for list="{{slabs}}" as="o" hint-placeholder-count="0">
+<div style="position: absolute; left: {{o.x}}px; top: {{o.y}}px; width: 0; height: 0">
+<div class="{{o.anim}}" style="position: absolute; left: 0; top: 0; width: 0; height: 0">
+<div style="position: absolute; left: 0; top: 0; width: 0; height: 0; transform: rotateX(60deg) rotateZ(45deg); transform-style: preserve-3d">
+<sc-for list="{{o.faces}}" as="f" hint-placeholder-count="3">
+<div style="position: absolute; left: {{f.l}}px; top: {{f.t}}px; width: {{f.w}}px; height: {{f.h}}px; background: {{f.c}}; transform-origin: {{f.o}}; transform: {{f.tf}}"></div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-for>
+<sc-for list="{{objs}}" as="o" hint-placeholder-count="0">
+<div style="position: absolute; left: {{o.x}}px; top: {{o.y}}px; width: 0; height: 0">
+<div class="{{o.anim}}" style="position: absolute; left: 0; top: 0; width: 0; height: 0">
+<div style="position: absolute; left: 0; top: 0; width: 0; height: 0; transform: rotateX(60deg) rotateZ(45deg); transform-style: preserve-3d">
+<sc-for list="{{o.faces}}" as="f" hint-placeholder-count="3">
+<div style="position: absolute; left: {{f.l}}px; top: {{f.t}}px; width: {{f.w}}px; height: {{f.h}}px; background: {{f.c}}; transform-origin: {{f.o}}; transform: {{f.tf}}"></div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-for>
+<sc-for list="{{labels}}" as="lb" hint-placeholder-count="0">
+<div style="position: absolute; left: {{lb.x}}px; top: {{lb.y}}px; transform: translate(-50%, -50%); white-space: nowrap; font-size: 12px; font-weight: 800; color: #344054; background: rgba(255,255,255,.88); padding: 4px 10px; border-radius: 999px; pointer-events: none">{{lb.t}}</div>
+</sc-for>
+</div>
+
+<sc-if value="{{hint}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); font-size: 14px; font-weight: 700; color: #FFFFFF; background: #101828; padding: 10px 16px; border-radius: 999px; white-space: nowrap; pointer-events: none">{{hintText}}</div>
+</sc-if>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between">
+<span style="font-size: 14px; color: #475467">No tiene que ser exacto. Buscamos lo que más se parezca.</span>
+<button onClick="{{search}}" style="border: 0; cursor: pointer; font: inherit; font-weight: 800; font-size: 16px; min-height: 56px; padding: 0 30px; border-radius: 16px; color: #FFFFFF; background: {{accent}}">Buscar algo parecido</button>
+</div>
+</main>
+</div>
+
+</div>
+</div>
+</template>
+<script src="dc.js"></script>
+<script>
+class Component extends DCLogic {
+componentDidMount() {
+this.fit = () => {
+var el = document.querySelector('[data-stage]');
+if (!el) return;
+var w = el.clientWidth;
+if (w && w !== (this.state || {}).sw) this.setState({ sw: w });
+};
+this.fit();
+setTimeout(this.fit, 300);
+window.addEventListener('resize', this.fit);
+}
+componentWillUnmount() { window.removeEventListener('resize', this.fit); }
+shade(hex, a) {
+var n = parseInt(hex.slice(1), 16), t = a < 0 ? 0 : 255, p = Math.abs(a);
+var m = (c) => Math.round(c + (t - c) * p);
+return 'rgb(' + m((n >> 16) & 255) + ',' + m((n >> 8) & 255) + ',' + m(n & 255) + ')';
+}
+faces(boxes, ox, oy, oz) {
+var out = [];
+for (var i = 0; i < boxes.length; i++) {
+var b = boxes[i], x = b[0] + ox, y = b[1] + oy, z = b[2] + oz, w = b[3], d = b[4], h = b[5], c = b[6];
+out.push({ l: x, t: y + d - h, w: w, h: h, c: this.shade(c, -0.06), o: '50% 100%', tf: 'translateZ(' + z + 'px) rotateX(-90deg)' });
+out.push({ l: x + w - h, t: y, w: h, h: d, c: this.shade(c, -0.22), o: '100% 50%', tf: 'translateZ(' + z + 'px) rotateY(90deg)' });
+out.push({ l: x, t: y, w: w, h: d, c: this.shade(c, 0.1), o: '50% 50%', tf: 'translateZ(' + (z + h) + 'px)' });
+}
+return out;
+}
+rooms() {
+var W = '#F4F5F7', K = '#1D2939';
+return {
+hab: { name: 'Habitación', max: 4, w: 150, d: 130, c: '#EFE2CF', base: [[16, 14, 0, 70, 6, 34, '#7A5230'], [16, 20, 0, 70, 92, 13, '#9C6B3F'], [19, 22, 13, 64, 88, 8, W], [25, 25, 21, 22, 16, 5, '#C7D7FE'], [55, 25, 21, 22, 16, 5, '#C7D7FE'], [19, 56, 21, 64, 54, 3, '#1F4FE0'], [98, 14, 0, 20, 20, 22, '#9C6B3F']] },
+bano: { name: 'Baño', max: 3, w: 92, d: 92, c: '#DCEBFA', base: [[12, 8, 0, 24, 8, 34, W], [14, 16, 0, 20, 22, 18, W], [52, 48, 0, 34, 36, 4, '#84CAFF'], [52, 8, 0, 34, 20, 26, W]] },
+cocina: { name: 'Cocina', max: 1, w: 140, d: 100, c: '#E9ECF1', base: [[6, 6, 0, 96, 26, 30, '#B8C0CC'], [6, 6, 30, 96, 26, 3, '#475467'], [20, 10, 33, 20, 16, 2, K], [108, 6, 0, 26, 26, 62, W]] },
+living: { name: 'Living', max: 1, w: 190, d: 150, c: '#F5EBDD', base: [[40, 40, 0, 110, 72, 2, '#C7D7FE']] },
+oficina: { name: 'Oficina', max: 1, w: 120, d: 110, c: '#EEE6F8', base: [[8, 6, 0, 56, 14, 56, '#9C6B3F'], [10, 7, 18, 52, 12, 2, '#F79009'], [10, 7, 38, 52, 12, 2, '#12B76A']] },
+lavadero: { name: 'Lavadero', max: 1, w: 84, d: 84, c: '#E3F1F7', base: [[8, 8, 0, 38, 38, 44, W], [18, 46, 12, 18, 2, 18, '#53B1FD']] },
+patio: { name: 'Patio', max: 1, w: 280, d: 180, c: '#BFE3C0', wall: false, base: [[238, 18, 0, 10, 10, 26, '#7A5230'], [222, 2, 26, 42, 42, 30, '#12B76A'], [230, 10, 56, 26, 26, 16, '#32D583']] },
+balcon: { name: 'Balcón', max: 1, w: 190, d: 60, c: '#E9EDF2', wall: false, base: [[0, 54, 0, 190, 4, 24, '#98A2B3'], [0, 0, 0, 4, 58, 24, '#98A2B3']] },
+cochera: { name: 'Cochera', max: 3, w: 110, d: 190, c: '#D9DDE4', wall: false, base: [[10, 10, 0, 6, 170, 1, '#FDE68A'], [94, 10, 0, 6, 170, 1, '#FDE68A']] }
+};
+}
+items() {
+var W = '#F4F5F7', K = '#1D2939';
+var sc = (o, s) => { o.boxes = o.boxes.map((b) => [b[0] * s, b[1] * s, b[2] * s, b[3] * s, b[4] * s, b[5] * s, b[6]]); o.size = [o.size[0] * s, o.size[1] * s]; return o; };
+var bike = () => {
+var out = [], F = '#F79009', T = '#1D2939';
+var dot = (y, z, c, x, w) => out.push([x === undefined ? 3.5 : x, y - 1.5, z - 1.5, w || 3, 3, 3, c]);
+var line = (y0, z0, y1, z1, c) => { var n = Math.max(2, Math.ceil(Math.hypot(y1 - y0, z1 - z0) / 2.4)); for (var i = 0; i <= n; i++) dot(y0 + (y1 - y0) * i / n, z0 + (z1 - z0) * i / n, c); };
+[12, 50].forEach((cy) => { for (var a = 0; a < 16; a++) { var t = a / 16 * Math.PI * 2; dot(cy + Math.cos(t) * 10.5, 12 + Math.sin(t) * 10.5, T); } dot(cy, 12, '#98A2B3'); });
+line(12, 12, 28, 13, F); line(28, 13, 21, 29, F); line(21, 29, 12, 12, F); line(21, 29, 44, 30, F); line(28, 13, 44, 30, F); line(44, 30, 50, 12, F); line(44, 30, 42, 37, T);
+out.push([0, 40.5, 36, 10, 3, 3, T]); out.push([2, 16, 31, 6, 9, 3, T]); out.push([3.5, 19.5, 28, 3, 2, 3, T]);
+return out;
+};
+return {
+perro: sc({ name: 'Perro', max: 2, size: [24, 70], kinds: ['small'], pref: ['patio', 'living', 'hab'], boxes: [[0, 10, 0, 6, 6, 10, '#B9772E'], [16, 10, 0, 6, 6, 10, '#B9772E'], [0, 40, 0, 6, 6, 10, '#B9772E'], [16, 40, 0, 6, 6, 10, '#B9772E'], [0, 8, 10, 22, 40, 16, '#D99A4E'], [8, 0, 22, 5, 10, 5, '#B9772E'], [-1, 40, 20, 24, 20, 20, '#D99A4E'], [5, 60, 21, 12, 9, 9, '#F3DDB7'], [9, 68, 26, 4, 2, 4, K], [-1, 41, 40, 6, 7, 9, '#8A5A22'], [17, 41, 40, 6, 7, 9, '#8A5A22'], [3, 55, 32, 3, 1, 3, K], [16, 55, 32, 3, 1, 3, K]] }, 0.55),
+gato: sc({ name: 'Gato', max: 2, size: [18, 48], kinds: ['small'], pref: ['living', 'hab'], boxes: [[0, 8, 0, 5, 5, 6, '#7F8794'], [11, 8, 0, 5, 5, 6, '#7F8794'], [0, 30, 0, 5, 5, 6, '#7F8794'], [11, 30, 0, 5, 5, 6, '#7F8794'], [0, 6, 6, 16, 30, 13, '#98A2B3'], [6, 0, 14, 4, 6, 26, '#7F8794'], [-1, 30, 13, 18, 15, 15, '#98A2B3'], [-1, 32, 28, 5, 5, 7, '#7F8794'], [12, 32, 28, 5, 5, 7, '#7F8794'], [6, 45, 17, 4, 1, 3, '#F4A6B7'], [2, 45, 22, 3, 1, 3, '#12B76A'], [11, 45, 22, 3, 1, 3, '#12B76A']] }, 0.48),
+sofa: { name: 'Sofá', max: 1, size: [110, 46], kinds: ['sofa'], pref: ['living'], need: 'living', boxes: [[0, 0, 0, 110, 46, 16, '#0B7A5E'], [0, 0, 16, 110, 12, 22, '#0B7A5E'], [0, 12, 16, 12, 34, 10, '#0B7A5E'], [98, 12, 16, 12, 34, 10, '#0B7A5E'], [14, 14, 16, 40, 30, 5, '#35A583'], [56, 14, 16, 40, 30, 5, '#35A583']] },
+tele: { name: 'Tele', max: 3, size: [80, 14], kinds: ['tv'], pref: ['living', 'hab'], boxes: [[0, 0, 0, 80, 14, 14, '#8A6A46'], [36, 4, 14, 8, 4, 4, K], [6, 5, 18, 68, 3, 36, K], [8, 8, 20, 64, 1, 32, '#2E90FA']] },
+aire: { name: 'Aire', max: 5, size: [46, 12], kinds: ['wall'], pref: ['hab', 'living', 'oficina'], lift: 46, boxes: [[0, 0, 0, 46, 11, 15, W], [4, 11, 2, 38, 1, 3, '#98A2B3'], [36, 11, 11, 4, 1, 2, '#12B76A']] },
+desk: { name: 'Escritorio', max: 1, size: [70, 68], kinds: ['desk'], pref: ['oficina', 'hab', 'living'], boxes: [[0, 0, 0, 4, 36, 26, '#8A6A46'], [66, 0, 0, 4, 36, 26, '#8A6A46'], [0, 0, 26, 70, 36, 4, '#C39A6B'], [31, 6, 30, 8, 5, 6, K], [15, 7, 36, 40, 3, 24, K], [17, 9, 38, 36, 1, 20, '#53B1FD'], [32, 52, 0, 6, 6, 14, '#667085'], [24, 44, 14, 22, 22, 4, '#F79009'], [24, 64, 18, 22, 3, 20, '#F79009']] },
+roomie: sc({ name: 'Roomie', max: 2, size: [18, 12], kinds: ['small'], pref: ['living', 'hab'], boxes: [[1, 2, 0, 6, 6, 20, '#344054'], [11, 2, 0, 6, 6, 20, '#344054'], [-1, 0, 20, 20, 10, 20, '#F79009'], [-4, 3, 22, 3, 5, 16, '#F79009'], [18, 3, 22, 3, 5, 16, '#F79009'], [4, 1, 40, 10, 9, 10, '#F3C9A0'], [4, 1, 50, 10, 9, 3, '#3B2A1A']] }, 1.5),
+nene: sc({ name: 'Nene', max: 3, size: [14, 10], kinds: ['small'], pref: ['patio', 'living', 'hab'], boxes: [[1, 2, 0, 5, 5, 13, '#1D2939'], [8, 2, 0, 5, 5, 13, '#1D2939'], [0, 1, 13, 14, 8, 14, '#2E90FA'], [-3, 3, 15, 3, 4, 11, '#2E90FA'], [14, 3, 15, 3, 4, 11, '#2E90FA'], [3, 1, 27, 8, 8, 8, '#F3C9A0'], [3, 1, 35, 8, 8, 3, '#3B2A1A'], [3, 1, 30, 8, 2, 5, '#3B2A1A']] }, 1.4),
+nena: sc({ name: 'Nena', max: 3, size: [14, 10], kinds: ['small'], pref: ['patio', 'living', 'hab'], boxes: [[2, 3, 0, 4, 4, 10, '#F3C9A0'], [8, 3, 0, 4, 4, 10, '#F3C9A0'], [-1, 0, 8, 16, 10, 8, '#F04438'], [1, 1, 16, 12, 8, 11, '#F04438'], [-2, 3, 17, 3, 4, 9, '#F3C9A0'], [13, 3, 17, 3, 4, 9, '#F3C9A0'], [3, 1, 27, 8, 8, 8, '#F3C9A0'], [3, 1, 35, 8, 8, 3, '#7A3E12'], [-1, 3, 31, 4, 4, 5, '#7A3E12'], [11, 3, 31, 4, 4, 5, '#7A3E12'], [3, 8, 23, 8, 2, 12, '#7A3E12']] }, 1.4),
+auto: { name: 'Auto', max: 3, size: [64, 120], kinds: ['car'], pref: ['cochera'], need: 'cochera', perRoom: true, boxes: [[-2, 16, 0, 6, 22, 14, K], [56, 16, 0, 6, 22, 14, K], [-2, 84, 0, 6, 22, 14, K], [56, 84, 0, 6, 22, 14, K], [0, 0, 7, 60, 120, 17, '#E5484D'], [5, 30, 24, 50, 58, 15, '#C7D7FE'], [5, 30, 39, 50, 58, 2, '#E5484D'], [8, 118, 12, 10, 3, 6, '#FDE68A'], [42, 118, 12, 10, 3, 6, '#FDE68A']] },
+bici: { name: 'Bici', max: 2, size: [10, 62], kinds: ['bike'], pref: ['cochera', 'balcon', 'patio', 'lavadero'], boxes: bike() },
+planta: { name: 'Plantas', max: 3, size: [24, 24], kinds: ['corner', 'small'], pref: ['balcon', 'patio', 'living'], boxes: [[5, 5, 0, 14, 14, 12, '#C8553D'], [3, 3, 12, 18, 18, 10, '#12B76A'], [6, 6, 22, 12, 12, 10, '#32D583'], [9, 9, 32, 6, 6, 6, '#12B76A']] },
+parrilla: { name: 'Parrilla', max: 1, size: [60, 30], kinds: ['grill'], pref: ['patio', 'balcon'], need: 'patio', boxes: [[0, 0, 0, 60, 30, 26, '#C8553D'], [2, 2, 26, 56, 26, 3, K], [10, 8, 29, 14, 12, 2, '#F79009'], [36, 0, 29, 18, 10, 32, '#C8553D']] },
+pileta: { name: 'Pileta', max: 1, size: [130, 70], kinds: ['pool'], pref: ['patio'], need: 'patio', boxes: [[8, 8, 0, 114, 54, 5, '#53B1FD'], [0, 0, 0, 130, 8, 9, W], [0, 62, 0, 130, 8, 9, W], [0, 8, 0, 8, 54, 9, W], [122, 8, 0, 8, 54, 9, W]] }
+};
+}
+slab(r, def) {
+var b = [[0, 0, 0, r.w, r.d, 6, def.c]];
+if (def.wall !== false) {
+var wc = '#E4E7EC';
+b.push([0, 0, 6, r.w, 5, 20, wc]);
+b.push([0, 5, 6, 5, r.d - 5, 20, wc]);
+}
+return b;
+}
+renderVals() {
+var st = this.state || {}, R = this.rooms(), I = this.items();
+var rent = st.mode !== 'buy';
+var acts = st.acts || [];
+var accent = rent ? '#1F4FE0' : '#0B7A5E';
+var P = (x, y) => [(x - y) * 0.7071, (x + y) * 0.3536];
+
+var rooms = [], items = [];
+acts.forEach((a, i) => {
+var kind = a.split(':')[0], key = a.split(':')[1];
+if (kind === 'r') rooms.push({ key: key, i: i, n: 0 });
+else items.push({ key: key, i: i });
+});
+var OUT = { patio: 1, balcon: 1, cochera: 1 };
+var inside = rooms.filter((r) => !OUT[r.key]), outside = rooms.filter((r) => OUT[r.key]);
+var x = 0, y = 0, rowH = 0, MAXW = 440, houseW = 0, houseH = 0;
+inside.forEach((r) => {
+var d = R[r.key]; r.w = d.w; r.d = d.d;
+if (x > 0 && x + r.w > MAXW) { x = 0; y += rowH; rowH = 0; }
+r.x = x; r.y = y; x += r.w; rowH = Math.max(rowH, r.d);
+houseW = Math.max(houseW, x); houseH = Math.max(houseH, y + rowH);
+});
+var GAP = 46, cx0 = houseW ? houseW + GAP : 0, by = houseH ? houseH + GAP : 0;
+outside.forEach((r) => {
+var d = R[r.key]; r.w = d.w; r.d = d.d;
+if (r.key === 'cochera') { r.x = cx0; r.y = 0; cx0 += r.w + 18; }
+});
+var bx = 0;
+outside.forEach((r) => {
+if (r.key === 'balcon') { r.x = bx; r.y = by; bx += r.w + GAP; }
+});
+outside.forEach((r) => {
+if (r.key === 'patio') { r.x = bx; r.y = by; bx += r.w + GAP; }
+});
+var last = acts.length - 1;
+var objs = [], slabs = [], labels = [];
+rooms.forEach((r) => {
+var d = R[r.key], p = P(r.x, r.y), anim = r.i === last ? 'drop' : '';
+slabs.push({ x: p[0], y: p[1], anim: anim, faces: this.faces(this.slab(r, d), 0, 0, 0) });
+if (d.base.length) objs.push({ depth: r.x + r.y + 1, x: p[0], y: p[1], anim: anim, faces: this.faces(d.base, 0, 0, 6) });
+var lp = P(r.x + r.w, r.y + r.d);
+labels.push({ x: lp[0], y: lp[1] + 18, t: d.name });
+});
+var SPOTS = {
+hab: { wall: [[0.34, 0]], tv: [[0.36, 0.95, 2]], desk: [[0.8, 0.7, 1]], corner: [[0.9, 0.1]], small: [[0.84, 0.5], [0.66, 0.9], [0.9, 0.86], [0.66, 0.62]] },
+living: { wall: [[0.82, 0]], tv: [[0.45, 0.06, 0]], sofa: [[0.45, 0.2, 0]], sofaTv: [[0.45, 0.82, 2]], desk: [[0.86, 0.32, 1]], corner: [[0.05, 0.07], [0.95, 0.93]], small: [[0.9, 0.52], [0.1, 0.55], [0.66, 0.5], [0.3, 0.52], [0.92, 0.8]] },
+oficina: { wall: [[0.8, 0]], desk: [[0.58, 0.6, 0]], tv: [[0.58, 0.95, 2]], corner: [[0.92, 0.12]], small: [[0.16, 0.72], [0.88, 0.9]] },
+cocina: { corner: [[0.06, 0.9]], small: [[0.4, 0.72], [0.18, 0.78], [0.65, 0.8]] },
+bano: { small: [[0.3, 0.72]] },
+lavadero: { bike: [[0.8, 0.5, 0]], small: [[0.75, 0.82]] },
+patio: { pool: [[0.45, 0.56, 0]], grill: [[0.13, 0.14, 0]], bike: [[0.03, 0.56, 0]], corner: [[0.97, 0.95], [0.36, 0.06], [0.76, 0.95]], small: [[0.84, 0.62], [0.15, 0.86], [0.55, 0.92], [0.93, 0.36], [0.76, 0.8], [0.3, 0.9]] },
+balcon: { corner: [[0.08, 0.45], [0.94, 0.45], [0.52, 0.45]], grill: [[0.3, 0.42, 0]], bike: [[0.72, 0.5, 1]], small: [[0.55, 0.42]] },
+cochera: { car: [[0.5, 0.4, 0]], bike: [[0.5, 0.88, 1]], corner: [[0.9, 0.95]], small: [[0.86, 0.82]] }
+};
+var rot = (d, r) => {
+var W0 = d.size[0], D0 = d.size[1];
+if (!r) return { boxes: d.boxes, size: d.size };
+if (r === 2) return { size: d.size, boxes: d.boxes.map((b) => [W0 - b[0] - b[3], D0 - b[1] - b[4], b[2], b[3], b[4], b[5], b[6]]) };
+return { size: [D0, W0], boxes: d.boxes.map((b) => [D0 - b[1] - b[4], b[0], b[2], b[4], b[3], b[5], b[6]]) };
+};
+rooms.forEach((r) => { r.used = {}; });
+var PRI = { pool: 0, car: 1, tv: 2, wall: 3, sofa: 4, desk: 5, grill: 6, bike: 7, corner: 8, small: 9 };
+var order = items.slice().sort((a, b) => PRI[I[a.key].kinds[0]] - PRI[I[b.key].kinds[0]] || a.i - b.i);
+var take = (room, kind) => {
+var sp = SPOTS[room.key] || {}, k = kind;
+if (kind === 'sofa' && (room.used.tv || 0) > 0 && sp.sofaTv) k = 'sofaTv';
+var list = sp[k];
+if (!list) return null;
+var n = room.used[kind] || 0;
+if (n >= list.length) return null;
+room.used[kind] = n + 1;
+return list[n];
+};
+order.forEach((it) => {
+var d = I[it.key], room = null, spot = null;
+for (var j = 0; j < d.pref.length && !spot; j++) {
+var cands = rooms.filter((r) => r.key === d.pref[j]);
+for (var q = 0; q < cands.length && !spot; q++) {
+for (var m = 0; m < d.kinds.length && !spot; m++) { var s0 = take(cands[q], d.kinds[m]); if (s0) { spot = s0; room = cands[q]; } }
+}
+}
+if (!spot) {
+for (var q2 = 0; q2 < rooms.length && !spot; q2++) { var s1 = take(rooms[q2], 'small'); if (s1) { spot = s1; room = rooms[q2]; } }
+}
+if (!spot) return;
+var g = rot(d, spot[2] || 0);
+var cx = room.x + room.w * spot[0], cy = spot[1] === 0 ? room.y + 12 : room.y + room.d * spot[1];
+var p = P(cx, cy);
+objs.push({ depth: cx + cy, x: p[0], y: p[1], anim: it.i === last ? 'drop' : '', faces: this.faces(g.boxes, -g.size[0] / 2, -g.size[1] / 2, 6 + (d.lift || 0)) });
+});
+objs.sort((a, b) => a.depth - b.depth);
+
+var sw = st.sw || 820, sh = 620;
+var minX = 0, maxX = 1, minY = 0, maxY = 1;
+if (rooms.length) {
+minX = 1e9; maxX = -1e9; minY = 1e9; maxY = -1e9;
+rooms.forEach((r) => {
+[[r.x, r.y], [r.x + r.w, r.y], [r.x, r.y + r.d], [r.x + r.w, r.y + r.d]].forEach((c) => {
+var q = P(c[0], c[1]);
+minX = Math.min(minX, q[0]); maxX = Math.max(maxX, q[0]); minY = Math.min(minY, q[1]); maxY = Math.max(maxY, q[1]);
+});
+});
+minY -= 70;
+}
+var bw = Math.max(1, maxX - minX), bh = Math.max(1, maxY - minY);
+var k = Math.min(1.5, (sw - 80) / bw, (sh - 110) / bh);
+var ox = sw / 2 - k * (minX + maxX) / 2, oy = sh / 2 - k * (minY + maxY) / 2;
+
+var cnt = {};
+acts.forEach((a) => { cnt[a] = (cnt[a] || 0) + 1; });
+var c = (a) => cnt[a] || 0;
+var remove = (kind, key) => {
+var tag = kind + ':' + key, idx = acts.lastIndexOf(tag);
+if (idx < 0) return;
+var next = acts.slice(0, idx).concat(acts.slice(idx + 1));
+this.setState({ acts: next, over: false, hint: null });
+};
+var add = (kind, key, fromClick) => {
+var max = kind === 'r' ? R[key].max : I[key].max, name = kind === 'r' ? R[key].name : I[key].name;
+var next = acts.slice();
+if (c(kind + ':' + key) >= max) {
+if (fromClick && max === 1) { remove(kind, key); return; }
+this.setState({ over: false, hint: 'Llegaste al máximo de ' + name.toLowerCase() + '. Tocá el botón rojo para sacar.' });
+return;
+}
+if (kind === 'i') {
+var d = I[key];
+var hasPref = d.pref.some((pk) => c('r:' + pk) > 0);
+if (d.perRoom && c('r:' + d.need) <= c('i:' + key)) next.push('r:' + d.need);
+else if (d.need && !hasPref) next.push('r:' + d.need);
+else if (!rooms.length) next.push('r:living');
+}
+next.push(kind + ':' + key);
+this.setState({ acts: next, over: false, hint: null });
+};
+var thumb = (boxes, size, px) => {
+var s = Math.min(1.05, px / ((size[0] + size[1]) * 0.72));
+return { tf: 'scale(' + s.toFixed(3) + ') rotateX(60deg) rotateZ(45deg)', faces: this.faces(boxes, -size[0] / 2, -size[1] / 2, 0) };
+};
+var tile = (kind, key, def, boxes, size) => {
+var n = c(kind + ':' + key), t = thumb(boxes, size, 58);
+return {
+name: def.name, aria: 'Agregar ' + def.name, ariaRemove: 'Sacar ' + def.name, tf: t.tf, faces: t.faces, count: n, has: n > 0,
+op: n >= def.max && def.max > 1 ? 0.55 : 1, line: n > 0 ? '#101828' : '#E4E7EC',
+add: () => add(kind, key, true),
+remove: () => remove(kind, key),
+start: (e) => { this.dragKey = [kind, key]; try { e.dataTransfer.setData('text/plain', key); e.dataTransfer.effectAllowed = 'copy'; } catch (err) {} }
+};
+};
+var roomTiles = Object.keys(R).map((key) => {
+var d = R[key], b = this.slab({ w: d.w, d: d.d }, d).concat(d.base.map((q) => [q[0], q[1], q[2] + 6, q[3], q[4], q[5], q[6]]));
+return tile('r', key, d, b, [d.w, d.d]);
+});
+var itemTiles = Object.keys(I).map((key) => tile('i', key, I[key], I[key].boxes, I[key].size));
+
+var house = c('r:patio') || c('r:cochera') || c('i:pileta');
+var parts = [];
+var nh = c('r:hab'), nb = c('r:bano'), nc = c('r:cochera');
+if (nh) parts.push(nh + (nh > 1 ? ' habitaciones' : ' habitación'));
+if (nb) parts.push(nb + (nb > 1 ? ' baños' : ' baño'));
+if (c('r:oficina')) parts.push('un cuarto para oficina');
+if (c('r:balcon')) parts.push('balcón');
+if (c('r:patio')) parts.push('patio');
+if (nc) parts.push(nc > 1 ? 'cochera para ' + Math.max(nc, c('i:auto')) + ' autos' : 'cochera');
+if (c('r:lavadero')) parts.push('lavadero');
+var extra = [];
+var pets = [];
+if (c('i:perro')) pets.push(c('i:perro') > 1 ? 'perros' : 'perro');
+if (c('i:gato')) pets.push(c('i:gato') > 1 ? 'gatos' : 'gato');
+if (pets.length) extra.push('que acepte ' + pets.join(' y '));
+if (c('i:sofa')) extra.push(house ? 'amoblada' : 'amoblado');
+if (c('i:aire')) extra.push('con aire acondicionado');
+if (c('i:desk') && !c('r:oficina')) extra.push('con lugar para home office');
+if (c('i:parrilla')) extra.push('con parrilla');
+if (c('i:pileta')) extra.push('con pileta');
+if (c('i:bici')) extra.push('con lugar para la bici');
+if (c('i:planta') && !c('r:patio') && !c('r:balcon')) extra.push('con buena luz para plantas');
+if (c('i:roomie')) extra.push('para compartir con ' + (c('i:roomie') > 1 ? 'mis roomies' : 'mi roomie'));
+var kids = c('i:nene') + c('i:nena');
+if (kids) {
+var who = kids > 1 ? 'mis ' + kids + ' hijos' : (c('i:nene') ? 'mi hijo' : 'mi hija');
+extra.push('cerca de buenos colegios privados para ' + who);
+}
+var join = (arr) => arr.length < 2 ? arr.join('') : arr.slice(0, -1).join(', ') + ' y ' + arr[arr.length - 1];
+var phrase = 'Tu lugar empieza acá. Sumá el primer ambiente.';
+if (acts.length) {
+var city = st.city && st.city !== 'Todo Paraguay' ? ' en ' + st.city : '';
+phrase = 'Busco ' + (house ? 'una casa' : 'un departamento') + city + ' para ' + (rent ? 'alquilar' : 'comprar');
+if (parts.length) phrase += ' con ' + join(parts);
+if (extra.length) phrase += (parts.length ? ', ' : ', ') + extra.join(', ');
+phrase += '.';
+}
+
+return {
+accent: accent, phrase: phrase, empty: acts.length === 0,
+slabs: slabs, objs: objs, labels: labels, k: k, ox: ox, oy: oy,
+roomTiles: roomTiles, itemTiles: itemTiles,
+stageLine: st.over ? accent : '#EAECF0',
+hint: !!st.hint, hintText: st.hint || '',
+over: (e) => { e.preventDefault(); try { e.dataTransfer.dropEffect = 'copy'; } catch (err) {} if (!st.over) this.setState({ over: true }); },
+leave: () => { if (st.over) this.setState({ over: false }); },
+drop: (e) => { e.preventDefault(); var dk = this.dragKey; this.dragKey = null; if (dk) add(dk[0], dk[1]); else this.setState({ over: false }); },
+dragEnd: () => { if (this.state && this.state.over) this.setState({ over: false }); },
+rentBg: rent ? '#101828' : 'transparent', rentFg: rent ? '#FFFFFF' : '#101828',
+buyBg: rent ? 'transparent' : '#101828', buyFg: rent ? '#101828' : '#FFFFFF',
+setRent: () => this.setState({ mode: 'rent' }),
+setBuy: () => this.setState({ mode: 'buy' }),
+setCity: (e) => this.setState({ city: e.target.value }),
+undo: () => this.setState({ acts: acts.slice(0, -1), hint: null }),
+reset: () => this.setState({ acts: [], hint: null }),
+search: () => { if (!acts.length) { this.setState({ hint: 'Sumá al menos un ambiente para buscar.' }); return; } location.href = './#/buscar?q=' + encodeURIComponent(phrase) + '&op=' + (rent ? 'alquiler' : 'venta') + (st.city && st.city !== 'Todo Paraguay' ? '&ciudad=' + encodeURIComponent(st.city) : ''); }
+};
+}
+}
+DC.montar(Component);
+</script>
+</body>
+</html>

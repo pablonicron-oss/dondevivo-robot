@@ -2,7 +2,7 @@ name: Robot DóndeVivo
 
 on:
   schedule:
-    - cron: "0 6 * * *"     # todos los días a las 03:00 de Paraguay (06:00 UTC)
+    - cron: "37 5 * * *"    # todos los días a las 02:37 de Paraguay (fuera de la hora pico de GitHub)
   workflow_dispatch:         # botón para correrlo a mano
 
 jobs:
@@ -23,3 +23,4 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}   # solo para pedirle a GitHub que actualice la web

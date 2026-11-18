@@ -13,6 +13,19 @@
       "Terreno con salida al lago en Areguá", "Casa en Encarnación cerca de la costanera"]
   };
   var estado = { op: "alquiler" };
+  /* ciudades del país, para entender la búsqueda aunque todavía no tengamos avisos ahí */
+  var PY = ["Asunción", "San Lorenzo", "Luque", "Lambaré", "Fernando de la Mora", "Mariano Roque Alonso", "Capiatá", "Ñemby", "Limpio",
+    "Villa Elisa", "San Antonio", "Itauguá", "Areguá", "Ypané", "Guarambaré", "Itá", "J. Augusto Saldívar", "Villeta", "Nueva Italia",
+    "Ypacaraí", "San Bernardino", "Altos", "Caacupé", "Tobatí", "Atyrá", "Emboscada", "Piribebuy", "Eusebio Ayala", "Arroyos y Esteros",
+    "Ciudad del Este", "Hernandarias", "Minga Guazú", "Presidente Franco", "Santa Rita", "Naranjal", "Juan E. O'Leary", "Itakyry",
+    "Encarnación", "Cambyretá", "Hohenau", "Obligado", "Bella Vista", "Capitán Miranda", "Coronel Bogado", "San Pedro del Paraná", "Fram",
+    "Coronel Oviedo", "Caaguazú", "Juan Manuel Frutos", "Repatriación", "J. Eulogio Estigarribia", "Villarrica", "Paraguarí", "Carapeguá",
+    "Yaguarón", "Pirayú", "Sapucai", "Ybycuí", "Quiindy", "Pilar", "San Juan Bautista", "San Ignacio", "Ayolas", "Concepción", "Horqueta",
+    "Pedro Juan Caballero", "Capitán Bado", "Salto del Guairá", "Curuguaty", "Katueté", "La Paloma", "San Estanislao", "San Pedro de Ycuamandiyú",
+    "Santa Rosa del Aguaray", "Caazapá", "Yuty", "San Juan Nepomuceno", "Filadelfia", "Loma Plata", "Villa Hayes", "Benjamín Aceval",
+    "Nanawa", "Puerto Casado", "Fuerte Olimpo", "Mariscal Estigarribia", "Natalicio Talavera", "Iturbe", "Independencia", "Colonia Independencia"];
+  function palabra(t, n) { var x = norm(n); return x.length > 2 && new RegExp("(^|[^a-z0-9])" + x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-z0-9]|$)").test(t); }
+  function masLargo(t, lista) { var m = ""; lista.forEach(function (n) { if (n.length > m.length && palabra(t, n)) m = n; }); return m; }
 
   /* ---------- utilidades ---------- */
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -22,6 +35,25 @@
     if (!a.p) return "Consultar precio";
     var n = Math.round(a.p).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     return (a.m === "USD" ? "USD " : "₲ ") + n;
+  }
+  function limpio(d) {
+    return String(d || "").replace(/<br\s*\/?>|<\/p>|<\/div>|<\/li>/gi, "\n").replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/[ \t]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  function expensas(a) {
+    var m = norm(a.d).match(/expensas?[^0-9]{0,30}?(usd|us\$|u\$s|\$)?\s*([0-9][0-9.,]{2,})/);
+    if (!m) return null;
+    var n = parseInt(m[2].replace(/[.,]/g, ""), 10);
+    if (!n || n < 10) return null;
+    var usd = !!m[1] || (n < 5000 && a.m === "USD");
+    if (!usd && n < 10000) return null;
+    return (usd ? "USD " : "₲ ") + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+  function extras(a) {
+    var t = norm(a.t + " " + a.d), o = [];
+    if (/negociable|conversable|a convenir|a tratar/.test(t)) o.push("Precio negociable");
+    if (/amoblad|amueblad/.test(t) && !/(sin|no) (amoblar|amoblad|amueblad)/.test(t)) o.push("Amoblado");
+    return o;
   }
   function porMes(a) { return a.op === "alquiler" && a.p ? " <small>por mes</small>" : ""; }
   function lugar(a) { return a.b && a.b !== a.c ? esc(a.b) + ", " + esc(a.c || "") : esc(a.c || "Paraguay") + ' <span title="El anunciante no menciona el barrio">· barrio sin especificar</span>'; }
@@ -47,8 +79,10 @@
     var d = t.match(/(\d)\s*(dormitorio|habitacion|hab|cuarto|pieza)/) || (/\b(un|1) dormitorio\b/.test(t) ? [0, "1"] : null);
     if (d) f.dor = d[1];
     if (/monoambiente/.test(t)) f.dor = "";
-    ciudades().forEach(function (c) { if (t.indexOf(norm(c)) >= 0) f.ciudad = c; });
-    barrios().forEach(function (b) { if (norm(b).length > 3 && t.indexOf(norm(b)) >= 0) { f.barrio = b; var a = DATA.find(function (x) { return x.b === b; }); if (a) f.ciudad = a.c; } });
+    var enDatos = ciudades(), c = masLargo(t, enDatos.concat(PY));
+    if (c) { var igual = enDatos.find(function (x) { return norm(x) === norm(c); }); f.ciudad = igual || c; }
+    var b = masLargo(t, barrios(f.ciudad).filter(function (x) { return norm(x).length > 3 && norm(x) !== norm(f.ciudad || ""); }));
+    if (b) { f.barrio = b; var a = DATA.find(function (x) { return x.b === b && (!f.ciudad || x.c === f.ciudad); }); if (a) f.ciudad = a.c; }
     return f;
   }
 
@@ -77,9 +111,62 @@
     if (a.ms === "no") tags.push('<span class="no">Sin mascotas</span>');
     if (a.eo === "en_pozo") tags.push("<span>En pozo</span>");
     if (a.eo === "a_estrenar") tags.push("<span>A estrenar</span>");
+    extras(a).forEach(function (x) { tags.push("<span>" + x + "</span>"); });
+    var ex = a.op === "alquiler" ? expensas(a) : null;
     return '<a class="tarjeta" href="#/aviso/' + encodeURIComponent(a.id) + '">' +
       '<div class="foto" style="background-image:url(\'' + esc(seguro(a.ph[0])) + '\')"><span class="tag">' + tipoTxt(a.tp) + '</span><span class="src">Aviso de ' + esc(FUENTES[a.f] || a.f) + "</span></div>" +
-      '<div class="info"><div class="precio">' + precio(a) + porMes(a) + '</div><div class="tit">' + esc(a.t) + '</div><div class="lugar">' + lugar(a) + '</div><div class="datos">' + tags.join("") + "</div></div></a>";
+      '<div class="info"><div class="precio">' + precio(a) + porMes(a) + '</div>' + (ex ? '<div class="expensas">+ ' + esc(ex) + ' de expensas</div>' : "") + '<div class="tit">' + esc(a.t) + '</div><div class="lugar">' + lugar(a) + '</div><div class="datos">' + tags.join("") + "</div></div></a>";
+  }
+
+  /* ---------- contador ----------
+     Cada aviso nuevo se suma al contador en algún momento de las 24 horas siguientes a que el robot
+     lo encontró. Así sube de a uno, parejo durante el día, y nunca muestra más de lo que hay. */
+  var REVELA = null, tic = null;
+  function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; }
+  function preparar() {
+    if (REVELA) return;
+    REVELA = DATA.map(function (a) { var p = Date.parse((a.n || "").length > 10 ? a.n + "Z" : "") || 0; return p ? p + hash(a.id) * 864e5 : 0; }).sort(function (x, y) { return x - y; });
+  }
+  function hasta(t) { var lo = 0, hi = REVELA.length; while (lo < hi) { var m = (lo + hi) >> 1; if (REVELA[m] <= t) lo = m + 1; else hi = m; } return lo; }
+  function medianoche() { var d = new Date(Date.now() - 3 * 36e5); d.setUTCHours(0, 0, 0, 0); return d.getTime() + 3 * 36e5; }
+  function digitos(n) {
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".").split("").map(function (c) {
+      return c === "." ? '<span class="pt">.</span>' : '<span class="dg"><i style="transform:translateY(-' + (+c * 10) + '%)">0 1 2 3 4 5 6 7 8 9</i></span>';
+    }).join("");
+  }
+  function pintarNumero(el, n) {
+    if (!el) return;
+    if (el.dataset.n === String(n)) return;
+    var antes = el.dataset.n;
+    if (antes && String(antes).length === String(n).length) {
+      var d = String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".").split("").filter(function (c) { return c !== "."; });
+      el.querySelectorAll(".dg i").forEach(function (i, k) { i.style.transform = "translateY(-" + (+d[k] * 10) + "%)"; });
+    } else el.innerHTML = digitos(n);
+    el.dataset.n = n;
+  }
+  function contador() {
+    var el = document.getElementById("contador");
+    if (!el || !DATA.length) return;
+    preparar();
+    el.innerHTML = '<div class="vivo"><span class="punto"></span>En vivo</div>' +
+      '<div class="dato"><div class="num hoy">+<span id="cHoy"></span></div><div class="et">inmuebles sumados hoy</div></div>' +
+      '<div class="dato"><div class="num"><span id="cTot"></span></div><div class="et">inmuebles para comparar en DóndeVivo</div></div>' +
+      '<div class="burbujas" id="cBur"></div>';
+    var ultimo = null;
+    function paso() {
+      if (!document.getElementById("contador")) { clearInterval(tic); tic = null; return; }
+      var ahora = Date.now(), tot = hasta(ahora), hoy = tot - hasta(medianoche());
+      pintarNumero(document.getElementById("cHoy"), hoy);
+      pintarNumero(document.getElementById("cTot"), tot);
+      if (ultimo !== null && tot > ultimo) {
+        var b = document.createElement("span"); b.className = "bur"; b.textContent = "+" + (tot - ultimo);
+        document.getElementById("cBur").appendChild(b); setTimeout(function () { b.remove(); }, 2200);
+      }
+      ultimo = tot;
+    }
+    paso();
+    if (tic) clearInterval(tic);
+    tic = setInterval(paso, 3000);
   }
 
   /* ---------- pantallas ---------- */
@@ -111,6 +198,57 @@
     [188, 8, 11, 60, 120, 17, "#E5484D"], [193, 38, 28, 50, 58, 15, "#C7D7FE"], [193, 38, 43, 50, 58, 2, "#E5484D"], [196, 126, 16, 10, 3, 6, "#FDE68A"], [230, 126, 16, 10, 3, 6, "#FDE68A"]
   ], -127, -68);
 
+  /* ---------- contador ----------
+     Cada aviso nuevo se suma al contador en algún momento de las 24 horas siguientes a que el robot
+     lo encontró. Así sube de a uno, parejo durante el día, y nunca muestra más de lo que hay. */
+  var REVELA = null, tic = null;
+  function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; }
+  function preparar() {
+    if (REVELA) return;
+    REVELA = DATA.map(function (a) { var p = Date.parse((a.n || "").length > 10 ? a.n + "Z" : "") || 0; return p ? p + hash(a.id) * 864e5 : 0; }).sort(function (x, y) { return x - y; });
+  }
+  function hasta(t) { var lo = 0, hi = REVELA.length; while (lo < hi) { var m = (lo + hi) >> 1; if (REVELA[m] <= t) lo = m + 1; else hi = m; } return lo; }
+  function medianoche() { var d = new Date(Date.now() - 3 * 36e5); d.setUTCHours(0, 0, 0, 0); return d.getTime() + 3 * 36e5; }
+  function digitos(n) {
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".").split("").map(function (c) {
+      return c === "." ? '<span class="pt">.</span>' : '<span class="dg"><i style="transform:translateY(-' + (+c * 10) + '%)">0 1 2 3 4 5 6 7 8 9</i></span>';
+    }).join("");
+  }
+  function pintarNumero(el, n) {
+    if (!el) return;
+    if (el.dataset.n === String(n)) return;
+    var antes = el.dataset.n;
+    if (antes && String(antes).length === String(n).length) {
+      var d = String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".").split("").filter(function (c) { return c !== "."; });
+      el.querySelectorAll(".dg i").forEach(function (i, k) { i.style.transform = "translateY(-" + (+d[k] * 10) + "%)"; });
+    } else el.innerHTML = digitos(n);
+    el.dataset.n = n;
+  }
+  function contador() {
+    var el = document.getElementById("contador");
+    if (!el || !DATA.length) return;
+    preparar();
+    el.innerHTML = '<div class="vivo"><span class="punto"></span>En vivo</div>' +
+      '<div class="dato"><div class="num hoy">+<span id="cHoy"></span></div><div class="et">inmuebles sumados hoy</div></div>' +
+      '<div class="dato"><div class="num"><span id="cTot"></span></div><div class="et">inmuebles para comparar en DóndeVivo</div></div>' +
+      '<div class="burbujas" id="cBur"></div>';
+    var ultimo = null;
+    function paso() {
+      if (!document.getElementById("contador")) { clearInterval(tic); tic = null; return; }
+      var ahora = Date.now(), tot = hasta(ahora), hoy = tot - hasta(medianoche());
+      pintarNumero(document.getElementById("cHoy"), hoy);
+      pintarNumero(document.getElementById("cTot"), tot);
+      if (ultimo !== null && tot > ultimo) {
+        var b = document.createElement("span"); b.className = "bur"; b.textContent = "+" + (tot - ultimo);
+        document.getElementById("cBur").appendChild(b); setTimeout(function () { b.remove(); }, 2200);
+      }
+      ultimo = tot;
+    }
+    paso();
+    if (tic) clearInterval(tic);
+    tic = setInterval(paso, 3000);
+  }
+
   /* ---------- pantallas ---------- */
   function inicio() {
     var cs = ciudades(), ej = EJ[estado.op], rent = estado.op === "alquiler";
@@ -128,13 +266,14 @@
       '<div class="lado"><div style="display:flex;flex-direction:column;gap:8px"><div class="mini">O buscá de otra forma</div><div class="grande">Armá tu lugar desde cero</div><div style="font-size:15px;line-height:1.5;color:#D0D5DD">Personalizá tu lugar con habitaciones, tu perro, el sofá o el auto. Te buscamos lo más parecido.</div></div>' +
       '<div class="float" aria-hidden="true"><div class="iso">' + PREVIEW + '</div></div>' +
       '<a class="cta" href="armar.html">Empezar a armar</a></div></section>' +
+      '<section class="contador" id="contador" aria-live="off"></section>' +
       '<section class="sec"><h2>Lo que otras plataformas esconden, acá se ve</h2><div class="grid4">' +
       '<div class="caja"><h3>El costo real de mudarte</h3><p>El alquiler es solo una parte. Te mostramos el total para entrar, con garantía y comisión incluidas cuando el aviso las menciona.</p></div>' +
-      '<div class="caja"><h3>Mascotas, sí o no</h3><p>Lo que está permitido y lo que no, bien arriba y sin letra chica.</p></div>' +
+      '<div class="caja"><h3>Mascotas, sí o no</h3><p>Si acepta mascotas, si el precio es negociable, si hay expensas aparte o si está amoblado. Todo bien arriba y sin letra chica.</p></div>' +
       '<div class="caja"><h3>Todas las páginas juntas</h3><p>InfoCasas, RE/MAX, BuscoDepto y más, en un solo lugar. Cada aviso te lleva a su página original.</p></div>' +
-      '<div class="caja"><h3>Fotos de verdad</h3><p>Solo mostramos avisos con varias fotos reales, sin marcos ni teléfonos encima.</p></div>' +
       "</div></section>" +
       '<section class="banda"><div>¿Tenés un inmueble? Publicá sin costo.</div><a href="publicar.html">Agregar mi inmueble</a></section>';
+    contador();
     $app.querySelectorAll("[data-op]").forEach(function (b) { b.onclick = function () { setOp(b.dataset.op); inicio(); }; });
     $app.querySelectorAll(".rot button").forEach(function (b) { b.onclick = function () { document.getElementById("qB").value = b.textContent; document.getElementById("fb").requestSubmit(); }; });
     document.getElementById("fb").onsubmit = function (e) {
@@ -159,6 +298,8 @@
     if (f.barrio && f.barrio === f.ciudad) delete f.barrio;
     setOp(f.op || "alquiler");
     var lista = filtrar(f), cs = ciudades(), bs = barrios(f.ciudad);
+    if (f.ciudad && cs.indexOf(f.ciudad) < 0) cs = [f.ciudad].concat(cs);
+    var sinCiudad = f.ciudad && !DATA.some(function (a) { return a.c === f.ciudad; });
     function opt(v, t, sel) { return '<option value="' + esc(v) + '"' + (String(sel || "") === String(v) ? " selected" : "") + ">" + esc(t) + "</option>"; }
     $app.innerHTML =
       '<div class="res"><form class="filtros" id="ff" aria-label="Filtros">' +
@@ -175,7 +316,8 @@
       '<button class="btn" type="submit">Aplicar</button></form>' +
       '<section><div class="cabeza"><h1>' + lista.length.toLocaleString("es-PY") + (f.op === "venta" ? " en venta" : " en alquiler") + (f.ciudad ? " en " + esc(f.ciudad) : "") + (f.barrio ? ", " + esc(f.barrio) : "") + '</h1><a class="volver" href="#/">← Nueva búsqueda</a></div>' +
       (lista.length ? '<div class="lista">' + lista.slice(0, mostrados).map(tarjeta).join("") + "</div>" + (lista.length > mostrados ? '<button class="mas" id="mas">Ver más</button>' : "")
-        : '<div class="vacio"><b>Todavía no tenemos avisos con esos filtros.</b><br>Probá sacar alguno. Sumamos avisos nuevos todos los días.</div>') +
+        : '<div class="vacio">' + (sinCiudad ? "<b>Todavía no tenemos avisos en " + esc(f.ciudad) + ".</b><br>Sumamos avisos nuevos todos los días, volvé a mirar pronto."
+          : "<b>Todavía no tenemos avisos con esos filtros.</b><br>Probá sacar alguno. Sumamos avisos nuevos todos los días.") + "</div>") +
       "</section></div>";
     var ff = document.getElementById("ff");
     function aplicar() { var o = { op: f.op }; new FormData(ff).forEach(function (v, k) { o[k] = v; }); if (o.ciudad !== f.ciudad) o.barrio = ""; mostrados = 24; location.hash = "#/buscar?" + q(o); }
@@ -189,24 +331,25 @@
     var a = DATA.find(function (x) { return x.id === id; });
     if (!a) { $app.innerHTML = '<div class="vacio"><b>Este aviso ya no está disponible.</b><br>Puede que se haya alquilado o vendido. <a href="#/">Volver a buscar</a></div>'; return; }
     setOp(a.op);
-    var fu = FUENTES[a.f] || a.f;
+    var fu = FUENTES[a.f] || a.f, ex = expensas(a);
     var costo = a.op === "alquiler"
       ? (a.g ? "<p>Garantía que pide el anunciante: <b>" + esc(a.g) + "</b>. Consultale si además cobra comisión.</p>"
         : "<p>Este anunciante no menciona costos de garantía ni comisión, conviene consultarle antes de visitar.</p>")
       : "<p>Consultale al anunciante si hay gastos de escritura o comisión aparte del precio.</p>";
+    if (ex) costo += "<p>Además del " + (a.op === "alquiler" ? "alquiler" : "precio") + ", el aviso menciona <b>" + esc(ex) + " de expensas</b>" + (a.op === "alquiler" ? " por mes." : ".") + "</p>";
     var masc = a.ms === "si" ? "<p><b>Sí, acepta mascotas</b> según el aviso.</p>" : a.ms === "no" ? "<p><b>No acepta mascotas</b> según el aviso.</p>" : "<p>El aviso no dice si acepta mascotas, conviene preguntar.</p>";
     var mapa = a.lat && a.lng ? '<iframe class="mapa" loading="lazy" title="Ubicación aproximada" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (a.lng - 0.012) + "," + (a.lat - 0.008) + "," + (a.lng + 0.012) + "," + (a.lat + 0.008) + "&layer=mapnik&marker=" + a.lat + "," + a.lng + '"></iframe>' : "<p>El anunciante no compartió la ubicación exacta.</p>";
     $app.innerHTML =
       '<a class="volver" href="javascript:history.back()">← Volver a los resultados</a><div class="ficha">' +
       '<div class="galeria"><div class="grande" id="gr" style="background-image:url(\'' + esc(seguro(a.ph[0])) + '\')"></div><div class="miniaturas">' +
       a.ph.map(function (u, i) { return '<button aria-label="Foto ' + (i + 1) + '" aria-current="' + (i === 0) + '" data-u="' + esc(seguro(u)) + '" style="background-image:url(\'' + esc(seguro(u)) + '\')"></button>'; }).join("") + "</div></div>" +
-      '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div><h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' +
-      '<div class="datos">' + [tipoTxt(a.tp), a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
+      '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas" + (a.op === "alquiler" ? " por mes, se pagan aparte" : "") + "</div>" : "") + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' +
+      '<div class="datos">' + [tipoTxt(a.tp), a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].concat(extras(a)).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
       '<a class="ir" href="' + esc(seguro(a.u)) + '" target="_blank" rel="noopener nofollow" id="ir">Escribir al anunciante <small>· en ' + esc(fu) + "</small></a>" +
       '<div class="bloque"><h2>Lo que cuesta entrar</h2>' + costo + "</div>" +
       '<div class="bloque"><h2>Mascotas</h2>' + masc + "</div>" +
       '<div class="bloque"><h2>Ubicación</h2>' + mapa + "</div>" +
-      (a.d ? '<div class="bloque"><h2>Lo que dice el aviso</h2><p class="desc">' + esc(a.d) + "</p></div>" : "") +
+      (a.d ? '<div class="bloque"><h2>Lo que dice el aviso</h2><p class="desc">' + esc(limpio(a.d)) + "</p></div>" : "") +
       '<div class="bloque"><p style="font-size:13px">Aviso de ' + esc(fu) + ". DóndeVivo lo encontró y lo revisa todos los días.</p></div></div></div>";
     $app.querySelectorAll(".miniaturas button").forEach(function (b) {
       b.onclick = function () { document.getElementById("gr").style.backgroundImage = "url('" + b.dataset.u + "')"; $app.querySelectorAll(".miniaturas button").forEach(function (x) { x.setAttribute("aria-current", x === b); }); };

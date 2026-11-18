@@ -8,13 +8,16 @@ on:
 jobs:
   robot:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 345
+    permissions:
+      actions: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - uses: liskin/gh-workflow-keepalive@v1   # evita que GitHub apague el horario tras 60 días sin cambios
       - run: python -m robot.main
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

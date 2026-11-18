@@ -24,13 +24,13 @@
     return (a.m === "USD" ? "USD " : "₲ ") + n;
   }
   function porMes(a) { return a.op === "alquiler" && a.p ? " <small>por mes</small>" : ""; }
-  function lugar(a) { return a.b ? esc(a.b) + ", " + esc(a.c || "") : esc(a.c || "Paraguay") + ' <span title="El anunciante no menciona el barrio">· barrio sin especificar</span>'; }
+  function lugar(a) { return a.b && a.b !== a.c ? esc(a.b) + ", " + esc(a.c || "") : esc(a.c || "Paraguay") + ' <span title="El anunciante no menciona el barrio">· barrio sin especificar</span>'; }
   function tipoTxt(t) { return { departamento: "Depto", casa: "Casa", duplex: "Dúplex", terreno: "Terreno" }[t] || "Inmueble"; }
   function q(params) { return Object.keys(params).filter(function (k) { return params[k] !== "" && params[k] != null; }).map(function (k) { return k + "=" + encodeURIComponent(params[k]); }).join("&"); }
   function leerQ(s) { var o = {}; (s || "").split("&").forEach(function (p) { if (!p) return; var i = p.indexOf("="); o[decodeURIComponent(p.slice(0, i))] = decodeURIComponent(p.slice(i + 1)); }); return o; }
   function setOp(op) { estado.op = op; document.body.classList.toggle("compra", op === "venta"); }
   function ciudades() { var m = {}; DATA.forEach(function (a) { if (a.c) m[a.c] = (m[a.c] || 0) + 1; }); return Object.keys(m).sort(function (x, y) { return m[y] - m[x]; }); }
-  function barrios(c) { var m = {}; DATA.forEach(function (a) { if (a.b && (!c || a.c === c)) m[a.b] = 1; }); return Object.keys(m).sort(); }
+  function barrios(c) { var m = {}; DATA.forEach(function (a) { if (a.b && a.b !== a.c && (!c || a.c === c)) m[a.b] = 1; }); return Object.keys(m).sort(); }
 
   /* ---------- lo que escribe la persona → filtros ---------- */
   function entender(texto, base) {
@@ -156,6 +156,7 @@
 
   var mostrados = 24;
   function buscar(f) {
+    if (f.barrio && f.barrio === f.ciudad) delete f.barrio;
     setOp(f.op || "alquiler");
     var lista = filtrar(f), cs = ciudades(), bs = barrios(f.ciudad);
     function opt(v, t, sel) { return '<option value="' + esc(v) + '"' + (String(sel || "") === String(v) ? " selected" : "") + ">" + esc(t) + "</option>"; }

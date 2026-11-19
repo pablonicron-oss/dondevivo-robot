@@ -160,14 +160,22 @@
     var el = document.getElementById("contador");
     if (!el || !DATA.length) return;
     preparar();
-    el.innerHTML = '<span class="num" id="cTot"></span> inmuebles en DóndeVivo';
-    function paso() {
-      if (!document.getElementById("contador")) { clearInterval(tic); tic = null; return; }
-      pintarNumero(document.getElementById("cTot"), hasta(Date.now()));
-    }
-    paso();
+    el.innerHTML = '<span class="cnum"><b>+</b><span class="num" id="cTot"></span></span> inmuebles en DóndeVivo';
+    var meta = hasta(Date.now()), n = Math.max(0, meta - Math.min(meta, 18 + Math.floor(Math.random() * 14)));
+    var caja = document.getElementById("cTot"); caja.classList.add("rapido");
+    pintarNumero(caja, n);
     if (tic) clearInterval(tic);
-    tic = setInterval(paso, 3000);
+    tic = setInterval(function () {        // al entrar, el número sube de a uno, suave, hasta el total
+      var c = document.getElementById("cTot");
+      if (!c) { clearInterval(tic); tic = null; return; }
+      if (n < meta) { n++; pintarNumero(c, n); return; }
+      c.classList.remove("rapido"); clearInterval(tic);
+      tic = setInterval(function () {      // después sigue sumando a medida que entran avisos
+        var d = document.getElementById("cTot");
+        if (!d) { clearInterval(tic); tic = null; return; }
+        pintarNumero(d, hasta(Date.now()));
+      }, 3000);
+    }, 90);
   }
 
   /* ejemplo del buscador: uno distinto en cada visita, fijo hasta recargar */
@@ -228,7 +236,7 @@
       seccionMapa(cs) +
       '<section class="sec"><h2>Lo que otras plataformas esconden, acá se ve</h2><div class="grid4">' +
       '<div class="caja"><h3>El costo real de mudarte</h3><p>El alquiler es solo una parte. Te mostramos el total para entrar, con garantía y comisión incluidas cuando el aviso las menciona.</p></div>' +
-      '<div class="caja"><h3>Mascotas, sí o no</h3><p>Si acepta mascotas, si el precio es negociable, si hay expensas aparte o si está amoblado. Todo bien arriba y sin letra chica.</p></div>' +
+      '<div class="caja"><h3>Los detalles importantes</h3><p>Si acepta mascotas, si el precio es negociable, si hay expensas aparte o si está amoblado. Todo bien arriba y sin letra chica.</p></div>' +
       '<div class="caja"><h3>Todas las páginas juntas</h3><p>InfoCasas, RE/MAX, BuscoDepto y más, en un solo lugar. Cada aviso te lleva a su página original.</p></div>' +
       "</div></section>" +
       '<section class="banda"><div>¿Tenés un inmueble? Publicá sin costo.</div><a href="publicar.html">Agregar mi inmueble</a></section>';
@@ -254,7 +262,7 @@
   }
 
   /* ---------- mapa con precios ---------- */
-  var TITULO_MAPA = "";   // el mapa se muestra cuando tenga título; para probarlo antes, agregar ?mapa=1 a la dirección
+  var TITULO_MAPA = "Precios cerca tuyo";
   var VER_MAPA = !!TITULO_MAPA || /[?&]mapa=1/.test(location.search);
   var mapa = null, capa = null, yo = null, mOp = "", mCiudad = "";
   function cargarMapaLib(listo) {
@@ -326,7 +334,8 @@
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap", referrerPolicy: "strict-origin-when-cross-origin" }).addTo(mapa);
         mapa.on("click focus", function () { mapa.scrollWheelZoom.enable(); });
         mapa.on("mouseout", function () { mapa.scrollWheelZoom.disable(); });
-        pintarMapa(true);
+        pintarMapa(false);   // arranca en Asunción, donde están la mayoría de los avisos
+        mapa.setView([-25.295, -57.58], 12);
       });
     }
     if ("IntersectionObserver" in window) {

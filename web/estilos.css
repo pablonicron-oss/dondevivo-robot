@@ -121,7 +121,10 @@ h1 .ac{color:var(--ac)}
 /* contador */
 .contador{display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:700;color:var(--gris)}
 .contador:empty{display:none}
-.num{font-family:'Outfit',sans-serif;font-weight:800;font-size:26px;line-height:1;letter-spacing:-.02em;color:var(--ink);display:inline-flex;align-items:center}
+.cnum{display:inline-flex;align-items:center;gap:1px;font-family:'Outfit',sans-serif;font-weight:800;font-size:22px;line-height:1;letter-spacing:-.02em;color:var(--ac)}
+.cnum b{font-weight:800}
+.num{display:inline-flex;align-items:center}
+.num.rapido .dg i{transition-duration:.22s;transition-timing-function:ease-out}
 .dg{display:inline-block;height:1em;overflow:hidden;line-height:1}
 .dg i{display:block;font-style:normal;width:.62em;text-align:center;word-spacing:100vw;line-height:1;white-space:normal;transition:transform .9s cubic-bezier(.2,1.4,.4,1)}
 .pt{display:inline-block;width:.25em;text-align:center}

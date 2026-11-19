@@ -266,6 +266,7 @@
     a.onload = function () { var b = document.createElement("script"); b.src = "https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"; b.onload = listo; document.head.appendChild(b); };
     document.head.appendChild(a);
   }
+  function enPY(a) { return a.lat && a.lng && a.lat > -27.7 && a.lat < -19.2 && a.lng > -62.7 && a.lng < -54.2; }   // descarta ubicaciones mal cargadas
   function corto(a) {
     if (!a.p) return "Consultar";
     var n = a.p, f = function (x) { return (Math.round(x * 10) / 10).toString().replace(".", ","); };
@@ -274,7 +275,7 @@
   }
   function seccionMapa(cs) {
     if (!VER_MAPA) return "";
-    var conLugar = {}; DATA.forEach(function (a) { if (a.lat && a.lng && a.c) conLugar[a.c] = 1; });
+    var conLugar = {}; DATA.forEach(function (a) { if (enPY(a) && a.c) conLugar[a.c] = 1; });
     return '<section class="sec mapa-sec" id="mapaSec"><div class="mapa-cab"><h2>' + esc(TITULO_MAPA || "Mapa (prueba)") + "</h2>" +
       '<div class="mapa-ctrl"><div class="seg" role="group" aria-label="Qué mostrar">' +
       ['["", "Todo"]', '["alquiler", "Alquiler"]', '["venta", "Venta"]'].map(function (j) { var x = JSON.parse(j); return '<button data-mop="' + x[0] + '" aria-pressed="' + (mOp === x[0]) + '">' + x[1] + "</button>"; }).join("") +
@@ -301,7 +302,7 @@
     if (capa) mapa.removeLayer(capa);
     capa = L.markerClusterGroup({ maxClusterRadius: 48, showCoverageOnHover: false, spiderfyOnMaxZoom: true,
       iconCreateFunction: function (c) { return L.divIcon({ className: "mgrupo", html: "<span>" + c.getChildCount() + "</span>", iconSize: [44, 44] }); } });
-    var lista = DATA.filter(function (a) { return a.lat && a.lng && (!mOp || a.op === mOp) && (!mCiudad || a.c === mCiudad); });
+    var lista = DATA.filter(function (a) { return enPY(a) && (!mOp || a.op === mOp) && (!mCiudad || a.c === mCiudad); });
     lista.sort(function (x, y) { return destacado(x) - destacado(y); });
     lista.forEach(function (a) {
       var cls = destacado(a) ? "dest" : a.op === "venta" ? "venta" : "alq";

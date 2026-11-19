@@ -57,8 +57,12 @@ input,select,textarea{font:inherit}
 <sc-if value="{{s0}}" hint-placeholder-val="{{true}}">
 <div class="in" style="display: flex; flex-direction: column; gap: 22px; max-width: 520px">
 <div style="display: flex; flex-direction: column; gap: 8px">
-<h1 style="margin: 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 800">Empecemos por tu correo</h1>
-<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #475467">Ahí te avisamos cuando tu inmueble esté publicado y te mandamos cada mes cuánta gente lo vio y te escribió.</p>
+<h1 style="margin: 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 800">Empecemos por tu nombre y correo</h1>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #475467">Ahí te avisamos cuando tu inmueble esté publicado y te mandamos cuánta gente lo vio y te escribió.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pnom" style="font-size: 14px; font-weight: 700">Nombre</label>
+<input id="pnom" value="{{campos.nombre}}" onInput="{{inp.nombre}}" type="text" autocomplete="name" placeholder="Tu nombre y apellido" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px">
 <label for="pmail" style="font-size: 14px; font-weight: 700">Correo</label>
@@ -485,7 +489,7 @@ var montoPagar = cupOk ? st.cupMonto : precioSel;
 var canPay = !!(CFG.endpoint && precioSel && cuenta.numero && st.avisoId);
 var campos = st.campos || {};
 var inp = {};
-['email', 'barrio', 'direccion', 'whatsapp', 'descripcion', 'ia'].forEach((k) => { inp[k] = (e) => { this.state.campos = Object.assign({}, this.state.campos || {}, { [k]: e.target.value }); }; });
+['nombre', 'email', 'barrio', 'direccion', 'whatsapp', 'descripcion', 'ia'].forEach((k) => { inp[k] = (e) => { this.state.campos = Object.assign({}, this.state.campos || {}, { [k]: e.target.value }); }; });
 inp.inf = (e) => { set({ campos: Object.assign({}, this.state.campos || {}, { inf: e.target.checked }), navMsg: '' }); };
 var leerImagen = (file) => new Promise((ok) => {
   var r = new FileReader();
@@ -521,6 +525,7 @@ var post = async (body) => {
 var falta = (desde, hasta) => {   // primer dato que falta entre esos pasos
   var c = this.state.campos || {}, n = (v) => String(v || '').trim().length;
   var reglas = [
+    [0, n(c.nombre) < 2, 'Escribí tu nombre.'],
     [0, !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email || ''), 'Escribí un correo válido para avisarte.'],
     [0, c.inf !== true, 'Marcá la casilla para recibir la confirmación de tu aviso.'],
     [2, n(c.barrio) < 3, 'Escribí el barrio.'],
@@ -598,7 +603,7 @@ send: async () => {
   set({ sending: true, sendMsg: '' });
   try {
     var r = await post({
-      tipo: 'aviso', web: '', email: c.email, informe: c.inf === true, whatsapp: c.whatsapp,
+      tipo: 'aviso', web: '', nombre: c.nombre, email: c.email, informe: c.inf === true, whatsapp: c.whatsapp,
       operacion: rent ? 'alquiler' : 'venta', tipo_inmueble: TIPO[tipo] || 'otro', quien: st.quien || 'Soy el dueño',
       ciudad: city, barrio: c.barrio || null, direccion: c.direccion || null, ubic: st.ubic || 'Solo la zona aproximada',
       region: REGION[city] || (CENTRAL.indexOf(city) >= 0 ? 'central' : 'resto'),

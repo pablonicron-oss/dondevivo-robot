@@ -118,21 +118,16 @@ h1 .ac{color:var(--ac)}
 .expensas{font-size:13px;font-weight:700;color:#B54708}
 .expensas.grande{font-size:16px;margin-top:-6px}
 
-/* contador en vivo */
-.contador{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:18px 40px;margin-top:24px;background:#fff;border-radius:28px;padding:22px 32px;overflow:hidden}
+/* contador */
+.contador{display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:700;color:var(--gris)}
 .contador:empty{display:none}
-.vivo{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#067647}
-.punto{width:10px;height:10px;border-radius:999px;background:#12B76A;box-shadow:0 0 0 0 rgba(18,183,106,.5);animation:latido 1.8s infinite}
-@keyframes latido{0%{box-shadow:0 0 0 0 rgba(18,183,106,.55)}70%{box-shadow:0 0 0 12px rgba(18,183,106,0)}100%{box-shadow:0 0 0 0 rgba(18,183,106,0)}}
-.dato{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.num{font-family:'Outfit',sans-serif;font-weight:800;font-size:44px;line-height:1;letter-spacing:-.03em;display:inline-flex;align-items:center}
-.num.hoy{color:var(--ac)}
-.et{font-size:15px;font-weight:700;color:var(--gris)}
+.num{font-family:'Outfit',sans-serif;font-weight:800;font-size:26px;line-height:1;letter-spacing:-.02em;color:var(--ink);display:inline-flex;align-items:center}
 .dg{display:inline-block;height:1em;overflow:hidden;line-height:1}
 .dg i{display:block;font-style:normal;width:.62em;text-align:center;word-spacing:100vw;line-height:1;white-space:normal;transition:transform .9s cubic-bezier(.2,1.4,.4,1)}
 .pt{display:inline-block;width:.25em;text-align:center}
-.burbujas{position:absolute;right:28px;top:50%;pointer-events:none}
-.bur{position:absolute;right:0;font-family:'Outfit',sans-serif;font-weight:800;font-size:22px;color:#12B76A;animation:sube 2.2s ease-out forwards}
-@keyframes sube{0%{opacity:0;transform:translateY(10px) scale(.8)}20%{opacity:1;transform:translateY(0) scale(1.1)}100%{opacity:0;transform:translateY(-46px) scale(1)}}
-@media (max-width:520px){.contador{padding:20px}.num{font-size:36px}}
-@media (prefers-reduced-motion:reduce){.punto,.bur{animation:none}.dg i{transition:none}}
+
+@media (prefers-reduced-motion:reduce){.dg i{transition:none}}
+
+/* destacados */
+.tarjeta.dest{box-shadow:0 0 0 3px var(--ac),0 10px 30px rgba(16,24,40,.12)}
+.foto .tag.destacado{left:auto;right:10px;background:var(--ac);color:#fff}

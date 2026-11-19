@@ -3,7 +3,8 @@
   "use strict";
   var $app = document.getElementById("app");
   var DATA = [], ACT = "";
-  var FUENTES = { infocasas: "InfoCasas", remax: "RE/MAX", buscodepto: "BuscoDepto", century21: "Century 21" };
+  var FUENTES = { infocasas: "InfoCasas", remax: "RE/MAX", buscodepto: "BuscoDepto", century21: "Century 21", dondevivo: "DóndeVivo" };
+  function destacado(a) { return !!(a.dh && Date.parse(a.dh) > Date.now()); }
   var EJ = {
     alquiler: ["Tengo un gato y busco un depto en Luque", "Dos habitaciones, una para mi oficina", "Algo para compartir con mi roomie cerca de la facu",
       "Monoambiente amoblado cerca de una parada", "Que acepte perros grandes y tenga patio", "Una casa quinta en San Bernardino para el verano",
@@ -99,7 +100,9 @@
       if (f.fuente && a.f !== f.fuente) return false;
       if (f.max && a.p && a.m === (f.mon || "PYG") && a.p > +f.max) return false;
       return true;
-    });
+    }).map(function (a, i) { return [a, i]; })
+      .sort(function (x, y) { return (destacado(y[0]) - destacado(x[0])) || (x[1] - y[1]); })
+      .map(function (x) { return x[0]; });
   }
 
   /* ---------- tarjeta ---------- */
@@ -113,8 +116,11 @@
     if (a.eo === "a_estrenar") tags.push("<span>A estrenar</span>");
     extras(a).forEach(function (x) { tags.push("<span>" + x + "</span>"); });
     var ex = a.op === "alquiler" ? expensas(a) : null;
-    return '<a class="tarjeta" href="#/aviso/' + encodeURIComponent(a.id) + '">' +
-      '<div class="foto" style="background-image:url(\'' + esc(seguro(a.ph[0])) + '\')"><span class="tag">' + tipoTxt(a.tp) + '</span><span class="src">Aviso de ' + esc(FUENTES[a.f] || a.f) + "</span></div>" +
+    var dest = destacado(a);
+    return '<a class="tarjeta' + (dest ? " dest" : "") + '" href="#/aviso/' + encodeURIComponent(a.id) + '">' +
+      '<div class="foto" style="background-image:url(\'' + esc(seguro(a.ph[0])) + '\')"><span class="tag">' + tipoTxt(a.tp) + '</span>' +
+      (dest ? '<span class="tag destacado">Destacado</span>' : "") +
+      '<span class="src">' + (a.f === "dondevivo" ? "Publicado en DóndeVivo" : "Aviso de " + esc(FUENTES[a.f] || a.f)) + "</span></div>" +
       '<div class="info"><div class="precio">' + precio(a) + porMes(a) + '</div>' + (ex ? '<div class="expensas">+ ' + esc(ex) + ' de expensas</div>' : "") + '<div class="tit">' + esc(a.t) + '</div><div class="lugar">' + lugar(a) + '</div><div class="datos">' + tags.join("") + "</div></div></a>";
   }
 
@@ -148,25 +154,22 @@
     var el = document.getElementById("contador");
     if (!el || !DATA.length) return;
     preparar();
-    el.innerHTML = '<div class="vivo"><span class="punto"></span>En vivo</div>' +
-      '<div class="dato"><div class="num hoy">+<span id="cHoy"></span></div><div class="et">inmuebles sumados hoy</div></div>' +
-      '<div class="dato"><div class="num"><span id="cTot"></span></div><div class="et">inmuebles para comparar en DóndeVivo</div></div>' +
-      '<div class="burbujas" id="cBur"></div>';
-    var ultimo = null;
+    el.innerHTML = '<span class="num" id="cTot"></span> inmuebles en DóndeVivo';
     function paso() {
       if (!document.getElementById("contador")) { clearInterval(tic); tic = null; return; }
-      var ahora = Date.now(), tot = hasta(ahora), hoy = tot - hasta(medianoche());
-      pintarNumero(document.getElementById("cHoy"), hoy);
-      pintarNumero(document.getElementById("cTot"), tot);
-      if (ultimo !== null && tot > ultimo) {
-        var b = document.createElement("span"); b.className = "bur"; b.textContent = "+" + (tot - ultimo);
-        document.getElementById("cBur").appendChild(b); setTimeout(function () { b.remove(); }, 2200);
-      }
-      ultimo = tot;
+      pintarNumero(document.getElementById("cTot"), hasta(Date.now()));
     }
     paso();
     if (tic) clearInterval(tic);
     tic = setInterval(paso, 3000);
+  }
+
+  /* ejemplo del buscador: uno distinto en cada visita, fijo hasta recargar */
+  var FIJO = {};
+  function ejemploFijo() {
+    var op = estado.op;
+    if (!FIJO[op]) { var l = EJ[op]; FIJO[op] = l[Math.floor(Math.random() * l.length)]; }
+    return FIJO[op];
   }
 
   /* ---------- pantallas ---------- */
@@ -198,57 +201,6 @@
     [188, 8, 11, 60, 120, 17, "#E5484D"], [193, 38, 28, 50, 58, 15, "#C7D7FE"], [193, 38, 43, 50, 58, 2, "#E5484D"], [196, 126, 16, 10, 3, 6, "#FDE68A"], [230, 126, 16, 10, 3, 6, "#FDE68A"]
   ], -127, -68);
 
-  /* ---------- contador ----------
-     Cada aviso nuevo se suma al contador en algún momento de las 24 horas siguientes a que el robot
-     lo encontró. Así sube de a uno, parejo durante el día, y nunca muestra más de lo que hay. */
-  var REVELA = null, tic = null;
-  function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; }
-  function preparar() {
-    if (REVELA) return;
-    REVELA = DATA.map(function (a) { var p = Date.parse((a.n || "").length > 10 ? a.n + "Z" : "") || 0; return p ? p + hash(a.id) * 864e5 : 0; }).sort(function (x, y) { return x - y; });
-  }
-  function hasta(t) { var lo = 0, hi = REVELA.length; while (lo < hi) { var m = (lo + hi) >> 1; if (REVELA[m] <= t) lo = m + 1; else hi = m; } return lo; }
-  function medianoche() { var d = new Date(Date.now() - 3 * 36e5); d.setUTCHours(0, 0, 0, 0); return d.getTime() + 3 * 36e5; }
-  function digitos(n) {
-    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".").split("").map(function (c) {
-      return c === "." ? '<span class="pt">.</span>' : '<span class="dg"><i style="transform:translateY(-' + (+c * 10) + '%)">0 1 2 3 4 5 6 7 8 9</i></span>';
-    }).join("");
-  }
-  function pintarNumero(el, n) {
-    if (!el) return;
-    if (el.dataset.n === String(n)) return;
-    var antes = el.dataset.n;
-    if (antes && String(antes).length === String(n).length) {
-      var d = String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".").split("").filter(function (c) { return c !== "."; });
-      el.querySelectorAll(".dg i").forEach(function (i, k) { i.style.transform = "translateY(-" + (+d[k] * 10) + "%)"; });
-    } else el.innerHTML = digitos(n);
-    el.dataset.n = n;
-  }
-  function contador() {
-    var el = document.getElementById("contador");
-    if (!el || !DATA.length) return;
-    preparar();
-    el.innerHTML = '<div class="vivo"><span class="punto"></span>En vivo</div>' +
-      '<div class="dato"><div class="num hoy">+<span id="cHoy"></span></div><div class="et">inmuebles sumados hoy</div></div>' +
-      '<div class="dato"><div class="num"><span id="cTot"></span></div><div class="et">inmuebles para comparar en DóndeVivo</div></div>' +
-      '<div class="burbujas" id="cBur"></div>';
-    var ultimo = null;
-    function paso() {
-      if (!document.getElementById("contador")) { clearInterval(tic); tic = null; return; }
-      var ahora = Date.now(), tot = hasta(ahora), hoy = tot - hasta(medianoche());
-      pintarNumero(document.getElementById("cHoy"), hoy);
-      pintarNumero(document.getElementById("cTot"), tot);
-      if (ultimo !== null && tot > ultimo) {
-        var b = document.createElement("span"); b.className = "bur"; b.textContent = "+" + (tot - ultimo);
-        document.getElementById("cBur").appendChild(b); setTimeout(function () { b.remove(); }, 2200);
-      }
-      ultimo = tot;
-    }
-    paso();
-    if (tic) clearInterval(tic);
-    tic = setInterval(paso, 3000);
-  }
-
   /* ---------- pantallas ---------- */
   function inicio() {
     var cs = ciudades(), ej = EJ[estado.op], rent = estado.op === "alquiler";
@@ -257,16 +209,16 @@
       '<div class="toggle" role="group" aria-label="Qué buscás"><button data-op="alquiler" aria-pressed="' + rent + '">Busco alquilar</button><button data-op="venta" aria-pressed="' + !rent + '">Busco comprar</button></div>' +
       '<h1>Contanos qué buscás. <span class="ac">Nosotros lo encontramos.</span></h1>' +
       '<div style="display:flex;flex-direction:column;gap:14px">' +
-      '<form class="buscador" id="fb"><label for="qB" style="position:absolute;left:-9999px">Describí lo que buscás</label><input id="qB" placeholder="' + (rent ? "Busco un depto en Luque, tengo un gato" : "Quiero comprar una casa con patio en Luque") + '" autocomplete="off">' +
+      '<form class="buscador" id="fb"><label for="qB" style="position:absolute;left:-9999px">Describí lo que buscás</label><input id="qB" placeholder="' + esc(ejemploFijo()) + '" autocomplete="off">' +
       '<label for="cB" style="position:absolute;left:-9999px">Ciudad</label><select id="cB"><option value="">Todo Paraguay</option>' + cs.map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("") + "</select>" +
       '<button class="btn">Buscar</button></form>' +
       '<div class="proba"><b>Probá con</b><div class="rot">' + ej.map(function (t) { return '<button type="button">' + esc(t) + "</button>"; }).join("") + "</div></div></div>" +
+      '<div class="contador" id="contador"></div>' +
       '<div class="chips"><button class="chip" data-chip="masc">Amigos de las mascotas</button><button class="chip" data-chip="office">Home office friendly</button><button class="chip" data-chip="1dorm">Para arrancar solo</button><button class="chip" data-chip="pozo">En pozo, para invertir</button><button class="chip" data-chip="estrenar">A estrenar</button></div>' +
       "</div>" +
       '<div class="lado"><div style="display:flex;flex-direction:column;gap:8px"><div class="mini">O buscá de otra forma</div><div class="grande">Armá tu lugar desde cero</div><div style="font-size:15px;line-height:1.5;color:#D0D5DD">Personalizá tu lugar con habitaciones, tu perro, el sofá o el auto. Te buscamos lo más parecido.</div></div>' +
       '<div class="float" aria-hidden="true"><div class="iso">' + PREVIEW + '</div></div>' +
       '<a class="cta" href="armar.html">Empezar a armar</a></div></section>' +
-      '<section class="contador" id="contador" aria-live="off"></section>' +
       '<section class="sec"><h2>Lo que otras plataformas esconden, acá se ve</h2><div class="grid4">' +
       '<div class="caja"><h3>El costo real de mudarte</h3><p>El alquiler es solo una parte. Te mostramos el total para entrar, con garantía y comisión incluidas cuando el aviso las menciona.</p></div>' +
       '<div class="caja"><h3>Mascotas, sí o no</h3><p>Si acepta mascotas, si el precio es negociable, si hay expensas aparte o si está amoblado. Todo bien arriba y sin letra chica.</p></div>' +
@@ -345,12 +297,14 @@
       a.ph.map(function (u, i) { return '<button aria-label="Foto ' + (i + 1) + '" aria-current="' + (i === 0) + '" data-u="' + esc(seguro(u)) + '" style="background-image:url(\'' + esc(seguro(u)) + '\')"></button>'; }).join("") + "</div></div>" +
       '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas" + (a.op === "alquiler" ? " por mes, se pagan aparte" : "") + "</div>" : "") + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' +
       '<div class="datos">' + [tipoTxt(a.tp), a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].concat(extras(a)).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
-      '<a class="ir" href="' + esc(seguro(a.u)) + '" target="_blank" rel="noopener nofollow" id="ir">Escribir al anunciante <small>· en ' + esc(fu) + "</small></a>" +
+      (a.f === "dondevivo" && a.wa
+        ? '<a class="ir" href="https://wa.me/' + esc(String(a.wa).replace(/\D/g, "")) + "?text=" + encodeURIComponent("Hola, vi tu aviso " + a.t + " en DóndeVivo") + '" target="_blank" rel="noopener" id="ir">Escribir por WhatsApp</a>'
+        : '<a class="ir" href="' + esc(seguro(a.u)) + '" target="_blank" rel="noopener nofollow" id="ir">Escribir al anunciante <small>· en ' + esc(fu) + "</small></a>") +
       '<div class="bloque"><h2>Lo que cuesta entrar</h2>' + costo + "</div>" +
       '<div class="bloque"><h2>Mascotas</h2>' + masc + "</div>" +
       '<div class="bloque"><h2>Ubicación</h2>' + mapa + "</div>" +
       (a.d ? '<div class="bloque"><h2>Lo que dice el aviso</h2><p class="desc">' + esc(limpio(a.d)) + "</p></div>" : "") +
-      '<div class="bloque"><p style="font-size:13px">Aviso de ' + esc(fu) + ". DóndeVivo lo encontró y lo revisa todos los días.</p></div></div></div>";
+      '<div class="bloque"><p style="font-size:13px">' + (a.f === "dondevivo" ? "Publicado directamente en DóndeVivo por su anunciante." : "Aviso de " + esc(fu) + ". DóndeVivo lo encontró y lo revisa todos los días.") + "</p></div></div></div>";
     $app.querySelectorAll(".miniaturas button").forEach(function (b) {
       b.onclick = function () { document.getElementById("gr").style.backgroundImage = "url('" + b.dataset.u + "')"; $app.querySelectorAll(".miniaturas button").forEach(function (x) { x.setAttribute("aria-current", x === b); }); };
     });

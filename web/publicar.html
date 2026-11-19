@@ -56,20 +56,14 @@ input,select,textarea{font:inherit}
 <sc-if value="{{s0}}" hint-placeholder-val="{{true}}">
 <div class="in" style="display: flex; flex-direction: column; gap: 22px; max-width: 520px">
 <div style="display: flex; flex-direction: column; gap: 8px">
-<h1 style="margin: 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 800">Creá tu cuenta para publicar</h1>
-<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #475467">Así te avisamos cuando tu inmueble esté publicado y te mandamos cada mes cuánta gente lo vio y te escribió.</p>
+<h1 style="margin: 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 800">Empecemos por tu correo</h1>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #475467">Ahí te avisamos cuando tu inmueble esté publicado y te mandamos cada mes cuánta gente lo vio y te escribió.</p>
 </div>
-<button onClick="{{next}}" class="opt" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 16px; min-height: 54px; border-radius: 16px; border: 2px solid #D0D5DD; background: #FFFFFF; color: #101828; display: flex; align-items: center; justify-content: center; gap: 10px"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.3c0-.8-.1-1.5-.2-2.3H12v4.3h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8z"></path><path fill="#34A853" d="M12 23c3 0 5.5-1 7.2-2.7l-3.5-2.7c-1 .7-2.2 1-3.7 1-2.9 0-5.3-1.9-6.2-4.5H2.2v2.8A11 11 0 0 0 12 23z"></path><path fill="#FBBC05" d="M5.8 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2.2a11 11 0 0 0 0 9.8z"></path><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.1-3.1A11 11 0 0 0 2.2 7.1l3.6 2.8C6.7 7.3 9.1 5.4 12 5.4z"></path></svg>Continuar con Google</button>
-<div style="display: flex; align-items: center; gap: 12px; color: #98A2B3; font-size: 14px; font-weight: 700"><span style="flex: 1; height: 1px; background: #EAECF0"></span>o con tu correo<span style="flex: 1; height: 1px; background: #EAECF0"></span></div>
 <div style="display: flex; flex-direction: column; gap: 6px">
 <label for="pmail" style="font-size: 14px; font-weight: 700">Correo</label>
-<input id="pmail" type="email" placeholder="vos@correo.com" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
+<input id="pmail" value="{{campos.email}}" onInput="{{inp.email}}" type="email" placeholder="vos@correo.com" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
 </div>
-<div style="display: flex; flex-direction: column; gap: 6px">
-<label for="ppass" style="font-size: 14px; font-weight: 700">Contraseña</label>
-<input id="ppass" type="password" placeholder="Mínimo 8 caracteres" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
-</div>
-<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; color: #475467; cursor: pointer"><input type="checkbox" checked style="width: 20px; height: 20px; margin: 0; flex: none; accent-color: #1F4FE0">Quiero recibir el informe mensual de mis avisos y novedades. Podés darte de baja cuando quieras.</label>
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; color: #475467; cursor: pointer"><input id="pinf" type="checkbox" checked onChange="{{inp.inf}}" style="width: 20px; height: 20px; margin: 0; flex: none; accent-color: #1F4FE0">Quiero recibir el informe mensual de mis avisos y novedades. Podés darte de baja cuando quieras.</label>
 </div>
 </sc-if>
 
@@ -109,18 +103,18 @@ input,select,textarea{font:inherit}
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 14px">
 <div style="display: flex; flex-direction: column; gap: 6px">
 <label for="pcity" style="font-size: 14px; font-weight: 700">Ciudad</label>
-<select id="pcity" onChange="{{setCity}}" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 14px; font-size: 16px; font-weight: 700; color: #101828; background: #FFFFFF">
+<select id="pcity" value="{{cityVal}}" onChange="{{setCity}}" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 14px; font-size: 16px; font-weight: 700; color: #101828; background: #FFFFFF">
 <option>Asunción</option><option>Luque</option><option>San Lorenzo</option><option>Lambaré</option><option>Fernando de la Mora</option><option>Mariano Roque Alonso</option><option>Capiatá</option><option>Ñemby</option><option>Limpio</option><option>San Bernardino</option><option>Areguá</option><option>Encarnación</option><option>Ciudad del Este</option>
 </select>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px">
 <label for="pbarrio" style="font-size: 14px; font-weight: 700">Barrio</label>
-<input id="pbarrio" type="text" placeholder="Ej. Villa Morra" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
+<input id="pbarrio" value="{{campos.barrio}}" onInput="{{inp.barrio}}" type="text" placeholder="Ej. Villa Morra" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
 </div>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px">
 <label for="pdir" style="font-size: 14px; font-weight: 700">Dirección, calle o referencia</label>
-<input id="pdir" type="text" placeholder="Ej. Senador Long casi Austria" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
+<input id="pdir" value="{{campos.direccion}}" onInput="{{inp.direccion}}" type="text" placeholder="Ej. Senador Long casi Austria" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
 </div>
 <div style="position: relative; height: 230px; border-radius: 22px; overflow: hidden; background-color: #E8EEF6; background-image: linear-gradient(#D6E0EC 2px, transparent 2px), linear-gradient(90deg, #D6E0EC 2px, transparent 2px); background-size: 46px 46px">
 <div style="position: absolute; left: 0; right: 0; top: 46%; height: 14px; background: #FFFFFF"></div>
@@ -247,10 +241,12 @@ input,select,textarea{font:inherit}
 </div>
 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px">
 <sc-for list="{{photos}}" as="f" hint-placeholder-count="6">
-<div style="aspect-ratio: 4 / 3; border-radius: 18px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 14px; font-weight: 800; background: {{f.bg}}; color: {{f.fg}}; border: 2px dashed {{f.bd}}">{{f.label}}</div>
+<div style="aspect-ratio: 4 / 3; border-radius: 18px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 14px; font-weight: 800; background: {{f.bg}}; color: {{f.fg}}; border: 2px dashed {{f.bd}}; position: relative; cursor: pointer" onClick="{{f.tap}}">{{f.label}}<sc-if value="{{f.has}}"><button onClick="{{f.del}}" aria-label="Sacar foto" style="position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 999px; border: 0; background: rgba(16,24,40,.75); color: #fff; font-weight: 800; cursor: pointer">×</button></sc-if></div>
 </sc-for>
 </div>
+<input id="pfile" type="file" accept="image/*" multiple style="display: none" onChange="{{gotPhotos}}">
 <button onClick="{{addPhoto}}" class="opt" style="align-self: flex-start; cursor: pointer; font: inherit; font-weight: 800; font-size: 15px; min-height: 50px; padding: 0 22px; border-radius: 14px; border: 2px solid #101828; background: #FFFFFF; color: #101828">Agregar fotos</button>
+<sc-if value="{{photoMsg}}"><div style="font-size: 14px; font-weight: 700; color: #B42318">{{photoMsg}}</div></sc-if>
 </div>
 </sc-if>
 
@@ -259,16 +255,16 @@ input,select,textarea{font:inherit}
 <h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">Contanos algo más</h2>
 <div style="display: flex; flex-direction: column; gap: 6px">
 <label for="pdesc" style="font-size: 14px; font-weight: 700">Descripción del aviso (opcional)</label>
-<textarea id="pdesc" rows="3" placeholder="Lo que querés que se lea en tu publicación" style="border: 2px solid #D0D5DD; border-radius: 14px; padding: 14px 16px; font-size: 16px; color: #101828; resize: vertical"></textarea>
+<textarea id="pdesc" value="{{campos.descripcion}}" onInput="{{inp.descripcion}}" rows="3" placeholder="Lo que querés que se lea en tu publicación" style="border: 2px solid #D0D5DD; border-radius: 14px; padding: 14px 16px; font-size: 16px; color: #101828; resize: vertical"></textarea>
 </div>
 <div style="display: flex; flex-direction: column; gap: 8px; border-radius: 22px; padding: 18px; background: #F0F4FF">
 <label for="pia" style="font-size: 16px; font-weight: 800">Ayudá a nuestra IA a encontrar a tu inquilino ideal</label>
 <div style="font-size: 14px; line-height: 1.5; color: #475467">Esto no se publica. Lo usamos para mostrar tu inmueble a quien lo busca con esas palabras.</div>
-<textarea id="pia" rows="4" placeholder="Ej. Entra mucha luz a la mañana, la cuadra es tranquila, el súper está a 2 cuadras, ideal para alguien que trabaja desde casa" style="border: 2px solid #C7D7FE; border-radius: 14px; padding: 14px 16px; font-size: 16px; color: #101828; background: #FFFFFF; resize: vertical"></textarea>
+<textarea id="pia" value="{{campos.ia}}" onInput="{{inp.ia}}" rows="4" placeholder="Ej. Entra mucha luz a la mañana, la cuadra es tranquila, el súper está a 2 cuadras, ideal para alguien que trabaja desde casa" style="border: 2px solid #C7D7FE; border-radius: 14px; padding: 14px 16px; font-size: 16px; color: #101828; background: #FFFFFF; resize: vertical"></textarea>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px; max-width: 360px">
 <label for="pwa" style="font-size: 14px; font-weight: 700">WhatsApp para que te escriban</label>
-<input id="pwa" type="tel" placeholder="0981 000 000" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
+<input id="pwa" value="{{campos.whatsapp}}" onInput="{{inp.whatsapp}}" type="tel" placeholder="0981 000 000" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
 </div>
 </div>
 </sc-if>
@@ -278,7 +274,7 @@ input,select,textarea{font:inherit}
 <h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">Así se va a ver</h2>
 <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
 <article style="flex: 0 1 340px; background: #FFFFFF; border: 2px solid #EAECF0; border-radius: 26px; padding: 12px; display: flex; flex-direction: column; gap: 12px">
-<div style="height: 190px; border-radius: 18px; background: #D9E0EC; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #475467">Tu primera foto</div>
+<div style="height: 190px; border-radius: 18px; background: {{firstBg}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #475467">{{firstLabel}}</div>
 <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 8px 8px">
 <div style="display: flex; flex-wrap: wrap; gap: 6px">
 <sc-for list="{{badges}}" as="b" hint-placeholder-count="3">
@@ -293,7 +289,8 @@ input,select,textarea{font:inherit}
 </article>
 <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 12px">
 <div style="font-size: 16px; line-height: 1.5; color: #475467">Revisamos cada inmueble antes de publicarlo para que todo lo que se ve acá sea real. Te avisamos por correo apenas esté aprobado.</div>
-<button onClick="{{send}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 17px; min-height: 58px; padding: 0 28px; border-radius: 16px; border: 0; background: {{accent}}; color: #FFFFFF">Enviar a revisión</button>
+<sc-if value="{{sendMsg}}"><div style="font-size: 15px; font-weight: 700; color: #B42318">{{sendMsg}}</div></sc-if>
+<button onClick="{{send}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 17px; min-height: 58px; padding: 0 28px; border-radius: 16px; border: 0; background: {{accent}}; color: #FFFFFF; opacity: {{sendOp}}">{{sendLabel}}</button>
 </div>
 </div>
 </div>
@@ -322,16 +319,55 @@ input,select,textarea{font:inherit}
 </div>
 <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between">
 <span style="font-size: 14px; color: #D0D5DD">Pagás por transferencia y lo activamos al toque.</span>
-<div style="display: flex; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
 <a href="./" style="text-decoration: none; font-weight: 800; font-size: 15px; color: #FFFFFF; padding: 15px 18px; border-radius: 14px">Ahora no</a>
-<a href="#destacar" style="text-decoration: none; font-weight: 800; font-size: 15px; background: #FFFFFF; color: #101828; padding: 15px 22px; border-radius: 14px">Destacar por WhatsApp</a>
+<a href="{{waLink}}" target="_blank" rel="noopener" style="text-decoration: none; font-weight: 800; font-size: 15px; color: #FFFFFF; border: 2px solid #475467; padding: 13px 20px; border-radius: 14px">Destacar por WhatsApp</a>
+<sc-if value="{{canPay}}"><button onClick="{{goPay}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 15px; background: #FFFFFF; color: #101828; padding: 15px 22px; border-radius: 14px; border: 0">Pagar por transferencia</button></sc-if>
 </div>
 </div>
 </div>
 </div>
 </sc-if>
 
+<sc-if value="{{s10}}" hint-placeholder-val="{{false}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 20px; max-width: 620px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">Transferí {{payAmount}}</h2>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #475467">Plan de {{payDays}}. Hacé la transferencia desde tu banco y subí el comprobante acá mismo.</p>
+</div>
+<div style="border-radius: 20px; border: 2px solid #EAECF0; padding: 20px; display: grid; grid-template-columns: max-content 1fr; gap: 10px 18px; font-size: 16px">
+<span style="color: #667085">Titular</span><b>{{bank.titular}}</b>
+<span style="color: #667085">Banco</span><b>{{bank.banco}}</b>
+<span style="color: #667085">Cuenta</span><b>{{bank.numero}}</b>
+<span style="color: #667085">CI o RUC</span><b>{{bank.documento}}</b>
+<span style="color: #667085">Monto</span><b>{{payAmount}}</b>
+<span style="color: #667085">Concepto</span><b style="color: #1F4FE0">{{payCode}}</b>
+</div>
+<div style="font-size: 14px; line-height: 1.5; background: #F5F7FB; border-radius: 14px; padding: 12px">Poné el código <b>{{payCode}}</b> en el concepto de la transferencia, así la encontramos al toque.</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="pcomp" style="font-size: 14px; font-weight: 700">Comprobante (PDF, JPG o PNG)</label>
+<input id="pcomp" type="file" accept="application/pdf,image/jpeg,image/png" onChange="{{gotReceipt}}" style="font-size: 15px">
+<span style="font-size: 14px; color: #475467">{{receiptName}}</span>
+</div>
+<sc-if value="{{payMsg}}"><div style="font-size: 15px; font-weight: 700; color: #B42318">{{payMsg}}</div></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+<button onClick="{{backPlans}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 15px; min-height: 54px; padding: 0 20px; border-radius: 14px; border: 2px solid #D0D5DD; background: #FFFFFF; color: #101828">Atrás</button>
+<button onClick="{{sendPay}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 17px; min-height: 54px; padding: 0 28px; border-radius: 16px; border: 0; background: #101828; color: #FFFFFF; opacity: {{payOp}}">{{payLabel}}</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s11}}" hint-placeholder-val="{{false}}">
+<div class="in" style="display: flex; flex-direction: column; gap: 14px; max-width: 600px">
+<div style="width: 64px; height: 64px; border-radius: 999px; background: #D1FADF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0B7A5E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></div>
+<h2 style="margin: 0; font-size: clamp(28px, 3.2vw, 40px); letter-spacing: -0.035em; font-weight: 800">Estamos confirmando la recepción de tu pago</h2>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #475467">En unas horas se habilita tu destacado y te avisamos por WhatsApp. Tu código de pedido es <b>{{payCode}}</b>.</p>
+<a href="./" style="align-self: flex-start; text-decoration: none; font-weight: 800; font-size: 15px; background: #101828; color: #FFFFFF; padding: 15px 22px; border-radius: 14px; margin-top: 8px">Volver al inicio</a>
+</div>
+</sc-if>
+
 <sc-if value="{{showNav}}" hint-placeholder-val="{{true}}">
+<sc-if value="{{navMsg}}"><div style="font-size: 15px; font-weight: 700; color: #B42318">{{navMsg}}</div></sc-if>
 <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; border-top: 2px solid #F2F4F7; padding-top: 20px">
 <button onClick="{{prev}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 15px; min-height: 50px; padding: 0 20px; border-radius: 14px; border: 2px solid #D0D5DD; background: #FFFFFF; color: #101828; visibility: {{prevVis}}">Atrás</button>
 <sc-if value="{{showNext}}" hint-placeholder-val="{{true}}">
@@ -345,6 +381,7 @@ input,select,textarea{font:inherit}
 </div>
 </div>
 </template>
+<script src="config.js?v=__V__"></script>
 <script src="dc.js?v=__V__"></script>
 <script>
 class Component extends DCLogic {
@@ -407,8 +444,12 @@ if (!rent) entryText = 'Precio de venta publicado por el propietario.';
 else if (garV === 'Otra') entryText = 'Este propietario pide una garantía especial. Conviene consultarle.';
 else if (!parts.length) entryText = 'No hace falta garantía para entrar y no se cobra comisión.';
 else entryText = 'Este propietario pide ' + parts.join(' y ') + '.' + (num ? ' En total, ' + money(num * (1 + gm + cm)) + ' para entrar, con el primer mes incluido.' : '');
-var nPh = st.ph || 0;
-var photos = [0, 1, 2, 3, 4, 5].map((i) => i < nPh ? { label: 'Foto ' + (i + 1), bg: ['#D9E0EC', '#EAD9C2', '#CFE0D0', '#E9ECF1', '#DCEBFA', '#EEE6F8'][i], fg: '#475467', bd: 'transparent' } : { label: i === nPh ? '+ Soltá o tocá' : '', bg: '#FFFFFF', fg: '#667085', bd: '#D0D5DD' });
+var fotos = st.fotos || [];
+var abrir = () => { var f = document.getElementById('pfile'); if (f) { f.value = ''; f.click(); } };
+var photos = fotos.map((f, i) => ({ label: '', has: true, bg: 'center / cover no-repeat url(' + f.url + ')', fg: '#475467', bd: 'transparent', tap: () => {},
+  del: (e) => { e.stopPropagation(); var l = fotos.slice(); l.splice(i, 1); set({ fotos: l }); } }));
+if (fotos.length < 12) photos.push({ label: '+ Soltá o tocá', has: false, bg: '#FFFFFF', fg: '#667085', bd: '#D0D5DD', tap: abrir, del: () => {} });
+while (photos.length < 6) photos.push({ label: '', has: false, bg: '#FFFFFF', fg: '#667085', bd: '#EAECF0', tap: abrir, del: () => {} });
 var badges = [];
 if (ans.mascotas === 'si') badges.push({ t: 'Acepta mascotas', bg: '#D1FADF', fg: '#05603A' });
 if (ans.mascotas === 'no') badges.push({ t: 'No acepta mascotas', bg: '#FEE4E2', fg: '#912018' });
@@ -416,9 +457,52 @@ badges.push({ t: cnt.hab + (cnt.hab === 1 ? ' habitación' : ' habitaciones'), b
 if (ans.amoblado === 'si') badges.push({ t: 'Amoblado', bg: '#F2F4F7', fg: '#344054' });
 badges.push({ t: 'Publicado acá', bg: '#F0F4FF', fg: '#1F4FE0' });
 var planSel = st.plan || 1;
-var plans = [['7 días', 'Más visitas', 'Precio por WhatsApp'], ['15 días', 'Más visitas', 'Precio por WhatsApp'], ['30 días', 'Más visitas', 'Precio por WhatsApp']].map((p, i) => ({ days: p[0], reach: p[1], price: p[2], bd: planSel === i ? '#C8F250' : '#344054', bg: planSel === i ? '#1D2939' : 'transparent', pick: () => set({ plan: i }) }));
+var CFG = window.DV || {};
+var DIAS = [7, 15, 30];
+var precioPlan = (d) => (CFG.planes || {})[d] || null;
+var gsTxt = (n) => 'Gs. ' + fmt(n);
+var plans = DIAS.map((d, i) => { var pr = precioPlan(d); return { days: d + ' días', reach: pr ? gsTxt(pr) : 'Más visitas', price: pr ? 'Primero en las búsquedas' : 'Precio por WhatsApp', bd: planSel === i ? '#C8F250' : '#344054', bg: planSel === i ? '#1D2939' : 'transparent', pick: () => set({ plan: i }) }; });
+var diasSel = DIAS[planSel], precioSel = precioPlan(diasSel);
+var cuenta = CFG.cuenta || {};
+var canPay = !!(CFG.endpoint && precioSel && cuenta.numero && st.avisoId);
+var waLink = 'https://wa.me/' + (CFG.whatsapp || '595983458755') + '?text=' + encodeURIComponent('Hola, quiero destacar mi inmueble en DóndeVivo por ' + diasSel + ' días' + (st.avisoId ? ' (aviso ' + st.avisoId + ')' : '') + '.');
+var campos = st.campos || {};
+var inp = {};
+['email', 'barrio', 'direccion', 'whatsapp', 'descripcion', 'ia'].forEach((k) => { inp[k] = (e) => { this.state.campos = Object.assign({}, this.state.campos || {}, { [k]: e.target.value }); }; });
+inp.inf = (e) => { this.state.campos = Object.assign({}, this.state.campos || {}, { inf: e.target.checked }); };
+var leerImagen = (file) => new Promise((ok) => {
+  var r = new FileReader();
+  r.onload = () => { var img = new Image(); img.onload = () => {
+    var k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    var url = c.toDataURL('image/jpeg', 0.82); ok({ url: url, data: url.split(',')[1], mime: 'image/jpeg' }); };
+    img.onerror = () => ok(null); img.src = r.result; };
+  r.onerror = () => ok(null); r.readAsDataURL(file);
+});
+var gotPhotos = async (e) => {
+  var files = Array.from(e.target.files || []).slice(0, 12 - fotos.length);
+  set({ photoMsg: files.length ? 'Cargando fotos...' : '' });
+  var nuevas = (await Promise.all(files.map(leerImagen))).filter(Boolean);
+  set({ fotos: (this.state.fotos || []).concat(nuevas).slice(0, 12), photoMsg: '', navMsg: '' });
+};
+var gotReceipt = (e) => {
+  var f = (e.target.files || [])[0];
+  if (!f) return;
+  if (f.size > 8e6) { set({ payMsg: 'El archivo es muy pesado, máximo 8 MB.' }); return; }
+  var r = new FileReader();
+  r.onload = () => set({ receipt: { data: String(r.result).split(',')[1], mime: f.type || 'application/pdf', name: f.name }, payMsg: '' });
+  r.readAsDataURL(f);
+};
+var REGION = { 'Asunción': 'asuncion', 'Ciudad del Este': 'cde', 'Hernandarias': 'cde', 'Minga Guazú': 'cde', 'Presidente Franco': 'cde' };
+var CENTRAL = ['Luque', 'San Lorenzo', 'Lambaré', 'Fernando de la Mora', 'Mariano Roque Alonso', 'Capiatá', 'Ñemby', 'Limpio', 'Villa Elisa', 'San Antonio', 'Itauguá', 'Areguá', 'Ypané', 'Guarambaré', 'Itá', 'Villeta', 'Ypacaraí', 'J. Augusto Saldívar', 'Nueva Italia'];
+var TIPO = { 'Departamento': 'departamento', 'Casa': 'casa', 'Dúplex': 'duplex', 'Monoambiente': 'departamento', 'Terreno': 'terreno', 'Casa quinta': 'quinta', 'Local': 'local', 'Oficina': 'oficina' };
+var post = async (body) => {
+  var r = await fetch(CFG.endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  return r.json();
+};
 var flags = {};
-for (var i = 0; i < 10; i++) flags['s' + i] = step === i;
+for (var i = 0; i < 12; i++) flags['s' + i] = step === i;
 return Object.assign(flags, {
 accent: accent, steps: steps, progress: Math.round(Math.min(step, 9) / 9 * 100),
 ops: ops, tipos: tipos, quien: quien, ubic: ubic, counters: counters, qs: qs,
@@ -426,14 +510,65 @@ showPets: ans.mascotas === 'si', petOpts: petOpts,
 isRent: rent, isSale: !rent, priceTitle: rent ? 'Precio y lo que se paga para entrar' : 'Precio de venta',
 priceLabel: rent ? 'Alquiler por mes' : 'Precio', priceTxt: priceTxt, curr: curr,
 setPrice: (e) => set({ price: e.target.value }), gar: gar, com: com, fin: fin, entryText: entryText,
-photos: photos, addPhoto: () => set({ ph: Math.min(6, nPh + 1) }),
+photos: photos, addPhoto: abrir,
 badges: badges, priceShow: num ? money(num) + (rent ? ' por mes' : '') : 'Precio a convenir',
-titleShow: tipo + ' en ' + (st.city || 'Asunción'), setCity: (e) => set({ city: e.target.value }),
+titleShow: tipo + (rent ? ' en alquiler' : ' en venta') + ' en ' + (campos.barrio ? campos.barrio + ', ' : '') + (st.city || 'Asunción'),
+setCity: (e) => set({ city: e.target.value }), cityVal: st.city || 'Asunción',
+firstLabel: fotos.length ? '' : 'Tu primera foto', firstBg: fotos.length ? 'center / cover no-repeat url(' + fotos[0].url + ')' : '#D9E0EC',
+campos: campos, inp: inp, gotPhotos: gotPhotos, photoMsg: st.photoMsg || '',
+navMsg: st.navMsg || '', sendMsg: st.sendMsg || '', sendLabel: st.sending ? 'Enviando...' : 'Enviar a revisión', sendOp: st.sending ? 0.6 : 1,
+waLink: waLink, canPay: canPay, goPay: () => set({ step: 10, payCode: st.payCode || ('DV-' + Math.floor(1000 + Math.random() * 9000)), payMsg: '' }),
+payAmount: precioSel ? gsTxt(precioSel) : '', payDays: diasSel + ' días', payCode: st.payCode || '', bank: cuenta,
+gotReceipt: gotReceipt, receiptName: st.receipt ? 'Adjuntaste ' + st.receipt.name : 'Todavía no adjuntaste el comprobante.',
+payMsg: st.payMsg || '', payLabel: st.paying ? 'Enviando...' : 'Enviar comprobante', payOp: st.paying ? 0.6 : 1,
+backPlans: () => set({ step: 9 }),
+sendPay: async () => {
+  if (this.state.paying) return;
+  if (!this.state.receipt) { set({ payMsg: 'Adjuntá el comprobante de la transferencia.' }); return; }
+  set({ paying: true, payMsg: '' });
+  try {
+    var r = await post({ tipo: 'pago', id: st.avisoId, dias: diasSel, codigo: st.payCode, comprobante: { data: this.state.receipt.data, mime: this.state.receipt.mime } });
+    if (r && r.ok) set({ paying: false, step: 11, payCode: r.codigo || st.payCode });
+    else set({ paying: false, payMsg: (r && r.error) || 'No pudimos enviarlo. Probá de nuevo.' });
+  } catch (err) { set({ paying: false, payMsg: 'No pudimos enviarlo. Revisá tu conexión y probá de nuevo.' }); }
+},
 plans: plans,
 showNav: step < 9, showNext: step < 8, prevVis: step > 0 ? 'visible' : 'hidden',
-nextLabel: step === 0 ? 'Crear cuenta' : 'Siguiente',
-next: () => set({ step: Math.min(9, step + 1) }), prev: () => set({ step: Math.max(0, step - 1) }),
-send: () => set({ step: 9 })
+nextLabel: 'Siguiente',
+next: () => {
+  var c = this.state.campos || {}, msg = '';
+  if (step === 0 && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email || '')) msg = 'Escribí un correo válido para avisarte.';
+  if (step === 6 && (this.state.fotos || []).length < 3) msg = 'Sumá al menos 3 fotos.';
+  if (step === 7 && String(c.whatsapp || '').replace(/\D/g, '').length < 9) msg = 'Escribí tu WhatsApp para que te puedan contactar.';
+  if (msg) { set({ navMsg: msg }); return; }
+  set({ step: Math.min(8, step + 1), navMsg: '' }); window.scrollTo(0, 0);
+},
+prev: () => { set({ step: Math.max(0, step - 1), navMsg: '' }); window.scrollTo(0, 0); },
+send: async () => {
+  if (this.state.sending) return;
+  if (!CFG.endpoint) { set({ sendMsg: 'Estamos terminando de conectar la publicación. Probá de nuevo en un rato.' }); return; }
+  var c = this.state.campos || {}, city = st.city || 'Asunción';
+  var si = qlist.filter((q) => q[0] !== 'mascotas' && ans[q[0]] === 'si').map((q) => q[0]);
+  var desc = (c.descripcion || '').trim() || (tipo + (rent ? ' en alquiler' : ' en venta') + ' en ' + city + '. ' + cnt.hab + ' habitaciones, ' + cnt.bano + ' baños, ' + cnt.m2 + ' m².');
+  set({ sending: true, sendMsg: '' });
+  try {
+    var r = await post({
+      tipo: 'aviso', web: '', email: c.email, informe: c.inf !== false, whatsapp: c.whatsapp,
+      operacion: rent ? 'alquiler' : 'venta', tipo_inmueble: TIPO[tipo] || 'otro', quien: st.quien || 'Soy el dueño',
+      ciudad: city, barrio: c.barrio || null, direccion: c.direccion || null, ubic: st.ubic || 'Solo la zona aproximada',
+      region: REGION[city] || (CENTRAL.indexOf(city) >= 0 ? 'central' : 'resto'),
+      dormitorios: cnt.hab, banos: cnt.bano, m2: cnt.m2, mascotas: ans.mascotas === 'si' ? 'si' : ans.mascotas === 'no' ? 'no' : null,
+      comodidades: si, precio: num || null, moneda: cur === 'USD' ? 'USD' : 'PYG',
+      garantia: rent ? (garV + ', comisión ' + comV.toLowerCase()) : ('Financiación ' + (st.fin || 'A conversar').toLowerCase()),
+      titulo: tipo + (rent ? ' en alquiler' : ' en venta') + ' en ' + (c.barrio ? c.barrio + ', ' : '') + city,
+      descripcion: desc, ia: c.ia || null,
+      extras: { cocheras: cnt.coch, mascotas_tipo: ans.mascotas === 'si' ? (st.pets || 'Perros y gatos') : null, respuestas: ans },
+      fotos: (this.state.fotos || []).map((f) => ({ data: f.data, mime: f.mime }))
+    });
+    if (r && r.ok) { set({ sending: false, step: 9, avisoId: r.id }); window.scrollTo(0, 0); }
+    else set({ sending: false, sendMsg: (r && r.error) || 'No pudimos enviarlo. Probá de nuevo.' });
+  } catch (err) { set({ sending: false, sendMsg: 'No pudimos enviarlo. Revisá tu conexión y probá de nuevo.' }); }
+}
 });
 }
 }

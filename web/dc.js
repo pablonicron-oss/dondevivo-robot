@@ -48,6 +48,7 @@
     var kids = [];
     node.childNodes.forEach(function (c) { render(c, scope, kids); });
     kids.forEach(function (k) { el.appendChild(k); });
+    if (el.hasAttribute("value") && "value" in el) el.value = el.getAttribute("value");   // campos de texto, áreas y listas
     out.push(el);
   }
 
@@ -74,7 +75,7 @@
       a = nuevo.attributes[i];
       if (viejo.getAttribute(a.name) !== a.value) viejo.setAttribute(a.name, a.value);
     }
-    if (nuevo.hasAttribute("value") && "value" in viejo && viejo.value !== nuevo.getAttribute("value")) viejo.value = nuevo.getAttribute("value");
+    if (nuevo.hasAttribute("value") && "value" in viejo && viejo.value !== nuevo.getAttribute("value") && viejo.type !== "file") viejo.value = nuevo.getAttribute("value");
     viejo.__h = nuevo.__h; viejo.__k = nuevo.__k;
     if (!viejo.__on) viejo.__on = {};
     Object.keys(viejo.__h || {}).forEach(function (ev) { escuchar(viejo, ev); });

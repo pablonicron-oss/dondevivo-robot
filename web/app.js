@@ -322,7 +322,7 @@
       cargarMapaLib(function () {
         if (!document.getElementById("mapa") || mapa) return;
         mapa = L.map("mapa", { scrollWheelZoom: false, zoomControl: true }).setView([-25.3, -57.6], 11);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap" }).addTo(mapa);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap", referrerPolicy: "strict-origin-when-cross-origin" }).addTo(mapa);
         mapa.on("click focus", function () { mapa.scrollWheelZoom.enable(); });
         mapa.on("mouseout", function () { mapa.scrollWheelZoom.disable(); });
         pintarMapa(true);

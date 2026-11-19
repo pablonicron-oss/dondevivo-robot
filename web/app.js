@@ -37,6 +37,14 @@
   /* ---------- utilidades ---------- */
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function seguro(u) { return /^https?:\/\//i.test(u || "") ? u : "#"; }
+  /* Las fotos de las inmobiliarias vienen enormes y tardan en cargar: las pedimos achicadas a wsrv.nl
+     (gratis, con caché). Si eso falla usamos la original, y si tampoco carga escondemos la tarjeta. */
+  function mini(u, w) { u = seguro(u); return u === "#" ? u : "https://wsrv.nl/?url=" + encodeURIComponent(u) + "&w=" + w + "&output=webp&q=72"; }
+  window.DVfoto = function (img) {
+    var o = img.getAttribute("data-o");
+    if (o) { img.removeAttribute("data-o"); img.src = o; return; }
+    var t = img.closest(".tarjeta"); if (t) t.style.display = "none";
+  };
   function norm(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
   function precio(a) {
     if (!a.p) return "Consultar precio";
@@ -124,7 +132,7 @@
     var ex = a.op === "alquiler" ? expensas(a) : null;
     var dest = destacado(a);
     return '<a class="tarjeta' + (dest ? " dest" : "") + '" href="#/aviso/' + encodeURIComponent(a.id) + '">' +
-      '<div class="foto" style="background-image:url(\'' + esc(seguro(a.ph[0])) + '\')"><span class="tag">' + tipoTxt(a.tp) + '</span>' +
+      '<div class="foto"><img class="fimg" alt="" loading="lazy" src="' + esc(mini(a.ph[0], 640)) + '" data-o="' + esc(seguro(a.ph[0])) + '" onerror="DVfoto(this)"><span class="tag">' + tipoTxt(a.tp) + '</span>' +
       (dest ? '<span class="tag destacado">Destacado</span>' : "") +
       '<span class="src">' + (a.f === "dondevivo" ? "Publicado en DóndeVivo" : "Aviso de " + esc(FUENTES[a.f] || a.f)) + "</span></div>" +
       '<div class="info"><div class="precio">' + precio(a) + porMes(a) + '</div>' + (ex ? '<div class="expensas">+ ' + esc(ex) + ' de expensas</div>' : "") + '<div class="tit">' + esc(a.t) + '</div><div class="lugar">' + lugar(a) + '</div><div class="datos">' + tags.join("") + "</div></div></a>";
@@ -297,7 +305,7 @@
   function tarjetaMapa(a) {
     var ex = expensas(a), dest = destacado(a);
     return '<a class="mtarj" href="#/aviso/' + encodeURIComponent(a.id) + '">' +
-      (a.ph && a.ph[0] ? '<span class="mfoto" style="background-image:url(\'' + esc(seguro(a.ph[0])) + '\')">' + (dest ? '<b class="mdest">Destacado</b>' : "") + "</span>" : "") +
+      (a.ph && a.ph[0] ? '<span class="mfoto" style="background-image:url(\'' + esc(mini(a.ph[0], 360)) + '\')">' + (dest ? '<b class="mdest">Destacado</b>' : "") + "</span>" : "") +
       '<span class="mtx"><b class="mprecio">' + precio(a) + porMes(a) + "</b>" +
       (ex ? '<span class="mex">+ ' + esc(ex) + " de expensas</span>" : "") +
       '<span class="mtit">' + esc(a.t) + "</span>" +
@@ -435,8 +443,8 @@
     var mapa = a.lat && a.lng ? '<iframe class="mapa" loading="lazy" title="Ubicación aproximada" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (a.lng - 0.012) + "," + (a.lat - 0.008) + "," + (a.lng + 0.012) + "," + (a.lat + 0.008) + "&layer=mapnik&marker=" + a.lat + "," + a.lng + '"></iframe>' : "<p>El anunciante no compartió la ubicación exacta.</p>";
     $app.innerHTML =
       '<a class="volver" href="javascript:history.back()">← Volver a los resultados</a><div class="ficha">' +
-      '<div class="galeria"><div class="grande" id="gr" style="background-image:url(\'' + esc(seguro(a.ph[0])) + '\')"></div><div class="miniaturas">' +
-      a.ph.map(function (u, i) { return '<button aria-label="Foto ' + (i + 1) + '" aria-current="' + (i === 0) + '" data-u="' + esc(seguro(u)) + '" style="background-image:url(\'' + esc(seguro(u)) + '\')"></button>'; }).join("") + "</div></div>" +
+      '<div class="galeria"><div class="grande" id="gr" style="background-image:url(\'' + esc(mini(a.ph[0], 1200)) + '\')"></div><div class="miniaturas">' +
+      a.ph.map(function (u, i) { return '<button aria-label="Foto ' + (i + 1) + '" aria-current="' + (i === 0) + '" data-u="' + esc(mini(u, 1200)) + '" style="background-image:url(\'' + esc(mini(u, 200)) + '\')"></button>'; }).join("") + "</div></div>" +
       '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas" + (a.op === "alquiler" ? " por mes, se pagan aparte" : "") + "</div>" : "") + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' +
       '<div class="datos">' + [tipoTxt(a.tp), a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].concat(extras(a)).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
       (a.f === "dondevivo" && a.wa

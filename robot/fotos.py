@@ -54,27 +54,42 @@ def modelo():
     return _modelo
 
 
+class Agotado(Exception):
+    """Gemini no tiene más cupo por hoy con esta clave."""
+
+
+_sin_cupo = False      # una vez que se agota, no insistimos en esta corrida
+
+
 def _pedir_gemini(cuerpo):
-    """Gemini a veces está saturado (503) o tarda: esperamos y reintentamos, y si un modelo
-    sigue fallando probamos con otro antes de rendirnos."""
-    global _modelo
-    ultimo = ""
-    for intento in range(6):
+    """Si un modelo no tiene cupo (429) probamos el siguiente; si ninguno tiene, avisamos con Agotado
+    para que el robot guarde el aviso igual y revise las fotos en otra corrida."""
+    global _modelo, _sin_cupo
+    if _sin_cupo:
+        raise Agotado("Gemini sin cupo")
+    ultimo, timeouts = "", 0
+    for intento in range(8):
         try:
-            resp = requests.post(f"{API}/models/{modelo()}:generateContent", headers=_headers(), json=cuerpo, timeout=90)
+            m = modelo()
+        except RuntimeError:
+            _sin_cupo = True
+            raise Agotado("ningún modelo de Gemini tiene cupo")
+        try:
+            resp = requests.post(f"{API}/models/{m}:generateContent", headers=_headers(), json=cuerpo, timeout=60)
         except requests.RequestException as e:
             resp, ultimo = None, f"sin respuesta ({type(e).__name__})"
-        if resp is not None and resp.status_code < 400:
+            timeouts += 1
+            if timeouts >= 2:                 # dos demoras seguidas: esta vez no se revisa
+                raise RuntimeError(f"Gemini {ultimo} con el modelo {m}")
+            time.sleep(10); continue
+        if resp.status_code < 400:
             return resp
-        if resp is not None:
-            ultimo = str(resp.status_code)
-            if resp.status_code == 404:
-                _descartados.add(_modelo); _modelo = None; continue
-            if resp.status_code not in (429, 500, 502, 503, 504):
-                break
-        time.sleep([5, 15, 30, 5, 15, 30][intento])
-        if intento == 2:                      # tres fallas seguidas: probamos con otro modelo
-            _descartados.add(_modelo); _modelo = None
+        ultimo = str(resp.status_code)
+        if resp.status_code in (404, 429):    # modelo inexistente o sin cupo: probamos el siguiente
+            _descartados.add(m); _modelo = None; continue
+        if resp.status_code in (500, 502, 503, 504):
+            time.sleep(15); continue
+        break
     raise RuntimeError(f"Gemini respondió {ultimo} con el modelo {_modelo}")
 
 

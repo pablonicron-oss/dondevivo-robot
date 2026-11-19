@@ -137,6 +137,28 @@ def candidatos(stats):
     return mezcla
 
 
+def revisar_fotos_pendientes(stats, tope=60):
+    """Avisos que se guardaron sin revisar las fotos porque Gemini no tenía cupo: los revisamos ahora."""
+    try:
+        pend = db.leer("avisos", select="id,fotos", fotos_revisadas="eq.false", activo="eq.true", limit=tope)
+    except Exception as e:
+        stats["notas"].append(f"no pude leer fotos pendientes: {e}"); return
+    for a in pend:
+        if not queda_tiempo():
+            break
+        try:
+            ok = fotos.revisar(a["fotos"] or [])
+        except fotos.Agotado:
+            break
+        except Exception:
+            continue
+        if len(ok) < MIN_FOTOS:
+            db.actualizar("avisos", {"id": f"eq.{a['id']}"}, {"activo": False, "motivo_baja": "fotos con diseño, logos o teléfonos"})
+        else:
+            db.actualizar("avisos", {"id": f"eq.{a['id']}"}, {"fotos": ok, "fotos_revisadas": True})
+        stats["fotos_revisadas"] = stats.get("fotos_revisadas", 0) + 1
+
+
 def sumar_nuevos(stats, prog):
     llenas = {r for r in META if prog[r] >= META[r]}
     bloqueadas = set()
@@ -165,14 +187,21 @@ def sumar_nuevos(stats, prog):
             continue   # esa zona ya llegó a su meta; lo dejamos para más adelante
         if aviso["fotos_total"] < MIN_FOTOS:
             db.upsert("descartados", {"id": aviso["id"], "motivo": "menos de 2 fotos"}); stats["descartados"] += 1; continue
+        revisadas = True
         try:
             aprobadas = fotos.revisar(aviso["fotos"])
+        except fotos.Agotado:
+            aprobadas, revisadas = aviso["fotos"][:12], False   # se guarda igual y las fotos se revisan en otra corrida
+            if not stats.get("sin_cupo"):
+                stats["sin_cupo"] = True; stats["notas"].append("Gemini se quedó sin cupo: los avisos se guardan y sus fotos se revisan después")
         except Exception as e:
-            stats["notas"].append(f"error revisando fotos {aviso['id']}: {e}"); continue
+            aprobadas, revisadas = aviso["fotos"][:12], False
+            stats["notas"].append(f"fotos sin revisar en {aviso['id']}: {e}")
         if len(aprobadas) < MIN_FOTOS:
             db.upsert("descartados", {"id": aviso["id"], "motivo": "fotos con diseño, logos o teléfonos"})
             stats["descartados"] += 1; continue
         aviso["fotos"] = aprobadas
+        aviso["fotos_revisadas"] = revisadas
         aviso["ultima_revision"] = ahora()
         db.upsert("avisos", aviso)
         stats["nuevos"] += 1
@@ -206,6 +235,7 @@ def main():
     stats = {"nuevos": 0, "bajas": 0, "descartados": 0, "revisados": 0, "notas": []}
     try:
         preparar_cola()
+        revisar_fotos_pendientes(stats)
         revisar_activos(stats)
         sumar_nuevos(stats, progreso())
     except Exception:

@@ -71,7 +71,8 @@ def leer_aviso(url):
         "operacion": "alquiler" if "alquiler" in op else "venta",
         "tipo": "departamento" if re.search(r"depto|departamento|monoambiente", norm(texto)) else
                 "duplex" if "duplex" in norm(texto) else "casa" if "casa" in norm(texto) else "otro",
-        "estado_obra": "en_pozo" if str(p.get("enconstruccion")) == "1" else estado_obra(texto),
+        "estado_obra": estado_obra(texto, es_proyecto=str(p.get("enconstruccion")) == "1",
+                                   operacion="alquiler" if "alquiler" in op else "venta", titulo=titulo),
         "precio": p.get("propiedadprecio_raw"), "moneda": "USD" if "USD" in str(p.get("moneda")) else "PYG",
         "dormitorios": int(_num(p.get("propiedaddormitorios")) or 0) or None,
         "banos": int(_num(p.get("propiedadbanos")) or 0) or None,

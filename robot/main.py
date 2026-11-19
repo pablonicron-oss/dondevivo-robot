@@ -67,11 +67,12 @@ def preparar_cola():
 
 def revisar_activos(stats):
     limite = (datetime.now(timezone.utc) - timedelta(hours=20)).isoformat()
-    filas = db.leer("avisos", select="id,url,fuente", activo="eq.true",
+    filas = db.leer("avisos", select="id,url,fuente", activo="eq.true", fuente="neq.dondevivo",
                     ultima_revision=f"lt.{limite}", order="ultima_revision.asc", limit=MAX_REVISAR)
     bloqueadas = set()
+    tope = INICIO + MINUTOS_MAX * 60 * 0.4      # revisar vendidos usa como máximo el 40 % de la corrida
     for f in filas:
-        if not queda_tiempo():
+        if not queda_tiempo() or time.time() > tope:
             break
         if f["fuente"] in bloqueadas:
             continue
@@ -89,7 +90,8 @@ def revisar_activos(stats):
             stats["bajas"] += 1
         else:
             db.actualizar("avisos", {"id": f"eq.{f['id']}"},
-                          {"precio": aviso["precio"], "moneda": aviso["moneda"], "ultima_revision": ahora()})
+                          {"precio": aviso["precio"], "moneda": aviso["moneda"],
+                           "estado_obra": aviso.get("estado_obra"), "ultima_revision": ahora()})
 
 
 def _candidatos_infocasas(stats):
@@ -139,9 +141,13 @@ def sumar_nuevos(stats, prog):
     llenas = {r for r in META if prog[r] >= META[r]}
     bloqueadas = set()
     ultima_web = time.time()
+    leidos = 0
     for nombre, url in candidatos(stats)[:MAX_NUEVOS]:
         if not queda_tiempo():
             break
+        leidos += 1
+        if leidos % 25 == 0:                       # cada 25 avisos, un descanso de 2 a 4 minutos
+            time.sleep(__import__("random").uniform(120, 240))
         if time.time() - ultima_web > 40 * 60:   # cada 40 minutos la web muestra lo nuevo
             actualizar_web(stats); ultima_web = time.time()
         if nombre in bloqueadas:

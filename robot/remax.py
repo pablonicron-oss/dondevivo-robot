@@ -77,7 +77,7 @@ def leer_aviso(url):
         "id": id_de(url), "fuente": FUENTE, "url": url,
         "titulo": titulo, "descripcion": desc[:4000],
         "operacion": op_url, "tipo": TIPOS.get(tipo_url, tipo_url),
-        "estado_obra": estado_obra(texto),
+        "estado_obra": estado_obra(texto, operacion=op_url, titulo=titulo),
         "precio": None if c.get("HidePricePublic") else c.get("ListingPrice"),
         "moneda": "USD" if c.get("ListingCurrency") == "USD" else "PYG",
         "dormitorios": c.get("NumberOfBedrooms"), "banos": c.get("NumberOfBathrooms"),

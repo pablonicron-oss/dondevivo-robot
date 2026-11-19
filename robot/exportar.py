@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from .config import SUPABASE_URL, SUPABASE_KEY
 
 CAMPOS = ("id,fuente,url,titulo,descripcion,operacion,tipo,estado_obra,precio,moneda,dormitorios,banos,"
-          "m2,ciudad,barrio,region,lat,lng,fotos,garantia,mascotas,publicado_en,primera_vez")
+          "m2,ciudad,barrio,region,lat,lng,fotos,garantia,mascotas,publicado_en,primera_vez,destacado_hasta,contacto")
 
 
 def todos():
@@ -35,7 +35,17 @@ def texto_limpio(t):
     return t.strip()
 
 
+def destacado(a):
+    """Devuelve la fecha de fin si el aviso está destacado ahora."""
+    h = a.get("destacado_hasta")
+    try:
+        return h if h and datetime.fromisoformat(h.replace("Z", "+00:00")) > datetime.now(timezone.utc) else None
+    except ValueError:
+        return None
+
+
 def corto(a):
+    propio = a["fuente"] == "dondevivo"
     return {
         "id": a["id"], "f": a["fuente"], "u": a["url"], "t": a["titulo"],
         "d": texto_limpio(a.get("descripcion"))[:1500], "op": a["operacion"], "tp": a["tipo"], "eo": a.get("estado_obra"),
@@ -43,6 +53,7 @@ def corto(a):
         "m2": a.get("m2"), "c": a.get("ciudad"), "b": a.get("barrio"), "r": a.get("region"),
         "lat": a.get("lat"), "lng": a.get("lng"), "ph": (a.get("fotos") or [])[:12],
         "g": a.get("garantia"), "ms": a.get("mascotas"), "n": (a.get("primera_vez") or "")[:19],
+        "dh": destacado(a), "wa": a.get("contacto") if propio else None,
     }
 
 

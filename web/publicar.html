@@ -555,7 +555,7 @@ applyCup: async () => {
   if (!c) { set({ cupon: null, cupMonto: null, cupMsg: '' }); return; }
   set({ cupMsg: 'Revisando el código…' });
   try {
-    var r = await fetch(CFG.endpoint + '?accion=cupon&c=' + encodeURIComponent(c) + '&dias=' + diasSel).then((x) => x.json());
+    var r = await fetch(CFG.endpoint + '?accion=cupon&codigo=' + encodeURIComponent(c) + '&dias=' + diasSel).then((x) => x.json());
     if (r.ok) set({ cupon: c, cupDias: diasSel, cupMonto: r.monto, cupTxt: c, cupMsg: 'Código aplicado. Pagás ' + gsTxt(r.monto) + ' en vez de ' + gsTxt(r.original) + '.' });
     else set({ cupon: null, cupMonto: null, cupMsg: r.error || 'Ese código no sirve.' });
   } catch (err) { set({ cupMsg: 'No pudimos revisar el código. Probá de nuevo.' }); }

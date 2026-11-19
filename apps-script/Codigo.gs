@@ -53,6 +53,7 @@ var URL_APP = 'https://script.google.com/macros/s/AKfycbxzVMle5jtoI35yGDvp8s7jng
 function urlScript() { return URL_APP; }   // fija: desde la tarea horaria Google devuelve otra dirección
 
 function miLink(id) { return SITIO + 'mi.html?id=' + encodeURIComponent(id) + '&t=' + firma('mi', id); }
+function panelLink(email) { var e = String(email || '').trim().toLowerCase(); return SITIO + 'mi.html?e=' + encodeURIComponent(e) + '&t=' + firma('panel', e); }
 function bajaLink(id) { return urlScript() + '?accion=baja&id=' + encodeURIComponent(id) + '&t=' + firma('baja', id); }
 function enc(id) { return encodeURIComponent(id); }
 function propio(id) { return (sb('get', 'propios?id=eq.' + enc(id) + '&select=*') || [])[0] || {}; }
@@ -240,6 +241,15 @@ function recibirAviso(d) {
   var rev = revisarAviso({ titulo: aviso.titulo, descripcion: aviso.descripcion, ia: d.ia }, d.fotos);
   var fotos = d.fotos.slice(0, 12).map(function (f, i) { return Utilities.newBlob(Utilities.base64Decode(f.data), f.mime || 'image/jpeg', 'foto' + (i + 1) + '.jpg'); });
   correoAviso(aviso, Object.assign({}, d, { numero: numero }), rev, fotos);
+  try {
+    MailApp.sendEmail({ to: d.email.trim(), name: 'DóndeVivo',
+      subject: 'Recibimos tu aviso en DóndeVivo' + (numero ? ' · aviso #' + numero : ''),
+      htmlBody: '<div style="font-family:Arial,sans-serif;color:#101828;font-size:16px;line-height:1.5;max-width:600px">' +
+        '<p>¡Gracias por publicar en DóndeVivo!</p>' +
+        '<p>Tu aviso <b>' + esc(aviso.titulo) + '</b>' + (numero ? ' (#' + numero + ')' : '') + ' está pendiente de aprobación. Por lo general se aprueba en un par de horas.</p>' +
+        '<p>Cuando esté aprobado te mandamos otro correo con tu panel, para que veas cuánta gente lo mira y lo puedas manejar.</p>' +
+        '<p style="color:#667085;font-size:13px">DóndeVivo · todas las casas y deptos de Paraguay en un solo lugar</p></div>' });
+  } catch (e) {}
   return { ok: true, id: id, numero: numero };
 }
 
@@ -368,7 +378,7 @@ function avisarAnunciante(id, asunto, texto, aunqueBaja) {
   if (!p.email || (p.baja && !aunqueBaja)) return false;
   MailApp.sendEmail({ to: p.email, subject: asunto + (p.numero ? ' · aviso #' + p.numero : ''), name: 'DóndeVivo',
     htmlBody: '<div style="font-family:Arial,sans-serif;color:#101828;font-size:16px;line-height:1.5;max-width:600px">' + texto +
-      '<p style="margin:26px 0 8px">' + boton('Ver mi aviso', miLink(id), '#1F4FE0') + '</p>' +
+      '<p style="margin:26px 0 8px">' + boton('Ver mi panel', panelLink(p.email), '#1F4FE0') + '</p>' +
       '<p style="color:#667085;font-size:13px">DóndeVivo · todas las casas y deptos de Paraguay en un solo lugar<br>' +
       'Si no querés recibir más estos correos, <a href="' + bajaLink(id) + '" style="color:#667085">date de baja acá</a>.</p></div>' });
   return true;
@@ -384,6 +394,14 @@ var ACCIONES = {
 
 function doGet(e) {
   var p = e.parameter || {};
+  if (p.accion === 'admin') {
+    try { return json(datosAdmin(p.t)); }
+    catch (err) { return json({ ok: false, error: 'No pudimos cargar el panel.', detalle: String(err).slice(0, 200) }); }
+  }
+  if (p.accion === 'panel') {
+    try { return json(datosPanel(p.e, p.t)); }
+    catch (err) { return json({ ok: false, error: 'No pudimos cargar tu panel. Probá de nuevo en un rato.', detalle: String(err).slice(0, 200) }); }
+  }
   if (p.accion === 'mi') {
     try { return json(datosMiAviso(p.id, p.t)); }
     catch (err) { return json({ ok: false, error: 'No pudimos cargar tu aviso. Probá de nuevo en un rato.', detalle: String(err).slice(0, 200) }); }
@@ -482,19 +500,35 @@ function sumar(filas) {
   return filas.reduce(function (t, f) { t.vistas += f.vistas || 0; t.contactos += f.contactos || 0; return t; }, { vistas: 0, contactos: 0 });
 }
 
-function datosMiAviso(id, t) {
-  if (!id || t !== firma('mi', id)) return { ok: false, error: 'Este link no es válido. Pedí uno nuevo con tu correo.' };
+function datosAviso(id) {
   var a = (sb('get', 'avisos?id=eq.' + enc(id) + '&select=id,titulo,precio,moneda,operacion,ciudad,barrio,fotos,activo,motivo_baja,destacado_hasta,publicado_en') || [])[0];
-  if (!a) return { ok: false, error: 'No encontramos este aviso.' };
+  if (!a) return null;
   var p = propio(id), filas = visitasDe(id);
   return {
-    ok: true, numero: p.numero, estado: p.estado, baja: !!p.baja, publicado: p.publicado,
+    id: id, t: firma('mi', id), numero: p.numero, estado: p.estado, baja: !!p.baja, publicado: p.publicado,
     aviso: { titulo: a.titulo, precio: a.precio, moneda: a.moneda, operacion: a.operacion, ciudad: a.ciudad, barrio: a.barrio,
              foto: (a.fotos || [])[0] || null, activo: a.activo, motivo: a.motivo_baja, destacado_hasta: a.destacado_hasta,
              url: SITIO + '#/aviso/' + enc(id) },
-    visitas: filas, total: sumar(filas),
-    planes: { 7: precio(7), 15: precio(15), 30: precio(30) }
+    visitas: filas, total: sumar(filas)
   };
+}
+
+function planesHoy() { return { 7: precio(7), 15: precio(15), 30: precio(30) }; }
+
+function datosMiAviso(id, t) {
+  if (!id || t !== firma('mi', id)) return { ok: false, error: 'Este link no es válido. Pedí uno nuevo con tu correo.' };
+  var d = datosAviso(id);
+  if (!d) return { ok: false, error: 'No encontramos este aviso.' };
+  return { ok: true, avisos: [d], planes: planesHoy() };
+}
+
+/* panel de una persona: todos sus avisos juntos */
+function datosPanel(email, t) {
+  var e = String(email || '').trim().toLowerCase();
+  if (!e || t !== firma('panel', e)) return { ok: false, error: 'Este link no es válido. Pedí uno nuevo con tu correo.' };
+  var filas = sb('get', 'propios?email=eq.' + enc(e) + '&select=id&order=creado.desc') || [];
+  var avisos = filas.map(function (f) { return datosAviso(f.id); }).filter(function (x) { return x; });
+  return { ok: true, email: e, avisos: avisos, planes: planesHoy() };
 }
 
 function accionMiAviso(d) {
@@ -521,18 +555,42 @@ function reenviarLinks(d) {
   var mail = String(d.email || '').trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return { ok: false, error: 'Revisá tu correo.' };
   limitar('link:' + mail, 3);
-  var filas = sb('get', 'propios?email=eq.' + enc(mail) + '&select=id,numero&order=creado.desc') || [];
+  var filas = sb('get', 'propios?email=eq.' + enc(mail) + '&select=id&limit=1') || [];
   if (filas.length) {
-    var avisos = sb('get', 'avisos?id=in.(' + filas.map(function (f) { return '"' + f.id + '"'; }).join(',') + ')&select=id,titulo') || [];
-    var tit = {}; avisos.forEach(function (x) { tit[x.id] = x.titulo; });
-    var lista = filas.map(function (f) {
-      return '<p style="margin:10px 0"><a href="' + miLink(f.id) + '" style="font-weight:700;color:#1F4FE0">' + esc(tit[f.id] || 'Tu aviso') + '</a>' +
-        (f.numero ? ' <span style="color:#667085">· #' + f.numero + '</span>' : '') + '</p>';
-    }).join('');
-    MailApp.sendEmail({ to: mail, subject: 'Tus avisos en DóndeVivo', name: 'DóndeVivo',
-      htmlBody: '<div style="font-family:Arial,sans-serif;color:#101828;font-size:16px;max-width:600px"><p>Acá tenés el link de cada uno de tus avisos:</p>' + lista + '</div>' });
+    MailApp.sendEmail({ to: mail, subject: 'Tu panel de DóndeVivo', name: 'DóndeVivo',
+      htmlBody: '<div style="font-family:Arial,sans-serif;color:#101828;font-size:16px;max-width:600px"><p>Acá tenés el link a tu panel, con todos tus avisos:</p>' +
+        '<p>' + boton('Ver mi panel', panelLink(mail), '#1F4FE0') + '</p></div>' });
   }
   return { ok: true };   // misma respuesta exista o no, para no revelar qué correos publicaron
+}
+
+/* ---------------- panel de Augusto ---------------- */
+
+function adminLink() { return SITIO + 'admin.html?t=' + firma('admin', 'augusto'); }
+
+function datosAdmin(t) {
+  if (t !== firma('admin', 'augusto')) return { ok: false, error: 'Este link no es válido.' };
+  var props = sb('get', 'propios?select=*&order=creado.desc&limit=1000') || [];
+  var ids = props.map(function (f) { return '"' + f.id + '"'; }).join(',');
+  var avisos = ids ? (sb('get', 'avisos?id=in.(' + ids + ')&select=id,titulo,precio,moneda,operacion,ciudad,barrio,fotos,activo,motivo_baja,destacado_hasta') || []) : [];
+  var vis = ids ? (sb('get', 'visitas?aviso_id=in.(' + ids + ')&select=aviso_id,vistas,contactos') || []) : [];
+  var pedidos = sb('get', 'pedidos?select=codigo,aviso_id,plan_dias,monto,estado,creado,resuelto,cupon&order=creado.desc&limit=300') || [];
+  var porId = {}; avisos.forEach(function (a) { porId[a.id] = a; });
+  var suma = {}; vis.forEach(function (v) { var x = suma[v.aviso_id] || (suma[v.aviso_id] = { vistas: 0, contactos: 0 }); x.vistas += v.vistas || 0; x.contactos += v.contactos || 0; });
+  var lista = props.map(function (p) {
+    var a = porId[p.id] || {};
+    return {
+      id: p.id, numero: p.numero, email: p.email, whatsapp: p.whatsapp, creado: p.creado, informe: p.informe, baja: p.baja,
+      titulo: a.titulo, precio: a.precio, moneda: a.moneda, operacion: a.operacion, ciudad: a.ciudad, barrio: a.barrio,
+      foto: (a.fotos || [])[0] || null, activo: a.activo, motivo: a.motivo_baja, destacado_hasta: a.destacado_hasta,
+      vistas: (suma[p.id] || {}).vistas || 0, contactos: (suma[p.id] || {}).contactos || 0,
+      url: SITIO + '#/aviso/' + enc(p.id), panel: panelLink(p.email),
+      aprobar: a.motivo_baja === 'en revisión' ? enlace('aprobar', p.id) : null,
+      rechazar: a.motivo_baja === 'en revisión' ? enlace('rechazar_aviso', p.id) : null
+    };
+  });
+  pedidos.forEach(function (x) { x.numero = (props.filter(function (p) { return p.id === x.aviso_id; })[0] || {}).numero || null; });
+  return { ok: true, avisos: lista, pedidos: pedidos };
 }
 
 /* ---------------- correos automáticos (corre cada hora) ---------------- */
@@ -594,4 +652,5 @@ function configurar() {
   if (!hay) ScriptApp.newTrigger('tarea').timeBased().everyHours(1).create();
 
   Logger.log('Listo. URL de la web app: ' + urlScript());
+  Logger.log('Tu panel: ' + adminLink());
 }

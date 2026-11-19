@@ -384,8 +384,14 @@ var ACCIONES = {
 
 function doGet(e) {
   var p = e.parameter || {};
-  if (p.accion === 'mi') return json(datosMiAviso(p.id, p.t));
-  if (p.accion === 'cupon') return json(aplicarCupon(p.c, Number(p.dias)));
+  if (p.accion === 'mi') {
+    try { return json(datosMiAviso(p.id, p.t)); }
+    catch (err) { return json({ ok: false, error: 'No pudimos cargar tu aviso. Probá de nuevo en un rato.', detalle: String(err).slice(0, 200) }); }
+  }
+  if (p.accion === 'cupon') {
+    try { return json(aplicarCupon(p.codigo, Number(p.dias))); }
+    catch (err) { return json({ ok: false, error: 'No pudimos revisar el código. Probá de nuevo.', detalle: String(err).slice(0, 200) }); }
+  }
   if (p.accion === 'baja') {
     if (!p.id || p.t !== firma('baja', p.id)) return HtmlService.createHtmlOutput('<p style="font-family:Arial;font-size:18px">Este enlace no es válido.</p>');
     sb('patch', 'propios?id=eq.' + enc(p.id), { baja: true });

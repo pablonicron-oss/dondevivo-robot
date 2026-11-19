@@ -49,7 +49,8 @@ function json(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 }
 
-function urlScript() { return ScriptApp.getService().getUrl(); }
+var URL_APP = 'https://script.google.com/macros/s/AKfycbxzVMle5jtoI35yGDvp8s7jng9twf7V6lw539LDs5i2h2rE8etXrK58w9ZXV9ZdSYQ/exec';
+function urlScript() { return URL_APP; }   // fija: desde la tarea horaria Google devuelve otra dirección
 
 function miLink(id) { return SITIO + 'mi.html?id=' + encodeURIComponent(id) + '&t=' + firma('mi', id); }
 function bajaLink(id) { return urlScript() + '?accion=baja&id=' + encodeURIComponent(id) + '&t=' + firma('baja', id); }

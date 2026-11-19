@@ -3,12 +3,17 @@ name: Robot DóndeVivo
 on:
   schedule:
     - cron: "37 5 * * *"    # todos los días a las 02:37 de Paraguay (fuera de la hora pico de GitHub)
+    - cron: "37 17 * * *"   # y a las 14:37 de Paraguay
   workflow_dispatch:         # botón para correrlo a mano
+
+concurrency:
+  group: robot
+  cancel-in-progress: false
 
 jobs:
   robot:
     runs-on: ubuntu-latest
-    timeout-minutes: 345
+    timeout-minutes: 330
     permissions:
       actions: write
     steps:

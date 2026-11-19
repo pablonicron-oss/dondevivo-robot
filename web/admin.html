@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Panel · DóndeVivo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M7 29L32 9l25 20' fill='none' stroke='%231F4FE0' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='21' cy='44' r='9.5' fill='%23fff' stroke='%23101828' stroke-width='1.8'/%3E%3Ccircle cx='21' cy='45' r='4.8' fill='%23101828'/%3E%3Ccircle cx='43' cy='44' r='9.5' fill='%23fff' stroke='%23101828' stroke-width='1.8'/%3E%3Ccircle cx='43' cy='45' r='4.8' fill='%23101828'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@700;800&display=swap">
+<style>
+:root{--azul:#1F4FE0;--verde:#0B7A5E;--amarillo:#F5B700;--tinta:#101828;--gris:#475467;--suave:#667085;--linea:#EAECF0;--fondo:#EEF1F6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);font-family:'Manrope',system-ui,sans-serif}
+a{color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 56px}
+nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 0}
+.logo{text-decoration:none;display:flex;align-items:center;gap:10px}
+.logo span{font-family:'Outfit',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.045em;line-height:1}
+h1{margin:6px 0 18px;font-size:clamp(26px,3.4vw,36px);letter-spacing:-.035em}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:22px}
+.kpi{background:#fff;border-radius:22px;padding:18px 20px}
+.kpi b{display:block;font-family:'Outfit',sans-serif;font-size:34px;letter-spacing:-.03em;line-height:1.05}
+.kpi span{font-size:14px;color:var(--gris);font-weight:700}
+.kpi.ok b{color:var(--verde);font-size:28px}.kpi.av b{color:#B54708}
+.barra{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.seg{display:flex;flex-wrap:wrap;background:#fff;border-radius:14px;padding:4px;gap:2px}
+.seg button{border:0;background:transparent;font:inherit;font-weight:800;font-size:14px;padding:0 14px;min-height:38px;border-radius:10px;cursor:pointer;color:var(--gris)}
+.seg button[aria-pressed="true"]{background:var(--tinta);color:#fff}
+input.buscar{flex:1;min-width:220px;min-height:46px;border:0;border-radius:14px;padding:0 16px;font:inherit;font-size:15px}
+.fila{display:flex;flex-wrap:wrap;gap:16px;align-items:center;background:#fff;border-radius:22px;padding:14px;margin-bottom:10px}
+.foto{flex:none;width:96px;height:72px;border-radius:14px;background:#D9E0EC center/cover no-repeat}
+.info{flex:1 1 300px;min-width:0}
+.info b{display:block;font-size:16px;line-height:1.25}
+.info .sub{font-size:13px;color:var(--gris);margin-top:3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:#F2F4F7;color:var(--gris)}
+.chip.ok{background:#D1FADF;color:#05603A}.chip.pausa{background:#FEF0C7;color:#93370D}.chip.no{background:#FEE4E2;color:#B42318}.chip.dest{background:var(--amarillo);color:var(--tinta)}.chip.rev{background:#DCE6FF;color:#1F4FE0}
+.nums{display:flex;gap:18px;font-size:13px;color:var(--gris);font-weight:700}
+.nums b{display:block;font-family:'Outfit',sans-serif;font-size:22px;color:var(--tinta)}
+.acc{display:flex;flex-wrap:wrap;gap:6px}
+.acc a{font-size:13px;font-weight:800;text-decoration:none;padding:9px 12px;border-radius:10px;border:2px solid #D0D5DD;white-space:nowrap}
+.acc a.ok{background:var(--verde);border-color:var(--verde);color:#fff}.acc a.no{color:#B42318;border-color:#FDA29B}
+h2{margin:30px 0 12px;font-size:22px;letter-spacing:-.02em}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:18px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--linea)}th{color:var(--gris);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.vacio{background:#fff;border-radius:22px;padding:22px;color:var(--gris)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <a class="logo" href="./" aria-label="DóndeVivo, inicio"><svg aria-hidden="true" width="44" height="44" viewBox="0 0 64 64"><path d="M7 29L32 9l25 20" fill="none" stroke="#1F4FE0" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="21" cy="44" r="9.5" fill="#FFFFFF" stroke="#101828" stroke-width="1.8"></circle><circle cx="21" cy="45" r="4.8" fill="#101828"></circle><circle cx="43" cy="44" r="9.5" fill="#FFFFFF" stroke="#101828" stroke-width="1.8"></circle><circle cx="43" cy="45" r="4.8" fill="#101828"></circle></svg><span><span style="color:#101828">dónde</span><span style="color:#1F4FE0">vivo</span></span></a>
+  <div style="font-weight:700;color:var(--gris)">Tu panel</div>
+</nav>
+<div id="app"><div class="vacio">Cargando…</div></div>
+</div>
+<script src="config.js?v=__V__"></script>
+<script>
+(function () {
+  var CFG = window.DV || {}, $ = document.getElementById("app"), T = new URLSearchParams(location.search).get("t");
+  var D = null, filtro = "todos", txt = "";
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function gs(n) { return "Gs. " + String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function f(d) { return d ? new Date(d).toLocaleDateString("es-PY", { day: "2-digit", month: "2-digit" }) : ""; }
+  function dest(a) { return a.destacado_hasta && new Date(a.destacado_hasta) > new Date(); }
+  function estado(a) {
+    if (a.motivo === "en revisión") return "revision";
+    if (a.motivo === "rechazado") return "rechazado";
+    if (a.motivo === "pausado") return "pausado";
+    if (a.motivo === "alquilado" || a.motivo === "vendido") return "cerrado";
+    return a.activo ? "publicado" : "otro";
+  }
+  var CHIP = { revision: '<span class="chip rev">En revisión</span>', rechazado: '<span class="chip no">Rechazado</span>', pausado: '<span class="chip pausa">Pausado</span>',
+    cerrado: '<span class="chip no">Cerrado</span>', publicado: '<span class="chip ok">Publicado</span>', otro: '<span class="chip">No visible</span>' };
+
+  function pintar() {
+    var av = D.avisos, ahora = new Date(), mes = ahora.getFullYear() + "-" + String(ahora.getMonth() + 1).padStart(2, "0");
+    var ventasMes = D.pedidos.filter(function (p) { return p.estado === "confirmado" && String(p.resuelto || p.creado).slice(0, 7) === mes; });
+    var pend = D.pedidos.filter(function (p) { return p.estado === "pendiente"; }).length;
+    var lista = av.filter(function (a) {
+      var e = estado(a);
+      if (filtro === "revision" && e !== "revision") return false;
+      if (filtro === "publicados" && e !== "publicado") return false;
+      if (filtro === "destacados" && !dest(a)) return false;
+      if (filtro === "otros" && (e === "publicado" || e === "revision")) return false;
+      if (txt && (a.titulo + " " + a.email + " " + a.whatsapp + " #" + a.numero + " " + a.ciudad + " " + a.barrio).toLowerCase().indexOf(txt) < 0) return false;
+      return true;
+    });
+    $.innerHTML = "<h1>Avisos publicados en DóndeVivo</h1>" +
+      '<div class="kpis">' +
+        '<div class="kpi"><b>' + av.length + "</b><span>avisos en total</span></div>" +
+        '<div class="kpi"><b>' + av.filter(function (a) { return estado(a) === "publicado"; }).length + "</b><span>publicados</span></div>" +
+        '<div class="kpi av"><b>' + av.filter(function (a) { return estado(a) === "revision"; }).length + "</b><span>esperando tu aprobación</span></div>" +
+        '<div class="kpi"><b>' + av.filter(dest).length + "</b><span>destacados ahora</span></div>" +
+        '<div class="kpi ok"><b>' + gs(ventasMes.reduce(function (t, p) { return t + (p.monto || 0); }, 0)) + "</b><span>" + ventasMes.length + " ventas este mes</span></div>" +
+        '<div class="kpi"><b>' + pend + "</b><span>pagos por confirmar</span></div>" +
+      "</div>" +
+      '<div class="barra"><div class="seg">' + [["todos", "Todos"], ["revision", "En revisión"], ["publicados", "Publicados"], ["destacados", "Destacados"], ["otros", "Pausados y cerrados"]].map(function (x) {
+        return '<button data-f="' + x[0] + '" aria-pressed="' + (filtro === x[0]) + '">' + x[1] + "</button>"; }).join("") +
+      '</div><input class="buscar" id="bu" placeholder="Buscar por título, correo, WhatsApp, número o barrio" value="' + esc(txt) + '"></div>' +
+      (lista.length ? lista.map(function (a) {
+        var e = estado(a);
+        return '<div class="fila"><div class="foto" style="background-image:url(\'' + esc(a.foto || "") + '\')"></div>' +
+          '<div class="info"><b>' + esc(a.titulo || "Sin título") + '</b><div class="sub">' + esc([a.numero ? "#" + a.numero : "", a.precio ? (a.moneda === "USD" ? "USD " + a.precio : gs(a.precio)) : "", [a.barrio, a.ciudad].filter(Boolean).join(", "), "publicado el " + f(a.creado)].filter(Boolean).join(" · ")) + "</div>" +
+          '<div class="sub">' + esc(a.email) + ' · <a href="https://wa.me/' + esc(a.whatsapp) + '" target="_blank" rel="noopener">' + esc(a.whatsapp) + "</a>" + (a.baja ? " · no quiere correos" : "") + "</div>" +
+          '<div class="chips">' + CHIP[e] + (dest(a) ? '<span class="chip dest">Destacado hasta ' + f(a.destacado_hasta) + "</span>" : "") + "</div></div>" +
+          '<div class="nums"><div><b>' + a.vistas + "</b>visitas</div><div><b>" + a.contactos + "</b>contactos</div></div>" +
+          '<div class="acc">' + (a.aprobar ? '<a class="ok" href="' + esc(a.aprobar) + '" target="_blank" rel="noopener">Aprobar</a><a class="no" href="' + esc(a.rechazar) + '" target="_blank" rel="noopener">Rechazar</a>' : "") +
+            (a.activo ? '<a href="' + esc(a.url) + '" target="_blank" rel="noopener">Ver</a>' : "") +
+            '<a href="' + esc(a.panel) + '" target="_blank" rel="noopener">Su panel</a></div></div>';
+      }).join("") : '<div class="vacio">No hay avisos con este filtro.</div>') +
+      "<h2>Pagos de destacados</h2>" +
+      (D.pedidos.length ? "<table><tr><th>Pedido</th><th>Aviso</th><th>Plan</th><th>Monto</th><th>Código</th><th>Estado</th><th>Fecha</th></tr>" + D.pedidos.map(function (p) {
+        return "<tr><td>" + esc(p.codigo) + "</td><td>" + (p.numero ? "#" + p.numero : "") + "</td><td>" + p.plan_dias + " días</td><td>" + gs(p.monto) + "</td><td>" + esc(p.cupon || "") + "</td><td>" + esc(p.estado) + "</td><td>" + f(p.creado) + "</td></tr>";
+      }).join("") + "</table>" : '<div class="vacio">Todavía no hay pagos.</div>');
+    $.querySelectorAll("[data-f]").forEach(function (b) { b.onclick = function () { filtro = b.dataset.f; pintar(); }; });
+    var bu = document.getElementById("bu");
+    bu.oninput = function () { txt = bu.value.trim().toLowerCase(); var pos = bu.selectionStart; pintar(); var n = document.getElementById("bu"); n.focus(); n.setSelectionRange(pos, pos); };
+  }
+
+  if (!T || !CFG.endpoint) { $.innerHTML = '<div class="vacio">Abrí el link de tu panel.</div>'; return; }
+  fetch(CFG.endpoint + "?accion=admin&t=" + encodeURIComponent(T)).then(function (r) { return r.json(); }).then(function (d) {
+    if (!d.ok) { $.innerHTML = '<div class="vacio">' + esc(d.error || "No se pudo cargar.") + "</div>"; return; }
+    D = d; pintar();
+  }).catch(function () { $.innerHTML = '<div class="vacio">No pudimos cargar el panel. Probá recargar.</div>'; });
+})();
+</script>
+</body>
+</html>

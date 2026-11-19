@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
-<title>Mi aviso · DóndeVivo</title>
+<title>Mi panel · DóndeVivo</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M7 29L32 9l25 20' fill='none' stroke='%231F4FE0' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='21' cy='44' r='9.5' fill='%23fff' stroke='%23101828' stroke-width='1.8'/%3E%3Ccircle cx='21' cy='45' r='4.8' fill='%23101828'/%3E%3Ccircle cx='43' cy='44' r='9.5' fill='%23fff' stroke='%23101828' stroke-width='1.8'/%3E%3Ccircle cx='43' cy='45' r='4.8' fill='%23101828'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@700;800&display=swap">
@@ -44,6 +44,16 @@ h2{margin:0 0 14px;font-size:20px;letter-spacing:-.02em}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 22px;border-radius:14px;border:0;font:inherit;font-weight:800;font-size:15px;cursor:pointer;text-decoration:none}
 .btn.blanco{background:#fff;color:var(--tinta)}.btn.negro{background:var(--tinta);color:#fff}.btn.borde{background:#fff;color:var(--tinta);border:2px solid #D0D5DD}
 .btn.rojo{background:#fff;color:#B42318;border:2px solid #FDA29B}
+.btn.amarillo{background:var(--amarillo);color:var(--tinta)}
+.sug{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;padding:16px 18px;border-radius:18px;background:#FFF6D6}
+.sug.ya{background:#F2F4F7}
+.sug b{display:block;font-size:16px}.sug span{font-size:14px;color:var(--gris)}
+.aviso .planes{margin:12px 0 0}
+.aviso .plan{border-color:var(--linea);text-decoration:none;color:var(--tinta);display:flex;flex-direction:column;gap:2px}
+.aviso .plan span{color:var(--tinta)}.aviso .plan small{font-weight:800;color:#B54708;margin-top:4px}
+.aviso .plan:hover{border-color:var(--amarillo)}
+.cab{margin:6px 4px 16px}.titulo{margin:0 0 4px;font-size:clamp(26px,3.4vw,36px);letter-spacing:-.035em}
+.aviso h1{margin:0 0 6px;font-size:clamp(20px,2.4vw,26px);letter-spacing:-.03em;line-height:1.15}
 .btn:disabled{opacity:.55;cursor:default}
 .acciones{display:flex;flex-wrap:wrap;gap:10px}
 .msg{margin-top:12px;font-weight:700;font-size:15px}
@@ -57,7 +67,7 @@ input.mail{min-height:52px;border:2px solid #D0D5DD;border-radius:14px;padding:0
 <div class="wrap">
 <nav>
   <a class="logo" href="./" aria-label="DóndeVivo, inicio"><svg aria-hidden="true" width="44" height="44" viewBox="0 0 64 64"><path d="M7 29L32 9l25 20" fill="none" stroke="#1F4FE0" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="21" cy="44" r="9.5" fill="#FFFFFF" stroke="#101828" stroke-width="1.8"></circle><circle cx="21" cy="45" r="4.8" fill="#101828"></circle><circle cx="43" cy="44" r="9.5" fill="#FFFFFF" stroke="#101828" stroke-width="1.8"></circle><circle cx="43" cy="45" r="4.8" fill="#101828"></circle></svg><span><span style="color:#101828">dónde</span><span style="color:#1F4FE0">vivo</span></span></a>
-  <div class="sub">Mi aviso</div>
+  <div class="sub">Mi panel</div>
 </nav>
 <div id="app"><div class="caja vacio">Cargando tu aviso…</div></div>
 </div>
@@ -65,7 +75,7 @@ input.mail{min-height:52px;border:2px solid #D0D5DD;border-radius:14px;padding:0
 <script>
 (function () {
   var CFG = window.DV || {}, $ = document.getElementById("app");
-  var q = new URLSearchParams(location.search), ID = q.get("id"), T = q.get("t");
+  var q = new URLSearchParams(location.search), ID = q.get("id"), EM = q.get("e"), T = q.get("t");
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function gs(n) { return "Gs. " + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function fecha(d) { return new Date(d).toLocaleDateString("es-PY", { day: "2-digit", month: "2-digit", year: "numeric" }); }
@@ -75,7 +85,7 @@ input.mail{min-height:52px;border:2px solid #D0D5DD;border-radius:14px;padding:0
 
   function pedirLink(msg) {
     $.innerHTML = '<div class="caja"><h2>' + esc(msg || "Este link no es válido") + '</h2>' +
-      '<p class="vacio">Escribí el correo con el que publicaste y te mandamos el link de cada uno de tus avisos.</p>' +
+      '<p class="vacio">Escribí el correo con el que publicaste y te mandamos el link de tu panel.</p>' +
       '<form id="fl" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px"><input class="mail" id="em" type="email" placeholder="vos@correo.com" required>' +
       '<button class="btn negro">Mandarme el link</button></form><div class="msg" id="lm"></div></div>';
     document.getElementById("fl").onsubmit = function (e) {
@@ -88,8 +98,8 @@ input.mail{min-height:52px;border:2px solid #D0D5DD;border-radius:14px;padding:0
     };
   }
 
-  function estadoChip(d) {
-    var a = d.aviso, m = a.motivo;
+  function estadoChip(a) {
+    var m = a.motivo;
     if (m === "en revisión") return '<span class="chip">En revisión</span>';
     if (m === "rechazado") return '<span class="chip no">No publicado</span>';
     if (m === "pausado") return '<span class="chip pausa">Pausado</span>';
@@ -103,7 +113,7 @@ input.mail{min-height:52px;border:2px solid #D0D5DD;border-radius:14px;padding:0
     vis.forEach(function (v) { mapa[v.dia] = v; });
     for (var i = 13; i >= 0; i--) {
       var d = new Date(hoy.getTime() - i * 864e5), k = d.toLocaleDateString("en-CA", { timeZone: "America/Asuncion" });
-      dias.push({ k: k, d: d, v: (mapa[k] || {}).vistas || 0 });
+      dias.push({ d: d, v: (mapa[k] || {}).vistas || 0 });
     }
     var max = Math.max.apply(null, dias.map(function (x) { return x.v; }).concat([1]));
     return '<div class="barras" aria-label="Visitas de los últimos 14 días">' + dias.map(function (x) {
@@ -111,70 +121,83 @@ input.mail{min-height:52px;border:2px solid #D0D5DD;border-radius:14px;padding:0
     }).join("") + "</div>";
   }
 
-  function pintar(d) {
+  function bloque(d) {
     var a = d.aviso, ahora = new Date();
     var destacado = a.destacado_hasta && new Date(a.destacado_hasta) > ahora;
     var faltan = destacado ? Math.ceil((new Date(a.destacado_hasta) - ahora) / 864e5) : 0;
     var publicado = a.motivo !== "en revisión" && a.motivo !== "rechazado";
     var precio = a.precio ? (a.moneda === "USD" ? "USD " + String(a.precio).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : gs(a.precio)) : "";
-    var planes = [7, 15, 30].filter(function (k) { return d.planes && d.planes[k]; }).map(function (k) {
-      return '<div class="plan"><b>' + k + ' días</b><span>' + gs(d.planes[k]) + "</span></div>";
-    }).join("");
-    var hayVisitas = d.total.vistas > 0;
-
-    $.innerHTML =
-      '<div class="caja"><div class="top"><div class="foto" style="background-image:url(\'' + esc(a.foto || "") + '\')"></div><div style="flex:1;min-width:220px">' +
+    var k = ' data-id="' + esc(d.id) + '" data-t="' + esc(d.t) + '"';
+    var precios = [7, 15, 30].filter(function (x) { return PLANES[x]; });
+    var desde = precios.length ? Math.min.apply(null, precios.map(function (x) { return PLANES[x]; })) : 0;
+    var sugerencia = publicado && a.activo && precios.length
+      ? '<div class="sug' + (destacado ? " ya" : "") + '"><div><b>' + (destacado ? "Seguí apareciendo primero" : "Llegá a más personas") + "</b><span>" +
+          (destacado ? "Si lo renovás antes de que termine, los días nuevos se suman." : "Destacá tu aviso desde " + gs(desde) + " y aparecé primero en las búsquedas.") + "</span></div>" +
+        '<button class="btn amarillo" data-planes="' + esc(d.id) + '">' + (destacado ? "Renovar" : "Destacar") + "</button></div>" +
+        '<div class="planes" data-lista="' + esc(d.id) + '" hidden>' + precios.map(function (x) {
+          return '<a class="plan" href="publicar.html?destacar=' + encodeURIComponent(d.id) + "&dias=" + x + '"><b>' + x + " días</b><span>" + gs(PLANES[x]) + "</span><small>Elegir</small></a>";
+        }).join("") + "</div>"
+      : "";
+    return '<div class="caja aviso">' +
+      '<div class="top"><div class="foto" style="background-image:url(\'' + esc(a.foto || "") + '\')"></div><div style="flex:1;min-width:220px">' +
         "<h1>" + esc(a.titulo) + '</h1><div class="sub">' + esc([precio, [a.barrio, a.ciudad].filter(Boolean).join(", ")].filter(Boolean).join(" · ")) + "</div>" +
-        '<div class="chips">' + estadoChip(d) + (destacado ? '<span class="chip dest">Destacado</span>' : "") + (d.numero ? '<span class="chip">Aviso #' + d.numero + "</span>" : "") + "</div></div></div></div>" +
-
-      '<div class="caja"><h2>Quién vio tu aviso</h2>' +
-        '<div class="nums"><div class="num"><b>' + d.total.vistas + '</b><span>visitas en total</span></div>' +
+        '<div class="chips">' + estadoChip(a) + (destacado ? '<span class="chip dest">Destacado' + (faltan <= 1 ? ", termina pronto" : ", " + faltan + " días más") + "</span>" : "") + (d.numero ? '<span class="chip">Aviso #' + d.numero + "</span>" : "") + "</div></div></div>" +
+      '<div class="nums" style="margin-top:22px"><div class="num"><b>' + d.total.vistas + '</b><span>visitas en total</span></div>' +
         '<div class="num"><b>' + d.total.contactos + '</b><span>' + (d.total.contactos === 1 ? "persona tocó contactar" : "personas tocaron contactar") + "</span></div></div>" +
-        (hayVisitas ? barras(d.visitas) : '<p class="vacio">' + (publicado ? "Todavía no hay visitas. Apenas alguien abra tu aviso, lo vas a ver acá." : "Cuando tu aviso esté publicado, acá vas a ver cuánta gente lo mira.") + "</p>") +
-      "</div>" +
-
-      (planes ? '<div class="caja dest"><h2>' + (destacado ? "Tu aviso está destacado" : "Que lo vea más gente") + "</h2>" +
-        "<p>" + (destacado
-          ? "Aparece primero en las búsquedas hasta el " + fecha(a.destacado_hasta) + (faltan <= 1 ? ", termina pronto." : ", te quedan " + faltan + " días.") + " Si lo renovás ahora, los días nuevos se suman."
-          : "Un aviso destacado aparece primero en las búsquedas que coinciden con tu inmueble y lleva la etiqueta Destacado.") + "</p>" +
-        '<div class="planes">' + planes + "</div>" +
-        '<a class="btn blanco" href="publicar.html?destacar=' + encodeURIComponent(ID) + '">' + (destacado ? "Renovar destacado" : "Destacar mi aviso") + "</a></div>" : "") +
-
-      '<div class="caja"><h2>Tu aviso</h2><div class="acciones">' +
+      (d.total.vistas > 0 ? barras(d.visitas) : '<p class="vacio">' + (publicado ? "Todavía no hay visitas. Apenas alguien abra tu aviso, lo vas a ver acá." : "Cuando tu aviso esté publicado, acá vas a ver cuánta gente lo mira.") + "</p>") +
+      sugerencia +
+      '<div class="acciones" style="margin-top:20px">' +
         (a.activo ? '<a class="btn negro" href="' + esc(a.url) + '">Ver en la web</a>' : "") +
-        (publicado && a.activo ? '<button class="btn borde" data-op="pausar">Pausar</button>' : "") +
-        (a.motivo === "pausado" ? '<button class="btn negro" data-op="reactivar">Volver a publicar</button>' : "") +
-        (publicado && a.motivo !== "alquilado" && a.motivo !== "vendido" ? '<button class="btn rojo" data-op="' + (a.operacion === "venta" ? "vendido" : "alquilado") + '">' + (a.operacion === "venta" ? "Ya lo vendí" : "Ya lo alquilé") + "</button>" : "") +
-        (a.motivo === "alquilado" || a.motivo === "vendido" ? '<button class="btn negro" data-op="reactivar">Volver a publicar</button>' : "") +
-      '</div><div class="msg" id="am"></div>' +
-      '<label class="sw"><input type="checkbox" id="cor"' + (d.baja ? "" : " checked") + "> Recibir por correo mis visitas y avisos de DóndeVivo</label></div>";
+        (publicado && a.activo ? '<button class="btn borde" data-op="pausar"' + k + '>Pausar</button>' : "") +
+        (a.motivo === "pausado" || a.motivo === "alquilado" || a.motivo === "vendido" ? '<button class="btn negro" data-op="reactivar"' + k + '>Volver a publicar</button>' : "") +
+        (publicado && a.motivo !== "alquilado" && a.motivo !== "vendido" ? '<button class="btn rojo" data-op="' + (a.operacion === "venta" ? "vendido" : "alquilado") + '"' + k + '>' + (a.operacion === "venta" ? "Ya lo vendí" : "Ya lo alquilé") + "</button>" : "") +
+      '</div><div class="msg" data-msg="' + esc(d.id) + '"></div></div>';
+  }
 
+  var PLANES = {};
+  function pintar(r) {
+    PLANES = r.planes || {};
+    var lista = r.avisos || [], tot = lista.reduce(function (t, d) { return t + d.total.vistas; }, 0);
+    var planes = [7, 15, 30].filter(function (k) { return r.planes && r.planes[k]; }).map(function (k) {
+      return '<div class="plan"><b>' + k + ' días</b><span>' + gs(r.planes[k]) + "</span></div>";
+    }).join("");
+    var algunoActivo = lista.some(function (d) { return d.aviso.motivo !== "en revisión" && d.aviso.motivo !== "rechazado"; });
+    $.innerHTML =
+      '<div class="cab"><h1 class="titulo">' + (lista.length > 1 ? "Tus " + lista.length + " avisos" : "Tu aviso") + "</h1>" +
+        (lista.length > 1 ? '<div class="sub">' + tot + " visitas entre todos</div>" : "") + "</div>" +
+      (lista.length ? lista.map(bloque).join("") : '<div class="caja vacio">Todavía no tenés avisos publicados.</div>') +
+
+      (lista.length ? '<div class="caja"><label class="sw" style="margin:0"><input type="checkbox" id="cor"' + (lista[0].baja ? "" : " checked") + "> Recibir por correo mis visitas y avisos de DóndeVivo</label></div>" : "");
+
+    $.querySelectorAll("[data-planes]").forEach(function (b) {
+      b.onclick = function () { var l = $.querySelector('[data-lista="' + b.dataset.planes + '"]'); l.hidden = !l.hidden; };
+    });
     $.querySelectorAll("[data-op]").forEach(function (b) {
       b.onclick = function () {
-        var op = b.dataset.op, am = document.getElementById("am");
-        if ((op === "alquilado" || op === "vendido") && !b.dataset.seguro) {
-          b.dataset.seguro = "1"; b.textContent = "Tocá de nuevo para confirmar"; return;
-        }
+        var op = b.dataset.op, am = $.querySelector('[data-msg="' + b.dataset.id + '"]');
+        if ((op === "alquilado" || op === "vendido") && !b.dataset.seguro) { b.dataset.seguro = "1"; b.textContent = "Tocá de nuevo para confirmar"; return; }
         b.disabled = true; am.className = "msg"; am.textContent = "Un momento…";
-        post({ tipo: "mi", id: ID, t: T, op: op }).then(function (r) {
-          if (!r.ok) { am.className = "msg err"; am.textContent = r.error || "No se pudo."; b.disabled = false; return; }
-          cargar("Listo, ya lo cambiamos. En la web se ve en la próxima actualización.");
+        post({ tipo: "mi", id: b.dataset.id, t: b.dataset.t, op: op }).then(function (res) {
+          if (!res.ok) { am.className = "msg err"; am.textContent = res.error || "No se pudo."; b.disabled = false; return; }
+          cargar({ id: b.dataset.id, txt: "Listo, ya lo cambiamos. En la web se ve en la próxima actualización." });
         }).catch(function () { am.className = "msg err"; am.textContent = "No se pudo. Probá de nuevo."; b.disabled = false; });
       };
     });
-    document.getElementById("cor").onchange = function (e) {
-      post({ tipo: "mi", id: ID, t: T, op: e.target.checked ? "alta_correos" : "baja_correos" });
+    var cor = document.getElementById("cor");
+    if (cor) cor.onchange = function (e) {
+      lista.forEach(function (d) { post({ tipo: "mi", id: d.id, t: d.t, op: e.target.checked ? "alta_correos" : "baja_correos" }); });
     };
   }
 
   function cargar(aviso) {
-    if (!ID || !T) return pedirLink("Abrí el link que te mandamos por correo");
+    if (!T || (!ID && !EM)) return pedirLink("Abrí el link que te mandamos por correo");
     if (!CFG.endpoint) { $.innerHTML = '<div class="caja vacio">Estamos actualizando esta página. Probá en un rato.</div>'; return; }
-    fetch(CFG.endpoint + "?accion=mi&id=" + encodeURIComponent(ID) + "&t=" + encodeURIComponent(T)).then(function (r) { return r.json(); }).then(function (d) {
+    var url = CFG.endpoint + (EM ? "?accion=panel&e=" + encodeURIComponent(EM) : "?accion=mi&id=" + encodeURIComponent(ID)) + "&t=" + encodeURIComponent(T);
+    fetch(url).then(function (r) { return r.json(); }).then(function (d) {
       if (!d.ok) return pedirLink(d.error);
       pintar(d);
-      if (aviso) { var am = document.getElementById("am"); am.className = "msg ok"; am.textContent = aviso; }
-    }).catch(function () { $.innerHTML = '<div class="caja vacio">No pudimos cargar tu aviso. Probá recargar la página.</div>'; });
+      if (aviso) { var am = $.querySelector('[data-msg="' + aviso.id + '"]'); if (am) { am.className = "msg ok"; am.textContent = aviso.txt; } }
+    }).catch(function () { $.innerHTML = '<div class="caja vacio">No pudimos cargar tu panel. Probá recargar la página.</div>'; });
   }
   cargar();
 })();

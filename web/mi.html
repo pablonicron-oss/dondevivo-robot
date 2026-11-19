@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Mi aviso · DóndeVivo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M7 29L32 9l25 20' fill='none' stroke='%231F4FE0' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='21' cy='44' r='9.5' fill='%23fff' stroke='%23101828' stroke-width='1.8'/%3E%3Ccircle cx='21' cy='45' r='4.8' fill='%23101828'/%3E%3Ccircle cx='43' cy='44' r='9.5' fill='%23fff' stroke='%23101828' stroke-width='1.8'/%3E%3Ccircle cx='43' cy='45' r='4.8' fill='%23101828'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@700;800&display=swap">
+<style>
+:root{--azul:#1F4FE0;--verde:#0B7A5E;--amarillo:#F5B700;--tinta:#101828;--gris:#475467;--suave:#667085;--linea:#EAECF0;--fondo:#EEF1F6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);font-family:'Manrope',system-ui,sans-serif}
+a{color:inherit}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px 56px}
+nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 0}
+.logo{text-decoration:none;display:flex;align-items:center;gap:10px}
+.logo span{font-family:'Outfit',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.045em;line-height:1}
+.caja{background:#fff;border-radius:28px;padding:clamp(20px,3.4vw,34px);margin-bottom:18px}
+.top{display:flex;flex-wrap:wrap;gap:20px;align-items:center}
+.foto{flex:none;width:150px;height:110px;border-radius:18px;background:#D9E0EC center/cover no-repeat}
+.top h1{margin:0 0 6px;font-size:clamp(22px,2.8vw,30px);letter-spacing:-.03em;line-height:1.15}
+.sub{color:var(--gris);font-size:15px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{font-size:13px;font-weight:800;padding:6px 12px;border-radius:999px;background:#F2F4F7;color:var(--gris)}
+.chip.ok{background:#D1FADF;color:#05603A}.chip.pausa{background:#FEF0C7;color:#93370D}.chip.no{background:#FEE4E2;color:#B42318}.chip.dest{background:var(--amarillo);color:var(--tinta)}
+h2{margin:0 0 14px;font-size:20px;letter-spacing:-.02em}
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+.num{border:2px solid var(--linea);border-radius:20px;padding:16px 18px}
+.num b{display:block;font-family:'Outfit',sans-serif;font-size:38px;letter-spacing:-.03em;line-height:1}
+.num span{font-size:14px;color:var(--gris);font-weight:700}
+.barras{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:8px}
+.barra{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.barra i{display:block;width:100%;max-width:34px;border-radius:8px 8px 3px 3px;background:var(--azul);min-height:3px}
+.barra small{font-size:11px;color:var(--suave);font-weight:700;white-space:nowrap}
+.vacio{color:var(--gris);font-size:15px}
+.dest{background:var(--tinta);color:#fff}
+.dest p{color:#D0D5DD;margin:0 0 16px;line-height:1.5}
+.planes{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px}
+.plan{border:2px solid #344054;border-radius:18px;padding:14px 16px}
+.plan b{display:block;font-size:17px}.plan span{color:var(--amarillo);font-weight:800;font-size:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 22px;border-radius:14px;border:0;font:inherit;font-weight:800;font-size:15px;cursor:pointer;text-decoration:none}
+.btn.blanco{background:#fff;color:var(--tinta)}.btn.negro{background:var(--tinta);color:#fff}.btn.borde{background:#fff;color:var(--tinta);border:2px solid #D0D5DD}
+.btn.rojo{background:#fff;color:#B42318;border:2px solid #FDA29B}
+.btn:disabled{opacity:.55;cursor:default}
+.acciones{display:flex;flex-wrap:wrap;gap:10px}
+.msg{margin-top:12px;font-weight:700;font-size:15px}
+.ok{color:#05603A}.err{color:#B42318}
+label.sw{display:flex;gap:10px;align-items:center;font-size:15px;font-weight:600;color:var(--gris);margin-top:16px;cursor:pointer}
+label.sw input{width:20px;height:20px;accent-color:var(--azul)}
+input.mail{min-height:52px;border:2px solid #D0D5DD;border-radius:14px;padding:0 16px;font:inherit;font-size:16px;width:100%;max-width:380px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <a class="logo" href="./" aria-label="DóndeVivo, inicio"><svg aria-hidden="true" width="44" height="44" viewBox="0 0 64 64"><path d="M7 29L32 9l25 20" fill="none" stroke="#1F4FE0" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="21" cy="44" r="9.5" fill="#FFFFFF" stroke="#101828" stroke-width="1.8"></circle><circle cx="21" cy="45" r="4.8" fill="#101828"></circle><circle cx="43" cy="44" r="9.5" fill="#FFFFFF" stroke="#101828" stroke-width="1.8"></circle><circle cx="43" cy="45" r="4.8" fill="#101828"></circle></svg><span><span style="color:#101828">dónde</span><span style="color:#1F4FE0">vivo</span></span></a>
+  <div class="sub">Mi aviso</div>
+</nav>
+<div id="app"><div class="caja vacio">Cargando tu aviso…</div></div>
+</div>
+<script src="config.js?v=__V__"></script>
+<script>
+(function () {
+  var CFG = window.DV || {}, $ = document.getElementById("app");
+  var q = new URLSearchParams(location.search), ID = q.get("id"), T = q.get("t");
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function gs(n) { return "Gs. " + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function fecha(d) { return new Date(d).toLocaleDateString("es-PY", { day: "2-digit", month: "2-digit", year: "numeric" }); }
+  function post(body) {
+    return fetch(CFG.endpoint, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) }).then(function (r) { return r.json(); });
+  }
+
+  function pedirLink(msg) {
+    $.innerHTML = '<div class="caja"><h2>' + esc(msg || "Este link no es válido") + '</h2>' +
+      '<p class="vacio">Escribí el correo con el que publicaste y te mandamos el link de cada uno de tus avisos.</p>' +
+      '<form id="fl" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px"><input class="mail" id="em" type="email" placeholder="vos@correo.com" required>' +
+      '<button class="btn negro">Mandarme el link</button></form><div class="msg" id="lm"></div></div>';
+    document.getElementById("fl").onsubmit = function (e) {
+      e.preventDefault();
+      var lm = document.getElementById("lm"); lm.className = "msg"; lm.textContent = "Enviando…";
+      post({ tipo: "link", email: document.getElementById("em").value }).then(function (r) {
+        lm.className = "msg " + (r.ok ? "ok" : "err");
+        lm.textContent = r.ok ? "Si ese correo tiene avisos en DóndeVivo, en unos minutos te llega el link." : (r.error || "No pudimos enviarlo.");
+      }).catch(function () { lm.className = "msg err"; lm.textContent = "No pudimos enviarlo. Probá de nuevo."; });
+    };
+  }
+
+  function estadoChip(d) {
+    var a = d.aviso, m = a.motivo;
+    if (m === "en revisión") return '<span class="chip">En revisión</span>';
+    if (m === "rechazado") return '<span class="chip no">No publicado</span>';
+    if (m === "pausado") return '<span class="chip pausa">Pausado</span>';
+    if (m === "alquilado") return '<span class="chip no">Alquilado</span>';
+    if (m === "vendido") return '<span class="chip no">Vendido</span>';
+    return a.activo ? '<span class="chip ok">Publicado</span>' : '<span class="chip">No visible</span>';
+  }
+
+  function barras(vis) {
+    var hoy = new Date(), dias = [], mapa = {};
+    vis.forEach(function (v) { mapa[v.dia] = v; });
+    for (var i = 13; i >= 0; i--) {
+      var d = new Date(hoy.getTime() - i * 864e5), k = d.toLocaleDateString("en-CA", { timeZone: "America/Asuncion" });
+      dias.push({ k: k, d: d, v: (mapa[k] || {}).vistas || 0 });
+    }
+    var max = Math.max.apply(null, dias.map(function (x) { return x.v; }).concat([1]));
+    return '<div class="barras" aria-label="Visitas de los últimos 14 días">' + dias.map(function (x) {
+      return '<div class="barra" title="' + x.v + ' visitas"><i style="height:' + Math.round(x.v / max * 110) + 'px' + (x.v ? '' : ';background:#D0D5DD') + '"></i><small>' + x.d.getDate() + '</small></div>';
+    }).join("") + "</div>";
+  }
+
+  function pintar(d) {
+    var a = d.aviso, ahora = new Date();
+    var destacado = a.destacado_hasta && new Date(a.destacado_hasta) > ahora;
+    var faltan = destacado ? Math.ceil((new Date(a.destacado_hasta) - ahora) / 864e5) : 0;
+    var publicado = a.motivo !== "en revisión" && a.motivo !== "rechazado";
+    var precio = a.precio ? (a.moneda === "USD" ? "USD " + String(a.precio).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : gs(a.precio)) : "";
+    var planes = [7, 15, 30].filter(function (k) { return d.planes && d.planes[k]; }).map(function (k) {
+      return '<div class="plan"><b>' + k + ' días</b><span>' + gs(d.planes[k]) + "</span></div>";
+    }).join("");
+    var hayVisitas = d.total.vistas > 0;
+
+    $.innerHTML =
+      '<div class="caja"><div class="top"><div class="foto" style="background-image:url(\'' + esc(a.foto || "") + '\')"></div><div style="flex:1;min-width:220px">' +
+        "<h1>" + esc(a.titulo) + '</h1><div class="sub">' + esc([precio, [a.barrio, a.ciudad].filter(Boolean).join(", ")].filter(Boolean).join(" · ")) + "</div>" +
+        '<div class="chips">' + estadoChip(d) + (destacado ? '<span class="chip dest">Destacado</span>' : "") + (d.numero ? '<span class="chip">Aviso #' + d.numero + "</span>" : "") + "</div></div></div></div>" +
+
+      '<div class="caja"><h2>Quién vio tu aviso</h2>' +
+        '<div class="nums"><div class="num"><b>' + d.total.vistas + '</b><span>visitas en total</span></div>' +
+        '<div class="num"><b>' + d.total.contactos + '</b><span>' + (d.total.contactos === 1 ? "persona tocó contactar" : "personas tocaron contactar") + "</span></div></div>" +
+        (hayVisitas ? barras(d.visitas) : '<p class="vacio">' + (publicado ? "Todavía no hay visitas. Apenas alguien abra tu aviso, lo vas a ver acá." : "Cuando tu aviso esté publicado, acá vas a ver cuánta gente lo mira.") + "</p>") +
+      "</div>" +
+
+      (planes ? '<div class="caja dest"><h2>' + (destacado ? "Tu aviso está destacado" : "Que lo vea más gente") + "</h2>" +
+        "<p>" + (destacado
+          ? "Aparece primero en las búsquedas hasta el " + fecha(a.destacado_hasta) + (faltan <= 1 ? ", termina pronto." : ", te quedan " + faltan + " días.") + " Si lo renovás ahora, los días nuevos se suman."
+          : "Un aviso destacado aparece primero en las búsquedas que coinciden con tu inmueble y lleva la etiqueta Destacado.") + "</p>" +
+        '<div class="planes">' + planes + "</div>" +
+        '<a class="btn blanco" href="publicar.html?destacar=' + encodeURIComponent(ID) + '">' + (destacado ? "Renovar destacado" : "Destacar mi aviso") + "</a></div>" : "") +
+
+      '<div class="caja"><h2>Tu aviso</h2><div class="acciones">' +
+        (a.activo ? '<a class="btn negro" href="' + esc(a.url) + '">Ver en la web</a>' : "") +
+        (publicado && a.activo ? '<button class="btn borde" data-op="pausar">Pausar</button>' : "") +
+        (a.motivo === "pausado" ? '<button class="btn negro" data-op="reactivar">Volver a publicar</button>' : "") +
+        (publicado && a.motivo !== "alquilado" && a.motivo !== "vendido" ? '<button class="btn rojo" data-op="' + (a.operacion === "venta" ? "vendido" : "alquilado") + '">' + (a.operacion === "venta" ? "Ya lo vendí" : "Ya lo alquilé") + "</button>" : "") +
+        (a.motivo === "alquilado" || a.motivo === "vendido" ? '<button class="btn negro" data-op="reactivar">Volver a publicar</button>' : "") +
+      '</div><div class="msg" id="am"></div>' +
+      '<label class="sw"><input type="checkbox" id="cor"' + (d.baja ? "" : " checked") + "> Recibir por correo mis visitas y avisos de DóndeVivo</label></div>";
+
+    $.querySelectorAll("[data-op]").forEach(function (b) {
+      b.onclick = function () {
+        var op = b.dataset.op, am = document.getElementById("am");
+        if ((op === "alquilado" || op === "vendido") && !b.dataset.seguro) {
+          b.dataset.seguro = "1"; b.textContent = "Tocá de nuevo para confirmar"; return;
+        }
+        b.disabled = true; am.className = "msg"; am.textContent = "Un momento…";
+        post({ tipo: "mi", id: ID, t: T, op: op }).then(function (r) {
+          if (!r.ok) { am.className = "msg err"; am.textContent = r.error || "No se pudo."; b.disabled = false; return; }
+          cargar("Listo, ya lo cambiamos. En la web se ve en la próxima actualización.");
+        }).catch(function () { am.className = "msg err"; am.textContent = "No se pudo. Probá de nuevo."; b.disabled = false; });
+      };
+    });
+    document.getElementById("cor").onchange = function (e) {
+      post({ tipo: "mi", id: ID, t: T, op: e.target.checked ? "alta_correos" : "baja_correos" });
+    };
+  }
+
+  function cargar(aviso) {
+    if (!ID || !T) return pedirLink("Abrí el link que te mandamos por correo");
+    if (!CFG.endpoint) { $.innerHTML = '<div class="caja vacio">Estamos actualizando esta página. Probá en un rato.</div>'; return; }
+    fetch(CFG.endpoint + "?accion=mi&id=" + encodeURIComponent(ID) + "&t=" + encodeURIComponent(T)).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.ok) return pedirLink(d.error);
+      pintar(d);
+      if (aviso) { var am = document.getElementById("am"); am.className = "msg ok"; am.textContent = aviso; }
+    }).catch(function () { $.innerHTML = '<div class="caja vacio">No pudimos cargar tu aviso. Probá recargar la página.</div>'; });
+  }
+  cargar();
+})();
+</script>
+</body>
+</html>

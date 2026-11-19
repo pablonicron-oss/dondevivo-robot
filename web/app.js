@@ -225,6 +225,7 @@
       '<div class="lado"><div style="display:flex;flex-direction:column;gap:8px"><div class="mini">O buscá de otra forma</div><div class="grande">Armá tu lugar desde cero</div><div style="font-size:15px;line-height:1.5;color:#D0D5DD">Personalizá tu lugar con habitaciones, tu perro, el sofá o el auto. Te buscamos lo más parecido.</div></div>' +
       '<div class="float" aria-hidden="true"><div class="iso">' + PREVIEW + '</div></div>' +
       '<a class="cta" href="armar.html">Empezar a armar</a></div></section>' +
+      seccionMapa(cs) +
       '<section class="sec"><h2>Lo que otras plataformas esconden, acá se ve</h2><div class="grid4">' +
       '<div class="caja"><h3>El costo real de mudarte</h3><p>El alquiler es solo una parte. Te mostramos el total para entrar, con garantía y comisión incluidas cuando el aviso las menciona.</p></div>' +
       '<div class="caja"><h3>Mascotas, sí o no</h3><p>Si acepta mascotas, si el precio es negociable, si hay expensas aparte o si está amoblado. Todo bien arriba y sin letra chica.</p></div>' +
@@ -232,6 +233,7 @@
       "</div></section>" +
       '<section class="banda"><div>¿Tenés un inmueble? Publicá sin costo.</div><a href="publicar.html">Agregar mi inmueble</a></section>';
     contador();
+    prepararMapa();
     $app.querySelectorAll("[data-op]").forEach(function (b) { b.onclick = function () { setOp(b.dataset.op); inicio(); }; });
     $app.querySelectorAll(".rot button").forEach(function (b) { b.onclick = function () { document.getElementById("qB").value = b.textContent; document.getElementById("fb").requestSubmit(); }; });
     document.getElementById("fb").onsubmit = function (e) {
@@ -249,6 +251,118 @@
         location.hash = "#/buscar?" + q(f);
       };
     });
+  }
+
+  /* ---------- mapa con precios ---------- */
+  var TITULO_MAPA = "";   // el mapa se muestra cuando tenga título; para probarlo antes, agregar ?mapa=1 a la dirección
+  var VER_MAPA = !!TITULO_MAPA || /[?&]mapa=1/.test(location.search);
+  var mapa = null, capa = null, yo = null, mOp = "", mCiudad = "";
+  function cargarMapaLib(listo) {
+    if (window.L && L.markerClusterGroup) return listo();
+    [["https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"], ["https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"]].forEach(function (h) {
+      var l = document.createElement("link"); l.rel = "stylesheet"; l.href = h[0]; document.head.appendChild(l);
+    });
+    var a = document.createElement("script"); a.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    a.onload = function () { var b = document.createElement("script"); b.src = "https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"; b.onload = listo; document.head.appendChild(b); };
+    document.head.appendChild(a);
+  }
+  function corto(a) {
+    if (!a.p) return "Consultar";
+    var n = a.p, f = function (x) { return (Math.round(x * 10) / 10).toString().replace(".", ","); };
+    var t = n >= 1e9 ? f(n / 1e9) + " mil M" : n >= 1e6 ? f(n / 1e6) + " M" : n >= 1e3 ? Math.round(n / 1e3) + " mil" : String(n);
+    return (a.m === "USD" ? "USD " : "₲ ") + t;
+  }
+  function seccionMapa(cs) {
+    if (!VER_MAPA) return "";
+    var conLugar = {}; DATA.forEach(function (a) { if (a.lat && a.lng && a.c) conLugar[a.c] = 1; });
+    return '<section class="sec mapa-sec" id="mapaSec"><div class="mapa-cab"><h2>' + esc(TITULO_MAPA || "Mapa (prueba)") + "</h2>" +
+      '<div class="mapa-ctrl"><div class="seg" role="group" aria-label="Qué mostrar">' +
+      ['["", "Todo"]', '["alquiler", "Alquiler"]', '["venta", "Venta"]'].map(function (j) { var x = JSON.parse(j); return '<button data-mop="' + x[0] + '" aria-pressed="' + (mOp === x[0]) + '">' + x[1] + "</button>"; }).join("") +
+      '</div><label class="sr" for="mCiudad">Ciudad del mapa</label><select id="mCiudad"><option value="">Todo Paraguay</option>' +
+      cs.filter(function (c) { return conLugar[c]; }).map(function (c) { return "<option" + (c === mCiudad ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("") +
+      '</select><button id="mCerca" class="cerca"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>Cerca mío</button></div></div>' +
+      '<div class="mapa-caja" id="mapaCaja"><div id="mapa" aria-label="Mapa de avisos"></div>' +
+      '<button id="mFull" class="mfull" aria-label="Pantalla completa"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg></button>' +
+      '<div class="mmsg" id="mMsg" hidden></div></div></section>';
+  }
+  function tarjetaMapa(a) {
+    var ex = expensas(a), dest = destacado(a);
+    return '<a class="mtarj" href="#/aviso/' + encodeURIComponent(a.id) + '">' +
+      (a.ph && a.ph[0] ? '<span class="mfoto" style="background-image:url(\'' + esc(seguro(a.ph[0])) + '\')">' + (dest ? '<b class="mdest">Destacado</b>' : "") + "</span>" : "") +
+      '<span class="mtx"><b class="mprecio">' + precio(a) + porMes(a) + "</b>" +
+      (ex ? '<span class="mex">+ ' + esc(ex) + " de expensas</span>" : "") +
+      '<span class="mtit">' + esc(a.t) + "</span>" +
+      '<span class="mlug">' + esc([a.b && a.b !== a.c ? a.b : "", a.c].filter(Boolean).join(", ")) + "</span>" +
+      (a.op === "alquiler" && a.g ? '<span class="mlug">Garantía: ' + esc(a.g) + "</span>" : "") +
+      '<span class="mver">Ver aviso →</span></span></a>';
+  }
+  function pintarMapa(ajustar) {
+    if (!mapa) return;
+    if (capa) mapa.removeLayer(capa);
+    capa = L.markerClusterGroup({ maxClusterRadius: 48, showCoverageOnHover: false, spiderfyOnMaxZoom: true,
+      iconCreateFunction: function (c) { return L.divIcon({ className: "mgrupo", html: "<span>" + c.getChildCount() + "</span>", iconSize: [44, 44] }); } });
+    var lista = DATA.filter(function (a) { return a.lat && a.lng && (!mOp || a.op === mOp) && (!mCiudad || a.c === mCiudad); });
+    lista.sort(function (x, y) { return destacado(x) - destacado(y); });
+    lista.forEach(function (a) {
+      var cls = destacado(a) ? "dest" : a.op === "venta" ? "venta" : "alq";
+      var m = L.marker([a.lat, a.lng], { icon: L.divIcon({ className: "mpin", html: '<span class="' + cls + '">' + esc(corto(a)) + "</span>", iconSize: null }),
+        zIndexOffset: destacado(a) ? 1000 : 0, title: a.t });
+      m.bindPopup(tarjetaMapa(a), { maxWidth: 280, minWidth: 240, className: "mpop" });
+      capa.addLayer(m);
+    });
+    mapa.addLayer(capa);
+    if (ajustar && lista.length) mapa.fitBounds(L.latLngBounds(lista.map(function (a) { return [a.lat, a.lng]; })).pad(0.08), { maxZoom: 14 });
+    var msg = document.getElementById("mMsg");
+    if (msg) { msg.hidden = !!lista.length; msg.textContent = "Todavía no hay avisos con ubicación para este filtro."; }
+  }
+  function prepararMapa() {
+    var sec = document.getElementById("mapaSec"); if (!sec) return;
+    mapa = null; capa = null; yo = null;
+    function iniciar() {
+      cargarMapaLib(function () {
+        if (!document.getElementById("mapa") || mapa) return;
+        mapa = L.map("mapa", { scrollWheelZoom: false, zoomControl: true }).setView([-25.3, -57.6], 11);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap" }).addTo(mapa);
+        mapa.on("click focus", function () { mapa.scrollWheelZoom.enable(); });
+        mapa.on("mouseout", function () { mapa.scrollWheelZoom.disable(); });
+        pintarMapa(true);
+      });
+    }
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (e) { if (e[0].isIntersecting) { io.disconnect(); iniciar(); } }, { rootMargin: "300px" });
+      io.observe(sec);
+    } else iniciar();
+    sec.querySelectorAll("[data-mop]").forEach(function (b) {
+      b.onclick = function () { mOp = b.dataset.mop; sec.querySelectorAll("[data-mop]").forEach(function (x) { x.setAttribute("aria-pressed", x === b); }); pintarMapa(true); };
+    });
+    document.getElementById("mCiudad").onchange = function (e) { mCiudad = e.target.value; pintarMapa(true); };
+    document.getElementById("mCerca").onclick = function () {
+      var msg = document.getElementById("mMsg"), btn = this;
+      if (!navigator.geolocation) { msg.hidden = false; msg.textContent = "Tu navegador no comparte la ubicación."; return; }
+      btn.disabled = true; btn.classList.add("cargando");
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        btn.disabled = false; btn.classList.remove("cargando");
+        if (!mapa) return;
+        var ll = [pos.coords.latitude, pos.coords.longitude];
+        if (yo) mapa.removeLayer(yo);
+        yo = L.circleMarker(ll, { radius: 9, color: "#fff", weight: 3, fillColor: "#1F4FE0", fillOpacity: 1 }).addTo(mapa);
+        if (mCiudad) { mCiudad = ""; document.getElementById("mCiudad").value = ""; pintarMapa(false); }
+        mapa.setView(ll, 14);
+      }, function () {
+        btn.disabled = false; btn.classList.remove("cargando");
+        msg.hidden = false; msg.textContent = "No pudimos ver tu ubicación. Revisá el permiso en tu navegador o elegí una ciudad.";
+        setTimeout(function () { msg.hidden = true; }, 5000);
+      }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+    };
+    var caja = document.getElementById("mapaCaja");
+    function salir(e) { if (e.key === "Escape") alternar(false); }
+    function alternar(on) {
+      caja.classList.toggle("full", on); document.body.classList.toggle("sin-scroll", on);
+      document.getElementById("mFull").setAttribute("aria-label", on ? "Salir de pantalla completa" : "Pantalla completa");
+      if (on) document.addEventListener("keydown", salir); else document.removeEventListener("keydown", salir);
+      if (mapa) setTimeout(function () { mapa.invalidateSize(); }, 60);
+    }
+    document.getElementById("mFull").onclick = function () { alternar(!caja.classList.contains("full")); };
   }
 
   var mostrados = 24;
@@ -285,6 +399,18 @@
     var m = document.getElementById("mas"); if (m) m.onclick = function () { mostrados += 24; buscar(f); };
   }
 
+  /* cuenta visitas y clics de contacto por aviso (privado, solo se puede sumar) */
+  var SUPA = "https://kjfsbcwedkofuxdybstq.supabase.co", SUPA_PUB = "sb_publishable_ZwjLEoR4XU46N71mNqyHCg_eLkcDURO";
+  function sumarVisita(id, tipo) {
+    var k = "dv:" + tipo + ":" + id;
+    try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); } catch (e) {}
+    try {
+      fetch(SUPA + "/rest/v1/rpc/sumar_visita", { method: "POST", keepalive: true,
+        headers: { apikey: SUPA_PUB, "Content-Type": "application/json" },
+        body: JSON.stringify({ p_id: id, p_tipo: tipo }) }).catch(function () {});
+    } catch (e) {}
+  }
+
   function ficha(id) {
     var a = DATA.find(function (x) { return x.id === id; });
     if (!a) { $app.innerHTML = '<div class="vacio"><b>Este aviso ya no está disponible.</b><br>Puede que se haya alquilado o vendido. <a href="#/">Volver a buscar</a></div>'; return; }
@@ -311,6 +437,8 @@
       '<div class="bloque"><h2>Ubicación</h2>' + mapa + "</div>" +
       (a.d ? '<div class="bloque"><h2>Lo que dice el aviso</h2><p class="desc">' + esc(limpio(a.d)) + "</p></div>" : "") +
       '<div class="bloque"><p style="font-size:13px">' + (a.f === "dondevivo" ? "Publicado directamente en DóndeVivo por su anunciante." : "Aviso de " + esc(fu) + ". DóndeVivo lo encontró y lo revisa todos los días.") + "</p></div></div></div>";
+    sumarVisita(a.id, "vista");
+    var ir = document.getElementById("ir"); if (ir) ir.addEventListener("click", function () { sumarVisita(a.id, "contacto"); });
     $app.querySelectorAll(".miniaturas button").forEach(function (b) {
       b.onclick = function () { document.getElementById("gr").style.backgroundImage = "url('" + b.dataset.u + "')"; $app.querySelectorAll(".miniaturas button").forEach(function (x) { x.setAttribute("aria-current", x === b); }); };
     });
@@ -318,6 +446,7 @@
   }
 
   function ruta() {
+    document.body.classList.remove("sin-scroll");
     var h = location.hash.replace(/^#/, "") || "/";
     if (h.indexOf("/aviso/") === 0) return ficha(decodeURIComponent(h.slice(7)));
     if (h.indexOf("/buscar") === 0) {

@@ -131,3 +131,44 @@ h1 .ac{color:var(--ac)}
 /* destacados */
 .tarjeta.dest{box-shadow:0 0 0 3px var(--ac),0 10px 30px rgba(16,24,40,.12)}
 .foto .tag.destacado{left:auto;right:10px;background:var(--ac);color:#fff}
+
+/* mapa con precios */
+.sr{position:absolute;left:-9999px}
+.mapa-cab{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 20px;margin-bottom:16px}
+.mapa-cab h2{margin:0}
+.mapa-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mapa-ctrl .seg{display:flex;background:#fff;border-radius:14px;padding:4px;gap:2px}
+.mapa-ctrl .seg button{border:0;background:transparent;font:inherit;font-weight:800;font-size:14px;padding:0 14px;min-height:38px;border-radius:10px;cursor:pointer;color:var(--gris)}
+.mapa-ctrl .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.mapa-ctrl select{min-height:46px;border:0;border-radius:14px;padding:0 14px;font:inherit;font-weight:700;font-size:14px;background:#fff;color:var(--ink);max-width:200px}
+.cerca{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 16px;border:0;border-radius:14px;background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:14px;cursor:pointer}
+.cerca.cargando{opacity:.6}
+.mapa-caja{position:relative;border-radius:28px;overflow:hidden;background:#E4E7EC;height:520px}
+.mapa-caja #mapa{position:absolute;inset:0}
+.mapa-caja.full{position:fixed;inset:0;z-index:1000;border-radius:0;height:auto}
+body.sin-scroll{overflow:hidden}
+.mfull{position:absolute;top:12px;right:12px;z-index:500;width:44px;height:44px;border:0;border-radius:12px;background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(16,24,40,.18)}
+.mmsg{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:500;background:var(--ink);color:#fff;font-weight:700;font-size:14px;padding:10px 16px;border-radius:12px;max-width:90%;text-align:center}
+.mpin{background:none;border:0}
+.mpin span{display:inline-block;transform:translate(-50%,-100%);white-space:nowrap;font-weight:800;font-size:13px;padding:6px 10px;border-radius:10px;color:#fff;box-shadow:0 2px 8px rgba(16,24,40,.25);position:relative}
+.mpin span::after{content:"";position:absolute;left:50%;bottom:-5px;margin-left:-5px;border:5px solid transparent;border-bottom:0;border-top-color:inherit}
+.mpin .alq{background:var(--azul);border-color:var(--azul)}
+.mpin .venta{background:var(--verde);border-color:var(--verde)}
+.mpin .dest{background:#F5B700;border-color:#F5B700;color:var(--ink)}
+.mpin span:hover{filter:brightness(1.08)}
+.mpin span::after{border-top-color:currentColor}
+.mpin .alq::after{border-top-color:var(--azul)}.mpin .venta::after{border-top-color:var(--verde)}.mpin .dest::after{border-top-color:#F5B700}
+.mgrupo{background:none}
+.mgrupo span{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:999px;background:var(--ink);color:#fff;font-weight:800;font-size:15px;border:4px solid rgba(255,255,255,.85);box-sizing:border-box;box-shadow:0 2px 10px rgba(16,24,40,.25)}
+.mpop .leaflet-popup-content-wrapper{border-radius:18px;padding:0;overflow:hidden}
+.mpop .leaflet-popup-content{margin:0;width:260px!important}
+.mtarj{display:flex;flex-direction:column;text-decoration:none;color:var(--ink);font-family:'Manrope',system-ui,sans-serif}
+.mfoto{position:relative;display:block;height:140px;background:#D9E0EC center/cover no-repeat}
+.mdest{position:absolute;top:10px;left:10px;background:#F5B700;color:var(--ink);font-size:12px;font-weight:800;padding:4px 9px;border-radius:999px}
+.mtx{display:flex;flex-direction:column;gap:3px;padding:12px 14px 14px}
+.mprecio{font-size:18px;font-weight:800}.mprecio small{font-size:12px;color:var(--gris)}
+.mex{font-size:13px;font-weight:700;color:#B54708}
+.mtit{font-size:14px;font-weight:700;line-height:1.3}
+.mlug{font-size:13px;color:var(--gris)}
+.mver{margin-top:6px;font-size:14px;font-weight:800;color:var(--ac)}
+@media (max-width:640px){.mapa-caja{height:440px;border-radius:22px}.mapa-ctrl select{max-width:150px}}

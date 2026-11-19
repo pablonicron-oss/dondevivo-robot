@@ -64,7 +64,7 @@ input,select,textarea{font:inherit}
 <label for="pmail" style="font-size: 14px; font-weight: 700">Correo</label>
 <input id="pmail" value="{{campos.email}}" onInput="{{inp.email}}" type="email" placeholder="vos@correo.com" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
 </div>
-<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; color: #475467; cursor: pointer"><input id="pinf" type="checkbox" checked onChange="{{inp.inf}}" style="width: 20px; height: 20px; margin: 0; flex: none; accent-color: #1F4FE0">Quiero recibir el informe mensual de mis avisos y novedades. Podés darte de baja cuando quieras.</label>
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; color: #475467; cursor: pointer"><input id="pinf" type="checkbox" data-on="{{infOn}}" onChange="{{inp.inf}}" style="width: 20px; height: 20px; margin: 0; flex: none; accent-color: #1F4FE0">Acepto recibir por correo y WhatsApp la confirmación de mi aviso, el informe de visitas y novedades de DóndeVivo. Me puedo dar de baja cuando quiera.</label>
 </div>
 </sc-if>
 
@@ -301,8 +301,8 @@ input,select,textarea{font:inherit}
 <div class="in" style="display: flex; flex-direction: column; gap: 24px">
 <div style="display: flex; flex-direction: column; gap: 10px">
 <div style="width: 64px; height: 64px; border-radius: 999px; background: #D1FADF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0B7A5E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></div>
-<h2 style="margin: 0; font-size: clamp(28px, 3.2vw, 40px); letter-spacing: -0.035em; font-weight: 800">¡Listo! Tu inmueble está en revisión</h2>
-<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #475467; max-width: 560px">Lo revisamos en menos de 24 horas y te mandamos un correo apenas esté publicado.</p>
+<h2 style="margin: 0; font-size: clamp(28px, 3.2vw, 40px); letter-spacing: -0.035em; font-weight: 800">{{s9Title}}</h2>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #475467; max-width: 560px">{{s9Text}}</p>
 </div>
 <div style="border-radius: 26px; background: #101828; color: #FFFFFF; padding: 26px; display: flex; flex-direction: column; gap: 18px">
 <div style="display: flex; flex-direction: column; gap: 6px">
@@ -334,6 +334,14 @@ input,select,textarea{font:inherit}
 <div style="display: flex; flex-direction: column; gap: 8px">
 <h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">Transferí {{payAmount}}</h2>
 <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #475467">Plan de {{payDays}}. Hacé la transferencia desde tu banco y subí el comprobante acá mismo.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="pcup" style="font-size: 14px; font-weight: 700">¿Tenés un código de descuento?</label>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<input id="pcup" value="{{cupTxt}}" onInput="{{cupInput}}" type="text" placeholder="Ej. CASA241" autocomplete="off" style="flex: 1 1 180px; min-height: 50px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; text-transform: uppercase; color: #101828">
+<button onClick="{{applyCup}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 15px; min-height: 50px; padding: 0 20px; border-radius: 14px; border: 2px solid #101828; background: #FFFFFF; color: #101828">Aplicar</button>
+</div>
+<sc-if value="{{cupMsg}}"><span style="font-size: 14px; font-weight: 700; color: {{cupColor}}">{{cupMsg}}</span></sc-if>
 </div>
 <div style="border-radius: 20px; border: 2px solid #EAECF0; padding: 20px; display: grid; grid-template-columns: max-content 1fr; gap: 10px 18px; font-size: 16px">
 <span style="color: #667085">Titular</span><b>{{bank.titular}}</b>
@@ -386,6 +394,11 @@ input,select,textarea{font:inherit}
 <script>
 class Component extends DCLogic {
 renderVals() {
+if (!this.__ini) {   // si viene desde Mi aviso para destacar o renovar, va directo a los planes
+  this.__ini = true;
+  var qd = new URLSearchParams(location.search).get('destacar');
+  if (qd) { this.state = Object.assign({}, this.state || {}, { step: 9, avisoId: qd, renovar: true }); }
+}
 var st = this.state || {}, step = st.step || 0;
 var set = (o) => this.setState(o);
 var rent = (st.op || 'rent') === 'rent';
@@ -464,11 +477,13 @@ var gsTxt = (n) => 'Gs. ' + fmt(n);
 var plans = DIAS.map((d, i) => { var pr = precioPlan(d); return { days: d + ' días', reach: pr ? gsTxt(pr) : 'Más visitas', price: pr ? 'Primero en las búsquedas' : 'Precio por WhatsApp', bd: planSel === i ? '#C8F250' : '#344054', bg: planSel === i ? '#1D2939' : 'transparent', pick: () => set({ plan: i }) }; });
 var diasSel = DIAS[planSel], precioSel = precioPlan(diasSel);
 var cuenta = CFG.cuenta || {};
+var cupOk = !!(st.cupon && st.cupDias === diasSel && st.cupMonto != null);
+var montoPagar = cupOk ? st.cupMonto : precioSel;
 var canPay = !!(CFG.endpoint && precioSel && cuenta.numero && st.avisoId);
 var campos = st.campos || {};
 var inp = {};
 ['email', 'barrio', 'direccion', 'whatsapp', 'descripcion', 'ia'].forEach((k) => { inp[k] = (e) => { this.state.campos = Object.assign({}, this.state.campos || {}, { [k]: e.target.value }); }; });
-inp.inf = (e) => { this.state.campos = Object.assign({}, this.state.campos || {}, { inf: e.target.checked }); };
+inp.inf = (e) => { set({ campos: Object.assign({}, this.state.campos || {}, { inf: e.target.checked }), navMsg: '' }); };
 var leerImagen = (file) => new Promise((ok) => {
   var r = new FileReader();
   r.onload = () => { var img = new Image(); img.onload = () => {
@@ -500,6 +515,21 @@ var post = async (body) => {
   var r = await fetch(CFG.endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
   return r.json();
 };
+var falta = (desde, hasta) => {   // primer dato que falta entre esos pasos
+  var c = this.state.campos || {}, n = (v) => String(v || '').trim().length;
+  var reglas = [
+    [0, !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email || ''), 'Escribí un correo válido para avisarte.'],
+    [0, c.inf !== true, 'Marcá la casilla para recibir la confirmación de tu aviso.'],
+    [2, n(c.barrio) < 3, 'Escribí el barrio.'],
+    [2, n(c.direccion) < 4, 'Escribí la dirección. Si querés, en la web mostramos solo la zona.'],
+    [5, !num, 'Escribí el precio.'],
+    [6, (this.state.fotos || []).length < 3, 'Sumá al menos 3 fotos.'],
+    [7, n(c.descripcion) < 20, 'Contá un poco más de tu inmueble en la descripción.'],
+    [7, String(c.whatsapp || '').replace(/\D/g, '').length < 9, 'Escribí tu WhatsApp para que te puedan contactar.']
+  ];
+  for (var i = 0; i < reglas.length; i++) if (reglas[i][0] >= desde && reglas[i][0] <= hasta && reglas[i][1]) return { step: reglas[i][0], msg: reglas[i][2] };
+  return null;
+};
 var flags = {};
 for (var i = 0; i < 12; i++) flags['s' + i] = step === i;
 return Object.assign(flags, {
@@ -514,10 +544,24 @@ badges: badges, priceShow: num ? money(num) + (rent ? ' por mes' : '') : 'Precio
 titleShow: tipo + (rent ? ' en alquiler' : ' en venta') + ' en ' + (campos.barrio ? campos.barrio + ', ' : '') + (st.city || 'Asunción'),
 setCity: (e) => set({ city: e.target.value }), cityVal: st.city || 'Asunción',
 firstLabel: fotos.length ? '' : 'Tu primera foto', firstBg: fotos.length ? 'center / cover no-repeat url(' + fotos[0].url + ')' : '#D9E0EC',
-campos: campos, inp: inp, gotPhotos: gotPhotos, photoMsg: st.photoMsg || '',
+campos: campos, inp: inp, infOn: (st.campos || {}).inf === true, gotPhotos: gotPhotos, photoMsg: st.photoMsg || '',
 navMsg: st.navMsg || '', sendMsg: st.sendMsg || '', sendLabel: st.sending ? 'Enviando...' : 'Enviar a revisión', sendOp: st.sending ? 0.6 : 1,
 canPay: canPay, goPay: () => set({ step: 10, payCode: st.payCode || ('DV-' + Math.floor(1000 + Math.random() * 9000)), payMsg: '' }),
-payAmount: precioSel ? gsTxt(precioSel) : '', payDays: diasSel + ' días', payCode: st.payCode || '', bank: cuenta,
+payAmount: montoPagar != null ? gsTxt(montoPagar) : '', payDays: diasSel + ' días',
+cupTxt: st.cupTxt || '', cupInput: (e) => { this.state.cupTxt = e.target.value; },
+cupMsg: st.cupMsg || '', cupColor: cupOk ? '#05603A' : '#B42318',
+applyCup: async () => {
+  var c = String(this.state.cupTxt || '').trim().toUpperCase();
+  if (!c) { set({ cupon: null, cupMonto: null, cupMsg: '' }); return; }
+  set({ cupMsg: 'Revisando el código…' });
+  try {
+    var r = await fetch(CFG.endpoint + '?accion=cupon&c=' + encodeURIComponent(c) + '&dias=' + diasSel).then((x) => x.json());
+    if (r.ok) set({ cupon: c, cupDias: diasSel, cupMonto: r.monto, cupTxt: c, cupMsg: 'Código aplicado. Pagás ' + gsTxt(r.monto) + ' en vez de ' + gsTxt(r.original) + '.' });
+    else set({ cupon: null, cupMonto: null, cupMsg: r.error || 'Ese código no sirve.' });
+  } catch (err) { set({ cupMsg: 'No pudimos revisar el código. Probá de nuevo.' }); }
+},
+s9Title: st.renovar ? 'Destacá tu aviso' : ('¡Listo! Tu inmueble está en revisión' + (st.numero ? ' (aviso #' + st.numero + ')' : '')),
+s9Text: st.renovar ? 'Elegí un plan y pagalo por transferencia. Apenas confirmemos el pago, tu aviso aparece primero en las búsquedas.' : 'Lo revisamos en menos de 24 horas y te mandamos un correo apenas esté publicado.', payCode: st.payCode || '', bank: cuenta,
 gotReceipt: gotReceipt, receiptName: st.receipt ? 'Adjuntaste ' + st.receipt.name : 'Todavía no adjuntaste el comprobante.',
 payMsg: st.payMsg || '', payLabel: st.paying ? 'Enviando...' : 'Enviar comprobante', payOp: st.paying ? 0.6 : 1,
 backPlans: () => set({ step: 9 }),
@@ -526,7 +570,7 @@ sendPay: async () => {
   if (!this.state.receipt) { set({ payMsg: 'Adjuntá el comprobante de la transferencia.' }); return; }
   set({ paying: true, payMsg: '' });
   try {
-    var r = await post({ tipo: 'pago', id: st.avisoId, dias: diasSel, codigo: st.payCode, comprobante: { data: this.state.receipt.data, mime: this.state.receipt.mime } });
+    var r = await post({ tipo: 'pago', id: st.avisoId, dias: diasSel, codigo: st.payCode, cupon: cupOk ? st.cupon : null, comprobante: { data: this.state.receipt.data, mime: this.state.receipt.mime } });
     if (r && r.ok) set({ paying: false, step: 11, payCode: r.codigo || st.payCode });
     else set({ paying: false, payMsg: (r && r.error) || 'No pudimos enviarlo. Probá de nuevo.' });
   } catch (err) { set({ paying: false, payMsg: 'No pudimos enviarlo. Revisá tu conexión y probá de nuevo.' }); }
@@ -535,24 +579,23 @@ plans: plans,
 showNav: step < 9, showNext: step < 8, prevVis: step > 0 ? 'visible' : 'hidden',
 nextLabel: 'Siguiente',
 next: () => {
-  var c = this.state.campos || {}, msg = '';
-  if (step === 0 && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email || '')) msg = 'Escribí un correo válido para avisarte.';
-  if (step === 6 && (this.state.fotos || []).length < 3) msg = 'Sumá al menos 3 fotos.';
-  if (step === 7 && String(c.whatsapp || '').replace(/\D/g, '').length < 9) msg = 'Escribí tu WhatsApp para que te puedan contactar.';
-  if (msg) { set({ navMsg: msg }); return; }
+  var f = falta(step, step);
+  if (f) { set({ navMsg: f.msg }); return; }
   set({ step: Math.min(8, step + 1), navMsg: '' }); window.scrollTo(0, 0);
 },
 prev: () => { set({ step: Math.max(0, step - 1), navMsg: '' }); window.scrollTo(0, 0); },
 send: async () => {
   if (this.state.sending) return;
   if (!CFG.endpoint) { set({ sendMsg: 'Estamos terminando de conectar la publicación. Probá de nuevo en un rato.' }); return; }
+  var f = falta(0, 7);
+  if (f) { set({ step: f.step, navMsg: f.msg, sendMsg: '' }); window.scrollTo(0, 0); return; }
   var c = this.state.campos || {}, city = st.city || 'Asunción';
   var si = qlist.filter((q) => q[0] !== 'mascotas' && ans[q[0]] === 'si').map((q) => q[0]);
   var desc = (c.descripcion || '').trim() || (tipo + (rent ? ' en alquiler' : ' en venta') + ' en ' + city + '. ' + cnt.hab + ' habitaciones, ' + cnt.bano + ' baños, ' + cnt.m2 + ' m².');
   set({ sending: true, sendMsg: '' });
   try {
     var r = await post({
-      tipo: 'aviso', web: '', email: c.email, informe: c.inf !== false, whatsapp: c.whatsapp,
+      tipo: 'aviso', web: '', email: c.email, informe: c.inf === true, whatsapp: c.whatsapp,
       operacion: rent ? 'alquiler' : 'venta', tipo_inmueble: TIPO[tipo] || 'otro', quien: st.quien || 'Soy el dueño',
       ciudad: city, barrio: c.barrio || null, direccion: c.direccion || null, ubic: st.ubic || 'Solo la zona aproximada',
       region: REGION[city] || (CENTRAL.indexOf(city) >= 0 ? 'central' : 'resto'),
@@ -564,7 +607,7 @@ send: async () => {
       extras: { cocheras: cnt.coch, mascotas_tipo: ans.mascotas === 'si' ? (st.pets || 'Perros y gatos') : null, respuestas: ans },
       fotos: (this.state.fotos || []).map((f) => ({ data: f.data, mime: f.mime }))
     });
-    if (r && r.ok) { set({ sending: false, step: 9, avisoId: r.id }); window.scrollTo(0, 0); }
+    if (r && r.ok) { set({ sending: false, step: 9, avisoId: r.id, numero: r.numero || null }); window.scrollTo(0, 0); }
     else set({ sending: false, sendMsg: (r && r.error) || 'No pudimos enviarlo. Probá de nuevo.' });
   } catch (err) { set({ sending: false, sendMsg: 'No pudimos enviarlo. Revisá tu conexión y probá de nuevo.' }); }
 }

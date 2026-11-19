@@ -13,6 +13,12 @@
       "Tengo 2 hijos, cerca de un buen colegio privado", "Dúplex con quincho y lugar para pileta", "Una casa quinta cerca de un arroyo",
       "Terreno con salida al lago en Areguá", "Casa en Encarnación cerca de la costanera"]
   };
+  var PH = {   /* ejemplos cortos para el buscador, entran enteros */
+    alquiler: ["Depto con patio en Luque", "Monoambiente amoblado", "Casa que acepte perros", "Dos dormitorios en Asunción",
+      "Depto cerca de la facu", "Sin garantía en San Lorenzo", "Depto con balcón y cochera"],
+    venta: ["Casa con patio en Luque", "Terreno en San Lorenzo", "Depto en pozo para invertir", "Dúplex con quincho",
+      "Casa quinta en Areguá", "Casa en Encarnación"]
+  };
   var estado = { op: "alquiler" };
   /* ciudades del país, para entender la búsqueda aunque todavía no tengamos avisos ahí */
   var PY = ["Asunción", "San Lorenzo", "Luque", "Lambaré", "Fernando de la Mora", "Mariano Roque Alonso", "Capiatá", "Ñemby", "Limpio",
@@ -168,7 +174,7 @@
   var FIJO = {};
   function ejemploFijo() {
     var op = estado.op;
-    if (!FIJO[op]) { var l = EJ[op]; FIJO[op] = l[Math.floor(Math.random() * l.length)]; }
+    if (!FIJO[op]) { var l = PH[op]; FIJO[op] = l[Math.floor(Math.random() * l.length)]; }
     return FIJO[op];
   }
 

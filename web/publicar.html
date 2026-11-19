@@ -321,7 +321,6 @@ input,select,textarea{font:inherit}
 <span style="font-size: 14px; color: #D0D5DD">Pagás por transferencia y lo activamos al toque.</span>
 <div style="display: flex; flex-wrap: wrap; gap: 10px">
 <a href="./" style="text-decoration: none; font-weight: 800; font-size: 15px; color: #FFFFFF; padding: 15px 18px; border-radius: 14px">Ahora no</a>
-<a href="{{waLink}}" target="_blank" rel="noopener" style="text-decoration: none; font-weight: 800; font-size: 15px; color: #FFFFFF; border: 2px solid #475467; padding: 13px 20px; border-radius: 14px">Destacar por WhatsApp</a>
 <sc-if value="{{canPay}}"><button onClick="{{goPay}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 15px; background: #FFFFFF; color: #101828; padding: 15px 22px; border-radius: 14px; border: 0">Pagar por transferencia</button></sc-if>
 </div>
 </div>
@@ -465,7 +464,6 @@ var plans = DIAS.map((d, i) => { var pr = precioPlan(d); return { days: d + ' d�
 var diasSel = DIAS[planSel], precioSel = precioPlan(diasSel);
 var cuenta = CFG.cuenta || {};
 var canPay = !!(CFG.endpoint && precioSel && cuenta.numero && st.avisoId);
-var waLink = 'https://wa.me/' + (CFG.whatsapp || '595983458755') + '?text=' + encodeURIComponent('Hola, quiero destacar mi inmueble en DóndeVivo por ' + diasSel + ' días' + (st.avisoId ? ' (aviso ' + st.avisoId + ')' : '') + '.');
 var campos = st.campos || {};
 var inp = {};
 ['email', 'barrio', 'direccion', 'whatsapp', 'descripcion', 'ia'].forEach((k) => { inp[k] = (e) => { this.state.campos = Object.assign({}, this.state.campos || {}, { [k]: e.target.value }); }; });
@@ -517,7 +515,7 @@ setCity: (e) => set({ city: e.target.value }), cityVal: st.city || 'Asunción',
 firstLabel: fotos.length ? '' : 'Tu primera foto', firstBg: fotos.length ? 'center / cover no-repeat url(' + fotos[0].url + ')' : '#D9E0EC',
 campos: campos, inp: inp, gotPhotos: gotPhotos, photoMsg: st.photoMsg || '',
 navMsg: st.navMsg || '', sendMsg: st.sendMsg || '', sendLabel: st.sending ? 'Enviando...' : 'Enviar a revisión', sendOp: st.sending ? 0.6 : 1,
-waLink: waLink, canPay: canPay, goPay: () => set({ step: 10, payCode: st.payCode || ('DV-' + Math.floor(1000 + Math.random() * 9000)), payMsg: '' }),
+canPay: canPay, goPay: () => set({ step: 10, payCode: st.payCode || ('DV-' + Math.floor(1000 + Math.random() * 9000)), payMsg: '' }),
 payAmount: precioSel ? gsTxt(precioSel) : '', payDays: diasSel + ' días', payCode: st.payCode || '', bank: cuenta,
 gotReceipt: gotReceipt, receiptName: st.receipt ? 'Adjuntaste ' + st.receipt.name : 'Todavía no adjuntaste el comprobante.',
 payMsg: st.payMsg || '', payLabel: st.paying ? 'Enviando...' : 'Enviar comprobante', payOp: st.paying ? 0.6 : 1,

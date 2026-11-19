@@ -3,7 +3,7 @@
  *
  * Corre en la cuenta de Google de Augusto (Apps Script, gratis):
  *  - recibe desde la web cada aviso nuevo de Publicá y cada comprobante de pago,
- *  - guarda fotos en Supabase y comprobantes en Google Drive (privados),
+ *  - guarda fotos y comprobantes en Supabase (los comprobantes en una carpeta privada),
  *  - le pide a Gemini que revise fotos, texto y comprobante,
  *  - manda un correo a Augusto con todo y botones para aprobar, confirmar o rechazar,
  *  - al confirmar, publica el aviso y lo destaca por los días del plan.
@@ -81,37 +81,41 @@ function subirFoto(ruta, base64, mime) {
 
 /* ---------------- Gemini ---------------- */
 
-function modeloGemini() {
-  var c = CacheService.getScriptCache(), m = c.get('modelo');
-  if (m) return m;
+function modelosGemini() {
+  var c = CacheService.getScriptCache(), m = c.get('modelos');
+  if (m) return JSON.parse(m);
   var r = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',
     { headers: { 'x-goog-api-key': prop('GEMINI_API_KEY') }, muteHttpExceptions: true });
   var lista = (JSON.parse(r.getContentText()).models || []).filter(function (x) {
     return (x.supportedGenerationMethods || []).indexOf('generateContent') >= 0 && /gemini/.test(x.name) &&
-      !/(preview|exp|tts|image|live|embedding)/.test(x.name);
+      !/(preview|exp|tts|image|live|embedding|omni|pro)/.test(x.name);
   }).map(function (x) { return x.name.split('/').pop(); });
-  lista.sort(function (a, b) {
-    var p = function (n) { return /flash-lite/.test(n) ? 1 : /flash/.test(n) ? 0 : 2; };
+  lista.sort(function (a, b) {   // primero los flash estables y conocidos, que tienen cupo gratis
+    var p = function (n) { return /latest/.test(n) ? 0 : /^gemini-\d+(\.\d+)?-flash$/.test(n) ? 1 : /flash-lite/.test(n) ? 3 : 2; };
     return p(a) - p(b) || (b > a ? 1 : -1);
   });
-  m = lista[0] || 'gemini-flash-latest';
-  c.put('modelo', m, 21600);
-  return m;
+  if (lista.indexOf('gemini-flash-latest') < 0) lista.unshift('gemini-flash-latest');
+  c.put('modelos', JSON.stringify(lista.slice(0, 8)), 21600);
+  return lista.slice(0, 8);
 }
 
 function gemini(partes) {
   var cuerpo = { contents: [{ parts: partes }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } };
-  for (var i = 0; i < 4; i++) {
-    var r = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modeloGemini() + ':generateContent', {
+  var c = CacheService.getScriptCache(), bueno = c.get('modelo');
+  var lista = modelosGemini().slice();
+  if (bueno) lista.unshift(bueno);
+  for (var i = 0; i < lista.length && i < 6; i++) {
+    var r = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + lista[i] + ':generateContent', {
       method: 'post', contentType: 'application/json', muteHttpExceptions: true,
       headers: { 'x-goog-api-key': prop('GEMINI_API_KEY') }, payload: JSON.stringify(cuerpo)
     });
-    if (r.getResponseCode() < 300) {
+    var code = r.getResponseCode();
+    if (code < 300) {
+      c.put('modelo', lista[i], 21600);
       var d = JSON.parse(r.getContentText());
       return JSON.parse(d.candidates[0].content.parts[0].text);
     }
-    if (r.getResponseCode() === 404) CacheService.getScriptCache().remove('modelo');
-    Utilities.sleep([3000, 10000, 20000, 1][i]);
+    if (code >= 500) Utilities.sleep(4000);     // si el problema es del servidor, espera y sigue con otro
   }
   return null;
 }
@@ -216,21 +220,25 @@ function recibirPago(d) {
   if ((sb('get', 'pedidos?codigo=eq.' + codigo + '&select=codigo') || []).length) codigo += '-' + Math.floor(Math.random() * 90 + 10);
 
   var mime = d.comprobante.mime || 'application/pdf';
-  var carpeta = carpetaComprobantes();
-  var archivo = carpeta.createFile(Utilities.newBlob(Utilities.base64Decode(d.comprobante.data), mime,
-    codigo + '-' + d.id.replace(':', '-') + '.' + (mime.indexOf('pdf') >= 0 ? 'pdf' : mime.indexOf('png') >= 0 ? 'png' : 'jpg')));
+  var ext = mime.indexOf('pdf') >= 0 ? 'pdf' : mime.indexOf('png') >= 0 ? 'png' : 'jpg';
+  var nombre = codigo + '-' + d.id.replace(':', '-') + '.' + ext;
+  var archivo = Utilities.newBlob(Utilities.base64Decode(d.comprobante.data), mime, nombre);
+  var ruta = guardarComprobante(nombre, archivo);
 
   var lectura = leerComprobante(d.comprobante.data, mime, monto, codigo);
   var codigoPedido = codigo;
   sb('post', 'pedidos', { codigo: codigoPedido, aviso_id: d.id, plan_dias: dias, monto: monto,
-                          estado: 'pendiente', lectura: lectura, comprobante_url: archivo.getUrl() });
+                          estado: 'pendiente', lectura: lectura, comprobante_url: ruta });
   correoPago(aviso, propio, { codigo: codigoPedido, dias: dias, monto: monto }, lectura, archivo);
   return { ok: true, codigo: codigoPedido };
 }
 
-function carpetaComprobantes() {
-  var nombre = 'DóndeVivo · comprobantes', it = DriveApp.getFoldersByName(nombre);
-  return it.hasNext() ? it.next() : DriveApp.createFolder(nombre);
+function guardarComprobante(nombre, blob) {   // carpeta privada en Supabase (no ocupa tu Drive)
+  var r = UrlFetchApp.fetch(prop('SUPABASE_URL') + '/storage/v1/object/comprobantes/' + nombre, {
+    method: 'post', muteHttpExceptions: true, contentType: blob.getContentType(),
+    headers: { Authorization: 'Bearer ' + prop('SUPABASE_SERVICE_KEY'), 'x-upsert': 'true' }, payload: blob.getBytes()
+  });
+  return r.getResponseCode() < 300 ? 'comprobantes/' + nombre : null;
 }
 
 /* ---------------- correos ---------------- */
@@ -291,7 +299,7 @@ function correoPago(aviso, propio, pedido, lectura, archivo) {
   MailApp.sendEmail({
     to: Session.getEffectiveUser().getEmail(),
     subject: '💰 Sumaste una venta de ' + (pedido.monto ? gs(pedido.monto) : 'un destacado') + ' en DóndeVivo',
-    htmlBody: html, attachments: [archivo.getBlob()]
+    htmlBody: html, attachments: [archivo]
   });
 }
 
@@ -373,6 +381,6 @@ function ejecutar(accion, id, t) {
 /* Correr una vez a mano para dar permisos y crear el secreto. */
 function configurar() {
   secreto();
-  carpetaComprobantes();
+
   Logger.log('Listo. URL de la web app: ' + urlScript());
 }

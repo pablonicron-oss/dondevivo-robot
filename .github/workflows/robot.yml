@@ -2,8 +2,10 @@ name: Robot DóndeVivo
 
 on:
   schedule:
-    - cron: "37 5 * * *"    # todos los días a las 02:37 de Paraguay (fuera de la hora pico de GitHub)
-    - cron: "37 17 * * *"   # y a las 14:37 de Paraguay
+    - cron: "37 5 * * *"    # 02:37 de Paraguay (fuera de la hora pico de GitHub)
+    - cron: "37 11 * * *"   # 08:37 de Paraguay
+    - cron: "37 17 * * *"   # 14:37 de Paraguay
+    - cron: "37 23 * * *"   # 20:37 de Paraguay
   workflow_dispatch:         # botón para correrlo a mano
 
 concurrency:

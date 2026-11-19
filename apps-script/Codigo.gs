@@ -127,8 +127,8 @@ function modelosGemini() {
   return lista.slice(0, 8);
 }
 
-function gemini(partes) {
-  var cuerpo = { contents: [{ parts: partes }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } };
+function gemini(partes, temp) {
+  var cuerpo = { contents: [{ parts: partes }], generationConfig: { responseMimeType: 'application/json', temperature: temp || 0 } };
   var c = CacheService.getScriptCache(), bueno = c.get('modelo');
   var lista = modelosGemini().slice();
   if (bueno) lista.unshift(bueno);
@@ -193,6 +193,8 @@ function doPost(e) {
     if (d.tipo === 'pago') return json(recibirPago(d));
     if (d.tipo === 'mi') return json(accionMiAviso(d));
     if (d.tipo === 'link') return json(reenviarLinks(d));
+    if (d.tipo === 'admin_redactar') return json(adminRedactar(d));
+    if (d.tipo === 'admin_enviar') return json(adminEnviar(d));
     return json({ ok: false, error: 'pedido desconocido' });
   } catch (err) {
     MailApp.sendEmail(Session.getEffectiveUser().getEmail(), 'DóndeVivo · error al recibir un envío', String(err && err.stack || err));
@@ -207,6 +209,7 @@ function limitar(clave, max) {
 }
 
 function recibirAviso(d) {
+  if (String(d.nombre || '').trim().length < 2) return { ok: false, error: 'Escribí tu nombre.' };
   if (!d.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) return { ok: false, error: 'Revisá tu correo.' };
   if (!d.whatsapp || String(d.whatsapp).replace(/\D/g, '').length < 9) return { ok: false, error: 'Revisá tu WhatsApp.' };
   if (!d.fotos || d.fotos.length < 3) return { ok: false, error: 'Sumá al menos 3 fotos.' };
@@ -235,7 +238,7 @@ function recibirAviso(d) {
   };
   sb('post', 'avisos', aviso);
   var fila = sb('post', 'propios', { id: id, email: d.email.trim().toLowerCase(), whatsapp: wa, ia: d.ia || null, quien: d.quien || null,
-                          direccion: d.direccion || null, ubic: d.ubic || null, extras: d.extras || {}, informe: true });
+                          direccion: d.direccion || null, ubic: d.ubic || null, extras: Object.assign({}, d.extras || {}, { nombre: String(d.nombre).trim().slice(0, 80) }), informe: true });
   var numero = (fila && fila[0] && fila[0].numero) || null;
 
   var rev = revisarAviso({ titulo: aviso.titulo, descripcion: aviso.descripcion, ia: d.ia }, d.fotos);
@@ -245,7 +248,7 @@ function recibirAviso(d) {
     MailApp.sendEmail({ to: d.email.trim(), name: 'DóndeVivo',
       subject: 'Recibimos tu aviso en DóndeVivo' + (numero ? ' · aviso #' + numero : ''),
       htmlBody: '<div style="font-family:Arial,sans-serif;color:#101828;font-size:16px;line-height:1.5;max-width:600px">' +
-        '<p>¡Gracias por publicar en DóndeVivo!</p>' +
+        '<p>¡Hola ' + esc(String(d.nombre).trim().split(' ')[0]) + ', gracias por publicar en DóndeVivo!</p>' +
         '<p>Tu aviso <b>' + esc(aviso.titulo) + '</b>' + (numero ? ' (#' + numero + ')' : '') + ' está pendiente de aprobación. Por lo general se aprueba en un par de horas.</p>' +
         '<p>Cuando esté aprobado te mandamos otro correo con tu panel, para que veas cuánta gente lo mira y lo puedas manejar.</p>' +
         '<p style="color:#667085;font-size:13px">DóndeVivo · todas las casas y deptos de Paraguay en un solo lugar</p></div>' });
@@ -344,7 +347,7 @@ function correoAviso(aviso, d, rev, imgs) {
     '<p style="font-size:16px">Llegó un aviso nuevo para publicar en DóndeVivo.</p>' + moderacionHtml(rev) +
     fichaHtml(aviso, d, imgs) + '<div style="margin:22px 0">' +
     boton('Aprobar y publicar', enlace('aprobar', aviso.id), '#0B7A5E') + boton('Rechazar', enlace('rechazar_aviso', aviso.id), '#B42318') +
-    '</div></div>';
+    boton('Abrir mi panel', adminLink(), '#1F4FE0') + '</div></div>';
   MailApp.sendEmail({ to: Session.getEffectiveUser().getEmail(), subject: '🏠 Nuevo aviso ' + (d.numero ? '#' + d.numero + ' ' : '') + 'para revisar en DóndeVivo, ' + aviso.titulo,
     htmlBody: html, inlineImages: inline(imgs) });
 }
@@ -361,7 +364,7 @@ function correoPago(aviso, propio, pedido, lectura, archivo) {
     '<p style="color:#667085">Antes de confirmar, fijate en tu banco que la plata haya entrado.</p>' +
     '<div style="margin:18px 0">' + boton('Confirmar pago', enlace('confirmar', pedido.codigo), '#0B7A5E') +
     boton('No recibí el pago', enlace('no_recibido', pedido.codigo), '#B42318') +
-    boton('Rechazar y reembolsar', enlace('reembolsar', pedido.codigo), '#475467') + '</div>' +
+    boton('Rechazar y reembolsar', enlace('reembolsar', pedido.codigo), '#475467') + boton('Abrir mi panel', adminLink(), '#1F4FE0') + '</div>' +
     '<p style="color:#667085;font-size:14px">Rechazar y reembolsar es para cuando la plata entró pero el aviso no sirve. El reembolso lo hacés vos desde tu cuenta, el correo solo le avisa.</p>' +
     (aviso.activo ? '' : '<p style="font-weight:700">Este aviso todavía no está publicado. Al confirmar el pago se publica y se destaca.</p>') +
     fichaHtml(aviso, { direccion: propio.direccion, ia: propio.ia, quien: propio.quien, email: propio.email, whatsapp: propio.whatsapp, numero: propio.numero }, imgs) +
@@ -581,6 +584,7 @@ function datosAdmin(t) {
     var a = porId[p.id] || {};
     return {
       id: p.id, numero: p.numero, email: p.email, whatsapp: p.whatsapp, creado: p.creado, informe: p.informe, baja: p.baja,
+      nombre: (p.extras || {}).nombre || '', correos: (p.extras || {}).correos || [], quien: p.quien,
       titulo: a.titulo, precio: a.precio, moneda: a.moneda, operacion: a.operacion, ciudad: a.ciudad, barrio: a.barrio,
       foto: (a.fotos || [])[0] || null, activo: a.activo, motivo: a.motivo_baja, destacado_hasta: a.destacado_hasta,
       vistas: (suma[p.id] || {}).vistas || 0, contactos: (suma[p.id] || {}).contactos || 0,
@@ -590,7 +594,65 @@ function datosAdmin(t) {
     };
   });
   pedidos.forEach(function (x) { x.numero = (props.filter(function (p) { return p.id === x.aviso_id; })[0] || {}).numero || null; });
-  return { ok: true, avisos: lista, pedidos: pedidos };
+  return { ok: true, avisos: lista, pedidos: pedidos, quedan: quedanCorreos() };
+}
+
+/* ---------------- correos a mano desde tu panel, redactados con IA ---------------- */
+
+function avisosDe(email) {
+  var e = String(email || '').trim().toLowerCase();
+  var props = sb('get', 'propios?email=eq.' + enc(e) + '&select=*&order=creado.asc') || [];
+  var ids = props.map(function (f) { return '"' + f.id + '"'; }).join(',');
+  var avisos = ids ? (sb('get', 'avisos?id=in.(' + ids + ')&select=id,titulo,precio,moneda,operacion,ciudad,barrio,fotos,activo,motivo_baja,destacado_hasta,descripcion') || []) : [];
+  return { props: props, avisos: avisos };
+}
+
+function adminRedactar(d) {
+  if (d.t !== firma('admin', 'augusto')) return { ok: false, error: 'Este link no es válido.' };
+  var x = avisosDe(d.email);
+  if (!x.props.length) return { ok: false, error: 'No encontré a esa persona.' };
+  var nombre = (x.props[0].extras || {}).nombre || '';
+  var porId = {}; x.avisos.forEach(function (a) { porId[a.id] = a; });
+  var resumen = x.props.map(function (p) {
+    var a = porId[p.id] || {}, v = sumar(visitasDe(p.id));
+    return '- Aviso #' + (p.numero || '') + ' ' + (a.titulo || '') + ' (' + (a.operacion || '') + ', ' + [a.barrio, a.ciudad].filter(Boolean).join(', ') + ')' +
+      ', ' + ((a.fotos || []).length) + ' fotos, ' + (v.vistas || 0) + ' visitas, ' + (v.contactos || 0) + ' contactos' +
+      ', estado ' + (a.activo ? 'publicado' : (a.motivo_baja || 'no visible')) +
+      (a.destacado_hasta && new Date(a.destacado_hasta) > new Date() ? ', destacado hasta ' + fecha(a.destacado_hasta) : ', sin destacar') +
+      '. Descripción: ' + String(a.descripcion || '').slice(0, 300);
+  }).join('\n');
+  var previo = d.borrador && d.borrador.cuerpo ? '\n\nBorrador anterior (corregilo según el pedido nuevo):\nAsunto: ' + d.borrador.asunto + '\n' + d.borrador.cuerpo : '';
+  var prompt = 'Sos Augusto, del equipo de DóndeVivo, un buscador de alquileres y ventas de Paraguay. Escribí un correo corto para un anunciante.\n' +
+    'Tono cercano y amable, voseo paraguayo (vos, tenés, podés), sin la palabra che, sin emojis, sin comillas y sin usar dos puntos en el texto. Frases cortas. No inventes datos ni precios que no estén acá. ' +
+    'No pongas firma ni despedida larga, terminá con Saludos, Augusto de DóndeVivo. No agregues links, el correo ya lleva un botón a su panel.\n\n' +
+    'Anunciante ' + (nombre || '(sin nombre)') + '\nSus avisos\n' + resumen + previo +
+    '\n\nLo que Augusto quiere decirle\n' + String(d.pedido || '').slice(0, 1500) +
+    '\n\nDevolvé JSON {"asunto": "...", "cuerpo": "..."} con el cuerpo en texto plano, párrafos separados por una línea en blanco.';
+  var r = gemini([{ text: prompt }], 0.6);
+  if (!r || !r.cuerpo) return { ok: false, error: 'La IA no respondió. Probá de nuevo en un minuto.' };
+  return { ok: true, asunto: String(r.asunto || '').slice(0, 150), cuerpo: String(r.cuerpo).slice(0, 5000) };
+}
+
+function adminEnviar(d) {
+  if (d.t !== firma('admin', 'augusto')) return { ok: false, error: 'Este link no es válido.' };
+  var x = avisosDe(d.email);
+  if (!x.props.length) return { ok: false, error: 'No encontré a esa persona.' };
+  if (x.props.every(function (p) { return p.baja; })) return { ok: false, error: 'Esta persona se dio de baja de los correos.' };
+  var asunto = String(d.asunto || '').trim(), cuerpo = String(d.cuerpo || '').trim();
+  if (!asunto || cuerpo.length < 10) return { ok: false, error: 'Falta el asunto o el texto.' };
+  if (quedanCorreos() < 3) return { ok: false, error: 'Por hoy se terminaron los correos de Google. Mañana se puede de nuevo.' };
+  var html = cuerpo.split(/\n\s*\n/).map(function (par) { return '<p>' + esc(par).replace(/\n/g, '<br>') + '</p>'; }).join('');
+  var p0 = x.props[x.props.length - 1];
+  MailApp.sendEmail({ to: p0.email, subject: asunto, name: 'DóndeVivo', replyTo: Session.getEffectiveUser().getEmail(),
+    htmlBody: '<div style="font-family:Arial,sans-serif;color:#101828;font-size:16px;line-height:1.5;max-width:600px">' + html +
+      '<p style="margin:26px 0 8px">' + boton('Ver mi panel', panelLink(p0.email), '#1F4FE0') + '</p>' +
+      '<p style="color:#667085;font-size:13px">DóndeVivo · todas las casas y deptos de Paraguay en un solo lugar<br>' +
+      'Si no querés recibir más estos correos, <a href="' + bajaLink(p0.id) + '" style="color:#667085">date de baja acá</a>.</p></div>' });
+  var ex = p0.extras || {}, lista = (ex.correos || []).slice(-29);
+  lista.push({ fecha: new Date().toISOString(), asunto: asunto, cuerpo: cuerpo.slice(0, 2000) });
+  ex.correos = lista;
+  sb('patch', 'propios?id=eq.' + enc(p0.id), { extras: ex });
+  return { ok: true, correos: lista };
 }
 
 /* ---------------- correos automáticos (corre cada hora) ---------------- */

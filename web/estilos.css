@@ -383,3 +383,20 @@ html.cargando body{overflow:hidden}
 .buscador:focus-within{box-shadow:none}
 @keyframes giro{to{--ang:360deg}}
 @media (prefers-reduced-motion:reduce){.buscador{animation:none}}
+
+/* solo celu: buscador del inicio sin desbordes y filtros en hoja inferior */
+@media (max-width:520px){.buscador>*{min-width:0}.bfila{width:100%;min-width:0;box-sizing:border-box}.enciudad{min-width:0;flex:1 1 100%;box-sizing:border-box}.enciudad select{min-width:0;width:100%}.buscador .btn{width:100%;box-sizing:border-box}}
+.abrir-fil,.fil-top,.fil-fondo{display:none}
+@media (max-width:860px){
+.abrir-fil{display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;border:1.5px solid #D0D5DD;background:#fff;color:var(--ink);font:inherit;font-weight:800;font-size:15px;min-height:44px;padding:0 18px;border-radius:999px;cursor:pointer}
+.abrir-fil b{background:var(--ac);color:#fff;border-radius:999px;min-width:22px;height:22px;display:inline-grid;place-items:center;font-size:12px;padding:0 6px;box-sizing:border-box}
+.res>.filtros{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:1000;max-height:86vh;overflow-y:auto;overscroll-behavior:contain;border-radius:24px 24px 0 0;padding:0 20px 20px;box-shadow:0 -12px 40px rgba(16,24,40,.25);transform:translateY(105%);visibility:hidden;transition:transform .28s ease,visibility 0s .28s}
+.res>.filtros.abierta{transform:none;visibility:visible;transition:transform .28s ease}
+.filtros .fil-top{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;padding:16px 0 8px;z-index:2;font-size:18px}
+.filtros .fil-top button{border:0;background:#F2F4F7;width:40px;height:40px;border-radius:999px;font-size:18px;cursor:pointer;color:var(--ink)}
+.filtros .aplicar{order:99;position:sticky;bottom:0;box-shadow:0 -10px 16px #fff,0 24px 0 #fff;margin-top:4px}
+.fil-fondo:not([hidden]){display:block;position:fixed;inset:0;background:rgba(16,24,40,.45);z-index:999}
+body.sin-scroll{overflow:hidden}
+.res>section{min-width:0}
+}
+@media (max-width:860px) and (prefers-reduced-motion:reduce){.res>.filtros{transition:none}}

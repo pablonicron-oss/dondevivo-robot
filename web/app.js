@@ -683,8 +683,10 @@
     var sinCiudad = f.ciudad && !DATA.some(function (a) { return enCiudad(a, f.ciudad); });
     var csCen = cs.filter(esCentral), csOtras = cs.filter(function (c) { return !esCentral(c); });
     function opt(v, t, sel) { return '<option value="' + esc(v) + '"' + (String(sel || "") === String(v) ? " selected" : "") + ">" + esc(t) + "</option>"; }
+    var nFil = ["ciudad", "barrio", "tipo", "min", "max", "masc", "con", "estado", "dor", "fuente", "cerca"].filter(function (k) { return f[k]; }).length;
     $app.innerHTML =
-      '<div class="res"><form class="filtros" id="ff" aria-label="Filtros">' +
+      '<div class="res"><div class="fil-fondo" id="filFondo" hidden></div><form class="filtros" id="ff" aria-label="Filtros">' +
+      '<div class="fil-top"><b>Filtros</b><button type="button" id="cerrarFil" aria-label="Cerrar filtros">✕</button></div>' +
       '<div class="toggle" role="group"><button type="button" data-op="alquiler" aria-pressed="' + (f.op !== "venta") + '">Alquilar</button><button type="button" data-op="venta" aria-pressed="' + (f.op === "venta") + '">Comprar</button></div>' +
       '<button class="btn aplicar" type="submit">Aplicar filtros</button>' +
       (f.cerca ? '<div class="cerca-de"><span>' + esc(cercaDe(f.cerca)) + '</span><button type="button" id="sinCerca" aria-label="Quitar">Quitar</button><input type="hidden" name="cerca" value="' + esc(f.cerca) + '"></div>' : "") +
@@ -700,6 +702,7 @@
       '<label>Página de origen<select name="fuente">' + opt("", "Todas", f.fuente) + Object.keys(FUENTES).map(function (k) { return opt(k, FUENTES[k], f.fuente); }).join("") + "</select></label>" +
       "</form>" +
       '<section><form class="rebusca" id="rb"><label for="rbq" class="sr">Tu búsqueda</label><input id="rbq" value="' + esc(f.txt || "") + '" placeholder="Describí lo que buscás, por ejemplo depto con patio en Luque" autocomplete="off"><button class="btn" type="submit">Buscar</button></form>' +
+      '<button type="button" class="abrir-fil" id="abrirFil" aria-controls="ff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtros' + (nFil ? ' <b>' + nFil + '</b>' : '') + '</button>' +
       '<div class="cabeza"><h1>' + lista.length.toLocaleString("es-PY") + (f.op === "venta" ? " en venta" : " en alquiler") + (f.ciudad ? " en " + esc(nomCiudad(f.ciudad)) : "") + (f.barrio ? ", " + esc(f.barrio) : "") + (f.cerca ? " c" + esc(cercaDe(f.cerca).slice(1)) : "") + '</h1><a class="volver" href="#/">← Nueva búsqueda</a></div>' +
       (lista.length ? '<div class="lista">' + lista.slice(0, mostrados).map(tarjeta).join("") + "</div>" + (lista.length > mostrados ? '<button class="mas" id="mas">Ver más</button>' : "")
         : '<div class="vacio">' + (sinCiudad ? "<b>Todavía no tenemos avisos en " + esc(f.ciudad) + ".</b><br>Sumamos avisos nuevos todos los días, volvé a mirar pronto."
@@ -708,7 +711,14 @@
     var ff = document.getElementById("ff");
     function aplicar() { var o = { op: f.op, txt: f.txt }; new FormData(ff).forEach(function (v, k) { o[k] = v; }); if ((o.ciudad || "") !== (f.ciudad || "") && o.barrio === (f.barrio || "")) o.barrio = ""; mostrados = 24; location.hash = "#/buscar?" + q(o); }
     ff.onsubmit = function (e) { e.preventDefault(); aplicar(); };
-    ff.querySelectorAll("select").forEach(function (s) { s.onchange = aplicar; });
+    /* en el celu los filtros van en una hoja que sube desde abajo y se aplican con el botón */
+    var celu = window.matchMedia("(max-width:860px)"), fondo = document.getElementById("filFondo");
+    function hoja(abrir) { ff.classList.toggle("abierta", abrir); fondo.hidden = !abrir; document.body.classList.toggle("sin-scroll", abrir); }
+    document.getElementById("abrirFil").onclick = function () { hoja(true); };
+    document.getElementById("cerrarFil").onclick = function () { hoja(false); };
+    fondo.onclick = function () { hoja(false); };
+    document.body.classList.remove("sin-scroll");
+    ff.querySelectorAll("select").forEach(function (s) { s.onchange = function () { if (!celu.matches) aplicar(); }; });
     var sc = document.getElementById("sinCerca"); if (sc) sc.onclick = function () { ff.querySelector("[name=cerca]").value = ""; aplicar(); };
     ff.querySelectorAll("[data-op]").forEach(function (b) { b.onclick = function () { f.op = b.dataset.op; aplicar(); }; });
     var m = document.getElementById("mas"); if (m) m.onclick = function () { mostrados += 24; buscar(f); };

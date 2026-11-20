@@ -142,7 +142,7 @@ input,select,textarea{font:inherit}
 
 <sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
 <div class="in" style="display: flex; flex-direction: column; gap: 22px">
-<h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">¿Cómo es por dentro?</h2>
+<h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">{{dentro}}</h2>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 12px">
 <sc-for list="{{counters}}" as="k" hint-placeholder-count="4">
 <div style="border: 2px solid #EAECF0; border-radius: 20px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
@@ -434,9 +434,10 @@ label: label, val: cnt[key] + (key === 'm2' ? ' m²' : ''), ariaMinus: 'Menos ' 
 minus: () => { var c = Object.assign({}, cnt); c[key] = Math.max(min, c[key] - stepN); set({ cnt: c }); },
 plus: () => { var c = Object.assign({}, cnt); c[key] = c[key] + stepN; set({ cnt: c }); }
 });
-var counters = [mk('hab', 'Habitaciones', 1, 0), mk('bano', 'Baños', 1, 0), mk('coch', 'Cocheras', 1, 0), mk('m2', 'Metros', 5, 10)];
+var esTerreno = tipo === 'Terreno';
+var counters = esTerreno ? [mk('m2', 'Metros cuadrados', 50, 50)] : [mk('hab', 'Habitaciones', 1, 0), mk('bano', 'Baños', 1, 0), mk('coch', 'Cocheras', 1, 0), mk('m2', 'Metros', 5, 10)];
 var ans = st.ans || {};
-var qlist = [['mascotas', '¿Se aceptan mascotas?'], ['amoblado', '¿Está amoblado?'], ['aire', '¿Tiene aire acondicionado?'], ['balcon', '¿Tiene balcón?'], ['patio', '¿Tiene patio o jardín?'], ['parrilla', '¿Tiene parrilla o quincho?'], ['pileta', '¿Tiene pileta?'], ['ascensor', '¿El edificio tiene ascensor?'], ['seguridad', '¿Tiene seguridad o portería?']];
+var qlist = esTerreno ? [['agua', '¿Tiene agua corriente?'], ['luz', '¿Tiene luz de la ANDE?'], ['asfalto', '¿La calle es asfaltada?'], ['titulo', '¿Tiene título de propiedad?'], ['financiado', '¿Se puede pagar en cuotas?']] : [['mascotas', '¿Se aceptan mascotas?'], ['amoblado', '¿Está amoblado?'], ['aire', '¿Tiene aire acondicionado?'], ['balcon', '¿Tiene balcón?'], ['patio', '¿Tiene patio o jardín?'], ['parrilla', '¿Tiene parrilla o quincho?'], ['pileta', '¿Tiene pileta?'], ['ascensor', '¿El edificio tiene ascensor?'], ['seguridad', '¿Tiene seguridad o portería?']];
 var qs = qlist.map((q) => ({
 label: q[1],
 opts: [['si', 'Sí'], ['no', 'No'], ['ns', 'No sé']].map((o) => {
@@ -542,7 +543,7 @@ var flags = {};
 for (var i = 0; i < 12; i++) flags['s' + i] = step === i;
 return Object.assign(flags, {
 accent: accent, steps: steps, progress: Math.round(Math.min(step, 9) / 9 * 100),
-ops: ops, tipos: tipos, quien: quien, ubic: ubic, counters: counters, qs: qs,
+dentro: esTerreno ? '¿Cómo es el terreno?' : '¿Cómo es por dentro?', ops: ops, tipos: tipos, quien: quien, ubic: ubic, counters: counters, qs: qs,
 showPets: ans.mascotas === 'si', petOpts: petOpts,
 isRent: rent, isSale: !rent, priceTitle: rent ? 'Precio y lo que se paga para entrar' : 'Precio de venta',
 priceLabel: rent ? 'Alquiler por mes' : 'Precio', priceTxt: priceTxt, curr: curr,
@@ -599,7 +600,9 @@ send: async () => {
   if (f) { set({ step: f.step, navMsg: f.msg, sendMsg: '' }); window.scrollTo(0, 0); return; }
   var c = this.state.campos || {}, city = st.city || 'Asunción';
   var si = qlist.filter((q) => q[0] !== 'mascotas' && ans[q[0]] === 'si').map((q) => q[0]);
-  var desc = (c.descripcion || '').trim() || (tipo + (rent ? ' en alquiler' : ' en venta') + ' en ' + city + '. ' + cnt.hab + ' habitaciones, ' + cnt.bano + ' baños, ' + cnt.m2 + ' m².');
+  var TXT = { agua: 'agua corriente', luz: 'luz de la ANDE', asfalto: 'calle asfaltada', titulo: 'título de propiedad', financiado: 'financiación en cuotas' };
+  var desc = (c.descripcion || '').trim() || (esTerreno ? ('Terreno' + (rent ? ' en alquiler' : ' en venta') + ' en ' + city + '. ' + cnt.m2 + ' m².' + (si.length ? ' Tiene ' + si.map((k) => TXT[k] || k).join(', ') + '.' : ''))
+    : (tipo + (rent ? ' en alquiler' : ' en venta') + ' en ' + city + '. ' + cnt.hab + ' habitaciones, ' + cnt.bano + ' baños, ' + cnt.m2 + ' m².'));
   set({ sending: true, sendMsg: '' });
   try {
     var r = await post({
@@ -607,7 +610,7 @@ send: async () => {
       operacion: rent ? 'alquiler' : 'venta', tipo_inmueble: TIPO[tipo] || 'otro', quien: st.quien || 'Soy el dueño',
       ciudad: city, barrio: c.barrio || null, direccion: c.direccion || null, ubic: st.ubic || 'Solo la zona aproximada',
       region: REGION[city] || (CENTRAL.indexOf(city) >= 0 ? 'central' : 'resto'),
-      dormitorios: cnt.hab, banos: cnt.bano, m2: cnt.m2, mascotas: ans.mascotas === 'si' ? 'si' : ans.mascotas === 'no' ? 'no' : null,
+      dormitorios: esTerreno ? null : cnt.hab, banos: esTerreno ? null : cnt.bano, m2: cnt.m2, mascotas: ans.mascotas === 'si' ? 'si' : ans.mascotas === 'no' ? 'no' : null,
       comodidades: si, precio: num || null, moneda: cur === 'USD' ? 'USD' : 'PYG',
       garantia: rent ? (garV + ', comisión ' + comV.toLowerCase()) : ('Financiación ' + (st.fin || 'A conversar').toLowerCase()),
       titulo: tipo + (rent ? ' en alquiler' : ' en venta') + ' en ' + (c.barrio ? c.barrio + ', ' : '') + city,

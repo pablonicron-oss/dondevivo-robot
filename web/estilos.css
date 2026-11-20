@@ -288,3 +288,36 @@ body.compra .buscador{background:linear-gradient(#fff,#fff) padding-box,linear-g
 .buscador .btn{min-height:46px}
 @media (max-width:520px){.bfila{flex-wrap:wrap}.enciudad{flex:1}.enciudad select{flex:1;max-width:none}.buscador .btn{flex:1 1 100%}}
 @media (prefers-reduced-motion:reduce){.buscador{animation:none}}
+
+/* terrenos */
+.toggle .tgl{display:inline-flex;align-items:center;font-weight:800;font-size:16px;min-height:48px;padding:0 22px;border-radius:12px;text-decoration:none;color:var(--ink)}
+.toggle .tgl:hover{background:#E4E7EC}
+.terr{padding-top:20px;display:flex;flex-direction:column;gap:16px}
+.terr-cab{background:#fff;border-radius:28px;padding:24px 28px;display:flex;flex-direction:column;gap:12px}
+.terr-cab h1{font-size:clamp(28px,3.4vw,44px)}
+.terr-sub{margin:0;color:var(--gris);font-weight:600}
+.terr-sub:empty{display:none}
+.terr-fil{display:flex;flex-wrap:wrap;gap:12px}
+.terr-fil label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--gris)}
+.terr-fil select{min-height:44px;border:2px solid #E4E7EC;border-radius:12px;padding:0 12px;font:inherit;font-weight:700;color:var(--ink);background:#fff;min-width:200px}
+.terr-mapa{position:relative;height:min(72vh,720px);border-radius:28px;overflow:hidden;background:#E4E7EC}
+.terr-mapa #mapaT{position:absolute;inset:0}
+.terr-vacio{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:500;background:#fff;border-radius:18px;padding:18px 22px;display:flex;flex-direction:column;gap:4px;text-align:center;box-shadow:0 8px 30px rgba(16,24,40,.15)}
+.terr-vacio span{color:var(--gris)}
+.tpin{background:none;border:0}
+.tpin span{display:grid;place-items:center;min-width:30px;height:30px;padding:0 6px;transform:translate(-50%,-50%);border-radius:999px;background:var(--verde);color:#fff;font-weight:800;font-size:13px;border:2px solid #fff;box-shadow:0 2px 8px rgba(16,24,40,.3)}
+.tpin span.aprox{background:#fff;color:var(--verde);border-color:var(--verde)}
+.tpin span.dest{background:#F5B700;color:var(--ink)}
+.mapr{margin:6px 10px 8px;font-size:12px;font-weight:700;color:#B54708}
+.terr-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:10px}
+.terr-item{display:flex;align-items:center;gap:10px;background:#fff;border-radius:16px;padding:8px;text-decoration:none;color:var(--ink)}
+.terr-item:hover{box-shadow:0 4px 16px rgba(16,24,40,.08)}
+.terr-item .tn{flex:none;display:grid;place-items:center;min-width:28px;height:28px;border-radius:999px;background:var(--verde);color:#fff;font-weight:800;font-size:13px}
+.terr-item .tf{flex:none;width:64px;height:52px;border-radius:10px;background:#E4E7EC center/cover}
+.terr-item .tx{display:flex;flex-direction:column;min-width:0;font-size:13px;color:var(--gris)}
+.terr-item .tx b{font-size:15px;color:var(--ink)}
+@media (max-width:520px){.toggle .tgl{padding:0 12px;font-size:14px;white-space:nowrap}.terr-fil select{min-width:0;width:100%}.terr-fil label{flex:1 1 140px}}
+.toggle{max-width:100%}
+@media (max-width:520px){.toggle button,.toggle .tgl{padding:0 10px;font-size:13.5px;min-height:44px}}
+.toggle .ct{display:none}
+@media (max-width:520px){.toggle .lg{display:none}.toggle .ct{display:inline}}

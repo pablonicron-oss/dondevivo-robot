@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   var $app = document.getElementById("app");
-  var DATA = [], ACT = "";
+  var DATA = [], TERRENOS = [], TODOS = [], ACT = "";
   var FUENTES = { infocasas: "InfoCasas", remax: "RE/MAX", buscodepto: "BuscoDepto", century21: "Century 21", dondevivo: "DóndeVivo" };
   function destacado(a) { return !!(a.dh && Date.parse(a.dh) > Date.now()); }
   var EJ = {
@@ -245,7 +245,7 @@
   function alternarGuardado(id) {
     var l = guardados(), i = l.findIndex(function (g) { return g.id === id; });
     if (i >= 0) l.splice(i, 1);
-    else { var a = DATA.find(function (x) { return x.id === id; }); if (!a) return false; l.unshift({ id: a.id, t: a.t, ph: [a.ph[0]], p: a.p, m: a.m, op: a.op, tp: a.tp, c: a.c, b: a.b, dor: a.dor, g: Date.now() }); }
+    else { var a = TODOS.find(function (x) { return x.id === id; }); if (!a) return false; l.unshift({ id: a.id, t: a.t, ph: [a.ph[0]], p: a.p, m: a.m, op: a.op, tp: a.tp, c: a.c, b: a.b, dor: a.dor, g: Date.now() }); }
     try { localStorage.setItem("dv:guardados", JSON.stringify(l.slice(0, 200))); } catch (e) {}
     contarGuardados();
     return i < 0;
@@ -274,7 +274,7 @@
     $app.innerHTML = '<div class="cabeza"><h1>Tus guardados</h1><a class="volver" href="#/buscar">← Seguir buscando</a></div>' +
       '<p class="nota-g">Quedan guardados en este celular o compu, sin crear cuenta. Si borrás los datos del navegador, se borran.</p>' +
       (l.length ? '<div class="lista">' + l.map(function (g) {
-        var a = DATA.find(function (x) { return x.id === g.id; });
+        var a = TODOS.find(function (x) { return x.id === g.id; });
         if (a) return tarjeta(a);
         return '<a class="tarjeta baja-g" href="#/aviso/' + encodeURIComponent(g.id) + '"><div class="foto" style="background-image:url(\'' + esc(mini(g.ph[0], 640)) + '\')"><span class="tag nd">Ya no está disponible</span>' + corazon(g.id) + '</div><div class="info"><div class="tit">' + esc(g.t) + '</div><div class="lugar">' + lugar(g) + "</div></div></a>";
       }).join("") + "</div>" : '<div class="vacio"><b>Todavía no guardaste ningún aviso.</b><br>Tocá el corazón de un aviso para guardarlo y verlo más tarde.</div>');
@@ -434,7 +434,7 @@
     var cs = ciudades(), ej = EJ[estado.op], rent = estado.op === "alquiler";
     $app.innerHTML =
       '<section class="hero"><div class="card-hero">' +
-      '<div class="toggle" role="group" aria-label="Qué buscás"><button data-op="alquiler" aria-pressed="' + rent + '">Busco alquilar</button><button data-op="venta" aria-pressed="' + !rent + '">Busco comprar</button></div>' +
+      '<div class="toggle" role="group" aria-label="Qué buscás"><button data-op="alquiler" aria-pressed="' + rent + '"><span class="lg">Busco alquilar</span><span class="ct">Alquilar</span></button><button data-op="venta" aria-pressed="' + !rent + '"><span class="lg">Busco comprar</span><span class="ct">Comprar</span></button><a class="tgl" href="#/terrenos"><span class="lg">Busco terreno</span><span class="ct">Terreno</span></a></div>' +
       '<h1><span>Contanos qué buscás.</span> <span class="ac">Nosotros lo encontramos.</span></h1>' +
       '<div style="display:flex;flex-direction:column;gap:14px">' +
       '<form class="buscador" id="fb"><label for="qB" class="sr">Describí lo que buscás</label><textarea id="qB" rows="1" placeholder="' + esc(ejemploFijo()) + '" autocomplete="off"></textarea>' +
@@ -527,6 +527,7 @@
       (a.ph && a.ph[0] ? '<span class="mfoto" style="background-image:url(\'' + esc(mini(a.ph[0], 360)) + '\')">' + (dest ? '<b class="mdest">Destacado</b>' : "") + "</span>" : "") +
       '<span class="mtx"><b class="mprecio">' + precio(a) + porMes(a) + "</b>" +
       (ex ? '<span class="mex">+ ' + esc(ex) + " de expensas</span>" : "") +
+      (a.tp === "terreno" && a.m2 >= 10 ? '<span class="mlug">' + Math.round(a.m2).toLocaleString("es-PY") + " m²" + (porM2(a) ? " · " + esc(porM2(a)) : "") + "</span>" : "") +
       '<span class="mtit">' + esc(a.t) + "</span>" +
       '<span class="mlug">' + esc([a.b && a.b !== a.c ? a.b : "", a.c].filter(Boolean).join(", ")) + "</span>" +
       (a.op === "alquiler" && a.g ? '<span class="mlug">Garantía: ' + esc(a.g) + "</span>" : "") +
@@ -654,7 +655,7 @@
   }
 
   function ficha(id) {
-    var a = DATA.find(function (x) { return x.id === id; });
+    var a = TODOS.find(function (x) { return x.id === id; });
     if (!a) return fichaBaja(id);
     setOp(a.op);
     var fu = FUENTES[a.f] || a.f, ex = expensas(a);
@@ -677,17 +678,17 @@
     } else costo = "<p>Consultale al anunciante si hay gastos de escritura o comisión aparte del precio.</p>";
     if (ex) costo += "<p>Además del " + (a.op === "alquiler" ? "alquiler" : "precio") + ", el aviso menciona <b>" + esc(ex) + " de expensas</b>" + (a.op === "alquiler" ? " por mes." : ".") + "</p>";
     var _masc = a.ms === "si" ? "<p><b>Sí, acepta mascotas</b> según el aviso.</p>" : a.ms === "no" ? "<p><b>No acepta mascotas</b> según el aviso.</p>" : "<p>El aviso no dice si acepta mascotas, conviene preguntar.</p>";
-    var mapa = a.lat && a.lng ? '<iframe class="mapa" loading="lazy" title="Ubicación aproximada" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (a.lng - 0.012) + "," + (a.lat - 0.008) + "," + (a.lng + 0.012) + "," + (a.lat + 0.008) + "&layer=mapnik&marker=" + a.lat + "," + a.lng + '"></iframe>' : "<p>El anunciante no compartió la ubicación exacta.</p>";
+    var mapa = a.lat && a.lng ? '<iframe class="mapa" loading="lazy" title="Ubicación aproximada" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (a.lng - 0.012) + "," + (a.lat - 0.008) + "," + (a.lng + 0.012) + "," + (a.lat + 0.008) + "&layer=mapnik&marker=" + a.lat + "," + a.lng + '"></iframe>' : mapaCiudad(a);
     $app.innerHTML =
       '<a class="volver" href="javascript:history.back()">← Volver a los resultados</a><div class="ficha">' +
       '<div class="galeria">' + corazon(a.id, true) + '<button type="button" class="ampliar" id="amp" aria-label="Ver fotos en grande"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg><span>Ver en grande</span></button><div class="grande" id="gr" role="button" tabindex="0" aria-label="Ver fotos en grande" style="background-image:url(\'' + esc(mini(a.ph[0], 1200)) + '\')"></div><div class="miniaturas">' +
       a.ph.map(function (u, i) { return '<button aria-label="Foto ' + (i + 1) + '" aria-current="' + (i === 0) + '" data-u="' + esc(mini(u, 1200)) + '" style="background-image:url(\'' + esc(mini(u, 200)) + '\')"></button>'; }).join("") + "</div>" + '<div class="mudanza" aria-hidden="true"><p>Tu próxima mudanza empieza acá</p><canvas id="mud"></canvas></div></div>' +
-      '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (a.op !== "alquiler" && ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas</div>" : "") + bloques(a, true) + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' + iconos(a) +
-      '<div class="datos">' + [tipoTxt(a.tp), a.mono ? "Monoambiente" : a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].concat(extras(a)).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
+      '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (a.op !== "alquiler" && ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas</div>" : "") + bloques(a, true) + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' + (a.tp === "terreno" ? iconosTerreno(a) : iconos(a)) +
+      '<div class="datos">' + [tipoTxt(a.tp), porM2(a), a.mono ? "Monoambiente" : a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.tp === "terreno" ? "" : a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].concat(a.tp === "terreno" ? [] : extras(a)).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
       (a.f === "dondevivo" && a.wa
         ? '<a class="ir" href="https://wa.me/' + esc(String(a.wa).replace(/\D/g, "")) + "?text=" + encodeURIComponent("Hola, vi tu aviso " + a.t + " en DóndeVivo") + '" target="_blank" rel="noopener" id="ir">Escribir por WhatsApp</a>'
         : '<a class="ir" href="' + esc(seguro(a.u)) + '" target="_blank" rel="noopener nofollow" id="ir">Escribir al anunciante <small>· en ' + esc(fu) + "</small></a>") +
-      '<div class="bloque"><h2>Lo que cuesta entrar</h2>' + costo + "</div>" +
+      (a.tp === "terreno" ? "" : '<div class="bloque"><h2>Lo que cuesta entrar</h2>' + costo + "</div>") +
       
       '<div class="bloque"><h2>Ubicación</h2>' + mapa + "</div>" +
       (a.d ? '<div class="bloque"><h2>Lo que dice el aviso</h2><p class="desc">' + esc(limpio(a.d)) + "</p></div>" : "") +
@@ -705,6 +706,93 @@
     var mud = document.getElementById("mud");
     if (mud && window.Mudanza && getComputedStyle(mud.parentNode).display !== "none" && !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) window.Mudanza(mud, { modo: "auto" });
     window.scrollTo(0, 0);
+  }
+
+  /* ---------- terrenos: mapa de todo Paraguay con pines numerados ---------- */
+  var CENTRO = {};
+  function centrosCiudad() {                                             // el centro de cada ciudad sale de los avisos que sí tienen ubicación
+    var s = {};
+    TODOS.forEach(function (a) { if (a.c && enPY(a)) { var k = a.c; s[k] = s[k] || [0, 0, 0]; s[k][0] += a.lat; s[k][1] += a.lng; s[k][2]++; } });
+    Object.keys(s).forEach(function (k) { CENTRO[k] = [s[k][0] / s[k][2], s[k][1] / s[k][2]]; });
+  }
+  function dondeEsta(a) {
+    if (enPY(a)) return { ll: [a.lat, a.lng], exacta: true };
+    var c = CENTRO[a.c]; if (!c) return null;
+    var h = 0; for (var i = 0; i < a.id.length; i++) h = (h * 31 + a.id.charCodeAt(i)) % 9973;   // separados un poquito, para que no queden encimados
+    return { ll: [c[0] + ((h % 97) / 97 - 0.5) * 0.02, c[1] + ((h % 89) / 89 - 0.5) * 0.02], exacta: false };
+  }
+  function mapaCiudad(a) {
+    var c = CENTRO[a.c];
+    if (!c) return "<p>El anunciante no compartió la ubicación exacta. Consultale dónde queda.</p>";
+    return '<iframe class="mapa" loading="lazy" title="Ciudad del aviso" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (c[1] - 0.06) + "," + (c[0] - 0.04) + "," + (c[1] + 0.06) + "," + (c[0] + 0.04) + '&layer=mapnik"></iframe>' +
+      '<p class="aclara"><b>Ubicación exacta, consultá al vendedor.</b> El mapa muestra ' + esc(a.c) + ", la ciudad que figura en el aviso.</p>";
+  }
+  function porM2(a) {
+    if (a.tp !== "terreno" || !a.p || !(a.m2 >= 10)) return "";
+    var v = a.p / a.m2, n = a.m === "USD" ? Math.round(v * 10) / 10 : Math.round(v);
+    return (a.m === "USD" ? "USD " : "₲ ") + String(n).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " el m²";
+  }
+  var TER = [
+    { k: "agua", n: "Agua", si: "Tiene agua corriente", re: /agua corriente|agua potable|essap|junta de saneamiento| agua /, nore: / sin agua/,
+      ic: '<path d="M12 3.5s6 6.4 6 10.5a6 6 0 0 1-12 0c0-4.1 6-10.5 6-10.5z"/>' },
+    { k: "luz", n: "Luz", si: "Tiene luz de la ANDE", re: / ande |energia electrica|luz electrica| luz |tendido electrico/, nore: / sin (luz|energia)/,
+      ic: '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>' },
+    { k: "asfa", n: "Asfalto", si: "Sobre calle asfaltada o empedrada", re: /asfalt|empedrad|pavimentad|adoquin/, nore: / (calle de tierra|sin asfalto)/,
+      ic: '<path d="M8 3L5 21M16 3l3 18M12 5v2.5M12 10.5v3M12 16.5v3"/>' },
+    { k: "titu", n: "Título", si: "Tiene título de propiedad", re: /titulo|escritura/, nore: / sin (titulo|escritura)/,
+      ic: '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 15.5h5"/>' },
+    { k: "fina", n: "Financiado", si: "Se puede pagar en cuotas", re: /financ|cuotas|entrega inicial|a plazo/, nore: / sin financ|al contado/,
+      ic: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 14.5h3"/>' }
+  ];
+  function iconosTerreno(a) {
+    var t = plano(a.t + " " + a.d);
+    return '<div class="comod" role="list">' + TER.map(function (c) {
+      var v = c.nore && c.nore.test(t) ? "no" : c.re.test(t) ? "si" : "nd";
+      var txt = v === "si" ? c.si : v === "no" ? "No tiene " + c.n.toLowerCase() : "El aviso no menciona " + c.n.toLowerCase();
+      return { v: v, h: '<span class="cm ' + v + '" role="listitem" tabindex="0" aria-label="' + esc(txt) + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + c.ic + "</svg>" +
+        (v === "no" ? '<i class="x" aria-hidden="true"></i>' : "") + '<b class="tip">' + esc(txt) + "</b></span>" };
+    }).sort(function (x, y) { var o = { si: 0, no: 1, nd: 2 }; return o[x.v] - o[y.v]; }).map(function (x) { return x.h; }).join("") + "</div>";
+  }
+  var mapaT = null;
+  function verTerrenos(f) {
+    f = f || {};
+    var cs = {}; TERRENOS.forEach(function (a) { if (a.c) cs[a.c] = (cs[a.c] || 0) + 1; });
+    var csL = Object.keys(cs).sort(function (x, y) { return cs[y] - cs[x]; });
+    var lista = TERRENOS.filter(function (a) { return (!f.ciudad || enCiudad(a, f.ciudad)) && (!f.m2 || (a.m2 || 0) >= +f.m2); })
+      .sort(function (x, y) { return (destacado(y) - destacado(x)) || ((x.c || "").localeCompare(y.c || "")); });
+    lista.forEach(function (a, i) { a._n = i + 1; });
+    $app.innerHTML =
+      '<section class="terr"><div class="terr-cab"><div class="toggle" role="group" aria-label="Qué buscás"><a class="tgl" href="#/" data-ir="alquiler"><span class="lg">Busco alquilar</span><span class="ct">Alquilar</span></a><a class="tgl" href="#/" data-ir="venta"><span class="lg">Busco comprar</span><span class="ct">Comprar</span></a><button aria-pressed="true"><span class="lg">Busco terreno</span><span class="ct">Terreno</span></button></div>' +
+      '<h1>Terrenos en todo Paraguay</h1><p class="terr-sub">' + (lista.length ? lista.length + (lista.length === 1 ? " terreno" : " terrenos") + ". Tocá un número para ver el terreno." : "") + "</p>" +
+      '<form class="terr-fil" id="tf"><label>Ciudad<select name="ciudad"><option value="">Todo Paraguay</option>' +
+      (cs["Asunción"] ? '<option value="Asunción"' + (f.ciudad === "Asunción" ? " selected" : "") + ">Asunción</option>" : "") +
+      '<option value="@central"' + (f.ciudad === "@central" ? " selected" : "") + ">Central</option>" +
+      csL.filter(function (c) { return c !== "Asunción"; }).map(function (c) { return '<option value="' + esc(c) + '"' + (f.ciudad === c ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("") + "</select></label>" +
+      '<label>Superficie mínima<select name="m2"><option value="">Cualquiera</option>' + [300, 500, 1000, 5000, 10000].map(function (n) { return '<option value="' + n + '"' + (String(f.m2) === String(n) ? " selected" : "") + ">" + (n >= 10000 ? n / 10000 + " hectárea" : n.toLocaleString("es-PY") + " m²") + "</option>"; }).join("") + "</select></label></form></div>" +
+      '<div class="terr-mapa"><div id="mapaT"></div>' + (TERRENOS.length ? "" : '<div class="terr-vacio"><b>Estamos juntando terrenos de todo el país.</b><span>En las próximas horas empiezan a aparecer acá.</span></div>') + "</div>" +
+      (lista.length ? '<div class="terr-lista">' + lista.map(function (a) {
+        return '<a class="terr-item" href="#/aviso/' + encodeURIComponent(a.id) + '"><span class="tn">' + a._n + '</span><span class="tf" style="background-image:url(\'' + esc(mini(a.ph[0], 300)) + '\')"></span><span class="tx"><b>' + precio(a) + "</b><span>" + esc([a.m2 >= 10 ? Math.round(a.m2).toLocaleString("es-PY") + " m²" : "", a.c].filter(Boolean).join(" · ")) + "</span></span></a>";
+      }).join("") + "</div>" : "") + "</section>";
+    $app.querySelectorAll("[data-ir]").forEach(function (b) { b.onclick = function () { setOp(b.dataset.ir); }; });
+    document.getElementById("tf").onchange = function () { var o = {}; new FormData(this).forEach(function (v, k) { if (v) o[k] = v; }); location.hash = "#/terrenos" + (q(o) ? "?" + q(o) : ""); };
+    window.scrollTo(0, 0);
+    cargarMapaLib(function () {
+      var el = document.getElementById("mapaT"); if (!el) return;
+      mapaT = L.map(el, { scrollWheelZoom: true }).setView([-23.4, -58.3], 6);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap", referrerPolicy: "strict-origin-when-cross-origin" }).addTo(mapaT);
+      var capaT = L.markerClusterGroup({ maxClusterRadius: 40, showCoverageOnHover: false, spiderfyOnMaxZoom: true,
+        iconCreateFunction: function (c) { return L.divIcon({ className: "mgrupo", html: "<span>" + c.getChildCount() + "</span>", iconSize: [44, 44] }); } });
+      var pts = [];
+      lista.forEach(function (a) {
+        var d = dondeEsta(a); if (!d) return;
+        pts.push(d.ll);
+        var m = L.marker(d.ll, { icon: L.divIcon({ className: "tpin", html: '<span class="' + (destacado(a) ? "dest" : "") + (d.exacta ? "" : " aprox") + '">' + a._n + "</span>", iconSize: null }), title: a.t });
+        m.bindPopup(tarjetaMapa(a) + (d.exacta ? "" : '<p class="mapr">Ubicación exacta, consultá al vendedor.</p>'), { maxWidth: 280, minWidth: 240, className: "mpop" });
+        capaT.addLayer(m);
+      });
+      mapaT.addLayer(capaT);
+      if (pts.length && f.ciudad) mapaT.fitBounds(L.latLngBounds(pts).pad(0.1), { maxZoom: 14 });
+    });
   }
 
   /* ---------- fotos en grande ---------- */
@@ -772,6 +860,7 @@
     var h = location.hash.replace(/^#/, "") || "/";
     if (h.indexOf("/aviso/") === 0) return ficha(decodeURIComponent(h.slice(7)));
     if (h.indexOf("/guardados") === 0) return verGuardados();
+    if (h.indexOf("/terrenos") === 0) return verTerrenos(leerQ(h.split("?")[1]));
     if (h.indexOf("/buscar") === 0) {
       var f = leerQ(h.split("?")[1]);
       if (f.q) { var t = f.q; delete f.q; f = entender(t, f); f.txt = t; if (leerQ(h.split("?")[1]).ciudad) f.ciudad = leerQ(h.split("?")[1]).ciudad; history.replaceState(null, "", "#/buscar?" + q(f)); }
@@ -783,7 +872,9 @@
 
   $app.innerHTML = '<div class="vacio">Cargando avisos…</div>';
   fetch("data/avisos.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
-    DATA = (j.avisos || []).filter(function (a) { return a.ph && a.ph.length >= 2; });
+    TODOS = (j.avisos || []).filter(function (a) { return a.ph && a.ph.length >= (a.tp === "terreno" ? 1 : 2); });
+    TERRENOS = TODOS.filter(function (a) { return a.tp === "terreno"; });
+    DATA = TODOS.filter(function (a) { return a.tp !== "terreno"; });
     var asu = {}; BARRIOS_ASU.forEach(function (b) { asu[plano(b).trim()] = b; });
     DATA.forEach(function (a) {
       a.mono = esMono(a);
@@ -796,7 +887,7 @@
         a.c = asu[k] ? "Asunción" : (a.r === "asuncion" ? "Asunción" : a.c);
       }
     });
-    deducirBarrios(); contarGuardados();
+    deducirBarrios(); centrosCiudad(); contarGuardados();
     ACT = j.actualizado;
     var d = new Date(ACT); document.getElementById("actualizado").textContent = "Actualizado " + d.toLocaleString("es-PY", { dateStyle: "short", timeStyle: "short" });
     window.addEventListener("hashchange", ruta); ruta();

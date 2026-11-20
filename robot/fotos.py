@@ -93,7 +93,7 @@ def _pedir_gemini(cuerpo):
     raise RuntimeError(f"Gemini respondió {ultimo} con el modelo {_modelo}")
 
 
-def revisar(urls):
+def revisar(urls, minimo=None):
     """Devuelve la lista de URLs aprobadas (en el mismo orden)."""
     urls = urls[:MAX_FOTOS_REVISAR]
     partes, validas = [{"text": PROMPT}], []
@@ -107,7 +107,7 @@ def revisar(urls):
             validas.append(u)
         except requests.RequestException:
             continue
-    if len(validas) < MIN_FOTOS:
+    if len(validas) < (MIN_FOTOS if minimo is None else minimo):
         return []
     cuerpo = {"contents": [{"parts": partes}],
               "generationConfig": {"responseMimeType": "application/json", "temperature": 0}}

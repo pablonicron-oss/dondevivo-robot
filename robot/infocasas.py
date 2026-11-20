@@ -8,7 +8,7 @@ BASE = "https://www.infocasas.com.py"
 FUENTE = "infocasas"
 RE_AVISO = re.compile(r'href="(/[a-z0-9-]+/(\d{8,9}))"')
 OPS = {"alquiler", "venta", "proyectos"}
-TIPOS = {"casas", "departamentos", "duplex", "casas-en-condominio"}
+TIPOS = {"casas", "departamentos", "duplex", "casas-en-condominio", "terrenos", "lotes"}
 
 
 def _prioridad(url, metas_cumplidas):

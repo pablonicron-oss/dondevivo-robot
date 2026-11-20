@@ -7,7 +7,8 @@ from .config import PAUSA_SEG
 
 BASE = "https://www.remax.com.py"
 FUENTE = "remax"
-TIPOS = {"casa": "casa", "departamento": "departamento", "duplex": "duplex", "dúplex": "duplex"}
+TIPOS = {"casa": "casa", "departamento": "departamento", "duplex": "duplex", "dúplex": "duplex",
+         "terreno": "terreno", "terrenos": "terreno", "lote": "terreno", "lotes": "terreno"}
 VENDIDOS = {161, 162, 167, 169, 1616}
 FOTO = "https://cdn.gryphtech.com/userimages/114/LargeWM/{}"   # la versión pública, con su marca de agua
 
@@ -32,7 +33,7 @@ def _prioridad(url):
 def nuevos():
     r = pedir(f"{BASE}/sitemap_listings_1.xml")
     urls = re.findall(r"<loc>([^<]+)</loc>", r.text)
-    out = [u for u in urls if "/es-py/" in u and _partes(u)[0] in TIPOS and _partes(u)[1] in ("alquiler", "venta")]
+    out = [u for u in urls if "/es-py/" in u and (_partes(u)[0] in TIPOS or "terreno" in _partes(u)[0] or "lote" in _partes(u)[0]) and _partes(u)[1] in ("alquiler", "venta")]
     random.shuffle(out)
     return sorted(out, key=_prioridad)
 
@@ -76,7 +77,7 @@ def leer_aviso(url):
     return {
         "id": id_de(url), "fuente": FUENTE, "url": url,
         "titulo": titulo, "descripcion": desc[:4000],
-        "operacion": op_url, "tipo": TIPOS.get(tipo_url, tipo_url),
+        "operacion": op_url, "tipo": TIPOS.get(tipo_url, "terreno" if ("terreno" in tipo_url or "lote" in tipo_url) else tipo_url),
         "estado_obra": estado_obra(texto, operacion=op_url, titulo=titulo),
         "precio": None if c.get("HidePricePublic") else c.get("ListingPrice"),
         "moneda": "USD" if c.get("ListingCurrency") == "USD" else "PYG",

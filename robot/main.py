@@ -5,7 +5,7 @@
 import os, sys, time, json, traceback, requests
 from datetime import datetime, timedelta, timezone
 from . import db, infocasas, buscodepto, remax, fotos
-from .config import GEMINI_KEY, SUPABASE_KEY, CENTRAL, CDE, META, MAX_NUEVOS, MAX_REVISAR, MAX_LISTADOS, MINUTOS_MAX, MIN_FOTOS
+from .config import GEMINI_KEY, SUPABASE_KEY, CENTRAL, CDE, META, MAX_NUEVOS, MAX_REVISAR, MAX_LISTADOS, MINUTOS_MAX, MIN_FOTOS, MIN_FOTOS_TERRENO, META_TERRENOS
 from .util import Bloqueado
 
 INICIO = time.time()
@@ -21,8 +21,9 @@ def ahora():
 
 
 def progreso():
-    p = {r: db.contar("avisos", activo="eq.true", region=f"eq.{r}") for r in META}
+    p = {r: db.contar("avisos", activo="eq.true", region=f"eq.{r}", tipo="neq.terreno") for r in META}
     p["total"] = sum(p.values())
+    p["terrenos"] = db.contar("avisos", activo="eq.true", tipo="eq.terreno")
     p["porcentaje"] = round(100 * sum(min(p[r], META[r]) for r in META) / sum(META.values()), 1)
     return p
 
@@ -57,8 +58,8 @@ def _peso(url):
 
 
 def preparar_cola():
-    if db.contar("cola_listados", fuente="eq.infocasas") > 0:
-        return
+    if db.contar("cola_listados", fuente="eq.infocasas") > 0 and db.contar("cola_listados", fuente="eq.infocasas", url="like.*terreno*") > 0:
+        return   # ya está armada, con las páginas de terrenos incluidas
     filas = [{"url": u, "fuente": "infocasas", "prioridad": p} for u, p in infocasas.listados_del_sitemap()]
     for i in range(0, len(filas), 500):
         db.upsert("cola_listados", filas[i:i + 500])
@@ -140,19 +141,20 @@ def candidatos(stats):
 def revisar_fotos_pendientes(stats, tope=60):
     """Avisos que se guardaron sin revisar las fotos porque Gemini no tenía cupo: los revisamos ahora."""
     try:
-        pend = db.leer("avisos", select="id,fotos", fotos_revisadas="eq.false", activo="eq.true", limit=tope)
+        pend = db.leer("avisos", select="id,fotos,tipo", fotos_revisadas="eq.false", activo="eq.true", limit=tope)
     except Exception as e:
         stats["notas"].append(f"no pude leer fotos pendientes: {e}"); return
     for a in pend:
         if not queda_tiempo():
             break
         try:
-            ok = fotos.revisar(a["fotos"] or [])
+            minimo = MIN_FOTOS_TERRENO if a.get("tipo") == "terreno" else MIN_FOTOS
+            ok = fotos.revisar(a["fotos"] or [], minimo)
         except fotos.Agotado:
             break
         except Exception:
             continue
-        if len(ok) < MIN_FOTOS:
+        if len(ok) < minimo:
             db.actualizar("avisos", {"id": f"eq.{a['id']}"}, {"activo": False, "motivo_baja": "fotos con diseño, logos o teléfonos"})
         else:
             db.actualizar("avisos", {"id": f"eq.{a['id']}"}, {"fotos": ok, "fotos_revisadas": True})
@@ -183,13 +185,18 @@ def sumar_nuevos(stats, prog):
             stats["notas"].append(f"error leyendo {url}: {e}"); continue
         if aviso is None:
             db.upsert("descartados", {"id": mod.id_de(url), "motivo": motivo}); stats["descartados"] += 1; continue
-        if aviso["region"] in llenas:
+        terreno = aviso.get("tipo") == "terreno"
+        minimo = MIN_FOTOS_TERRENO if terreno else MIN_FOTOS
+        if terreno:
+            if prog.get("terrenos", 0) >= META_TERRENOS:
+                continue   # ya llegamos al cupo de terrenos
+        elif aviso["region"] in llenas:
             continue   # esa zona ya llegó a su meta; lo dejamos para más adelante
-        if aviso["fotos_total"] < MIN_FOTOS:
-            db.upsert("descartados", {"id": aviso["id"], "motivo": "menos de 2 fotos"}); stats["descartados"] += 1; continue
+        if aviso["fotos_total"] < minimo:
+            db.upsert("descartados", {"id": aviso["id"], "motivo": "sin fotos" if terreno else "menos de 2 fotos"}); stats["descartados"] += 1; continue
         revisadas = True
         try:
-            aprobadas = fotos.revisar(aviso["fotos"])
+            aprobadas = fotos.revisar(aviso["fotos"], minimo)
         except fotos.Agotado:
             aprobadas, revisadas = aviso["fotos"][:12], False   # se guarda igual y las fotos se revisan en otra corrida
             if not stats.get("sin_cupo"):
@@ -197,13 +204,15 @@ def sumar_nuevos(stats, prog):
         except Exception as e:
             aprobadas, revisadas = aviso["fotos"][:12], False
             stats["notas"].append(f"fotos sin revisar en {aviso['id']}: {e}")
-        if len(aprobadas) < MIN_FOTOS:
+        if len(aprobadas) < minimo:
             db.upsert("descartados", {"id": aviso["id"], "motivo": "fotos con diseño, logos o teléfonos"})
             stats["descartados"] += 1; continue
         aviso["fotos"] = aprobadas
         aviso["fotos_revisadas"] = revisadas
         aviso["ultima_revision"] = ahora()
         db.upsert("avisos", aviso)
+        if terreno:
+            prog["terrenos"] = prog.get("terrenos", 0) + 1
         stats["nuevos"] += 1
         stats.setdefault("por_fuente", {}).setdefault(nombre, 0)
         stats["por_fuente"][nombre] += 1
@@ -223,6 +232,7 @@ def resumen(stats, prog):
            f"- Descartados: {stats['descartados']}\n- Revisados: {stats['revisados']}\n\n"
            f"### Avance hacia 3.000: **{prog['porcentaje']}%**\n\n"
            + "\n".join(f"- {r}: {prog[r]} / {META[r]}" for r in META)
+           + f"\n- terrenos: {prog.get('terrenos', 0)} / {META_TERRENOS}"
            + "\n\n### Nuevos por fuente\n" + "\n".join(f"- {k}: {v}" for k, v in stats.get("por_fuente", {}).items())
            + ("\n\n### Notas\n" + "\n".join(f"- {n}" for n in stats["notas"][:30]) if stats["notas"] else ""))
     txt = limpiar(txt)

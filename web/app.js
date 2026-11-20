@@ -3,7 +3,7 @@
   "use strict";
   var $app = document.getElementById("app");
   var DATA = [], TERRENOS = [], TODOS = [], ACT = "";
-  var FUENTES = { infocasas: "InfoCasas", remax: "RE/MAX", buscodepto: "BuscoDepto", century21: "Century 21", dondevivo: "DóndeVivo" };
+  var FUENTES = { infocasas: "InfoCasas", remax: "RE/MAX", buscodepto: "BuscoDepto", clasipar: "Clasipar", century21: "Century 21", dondevivo: "DóndeVivo" };
   function destacado(a) { return !!(a.dh && Date.parse(a.dh) > Date.now()); }
   var EJ = {
     alquiler: ["Tengo un gato y busco un depto en Luque", "Dos habitaciones, una para mi oficina", "Algo para compartir con mi roomie cerca de la facu",
@@ -131,7 +131,7 @@
   function tipoTxt(t) { return { departamento: "Depto", casa: "Casa", duplex: "Dúplex", terreno: "Terreno" }[t] || "Inmueble"; }
   function q(params) { return Object.keys(params).filter(function (k) { return params[k] !== "" && params[k] != null; }).map(function (k) { return k + "=" + encodeURIComponent(params[k]); }).join("&"); }
   function leerQ(s) { var o = {}; (s || "").split("&").forEach(function (p) { if (!p) return; var i = p.indexOf("="); o[decodeURIComponent(p.slice(0, i))] = decodeURIComponent(p.slice(i + 1)); }); return o; }
-  function setOp(op) { estado.op = op; document.body.classList.toggle("compra", op === "venta"); }
+  function setOp(op) { estado.op = op; document.body.classList.toggle("compra", op === "venta"); document.body.classList.remove("terreno"); }
   var CENTRAL = ["san lorenzo", "luque", "lambare", "fernando de la mora", "mariano roque alonso", "capiata", "nemby", "limpio", "villa elisa",
     "san antonio", "itaugua", "aregua", "ypane", "guarambare", "ita", "j. augusto saldivar", "villeta", "nueva italia", "ypacarai"];
   function esCentral(c) { return CENTRAL.indexOf(norm(c)) >= 0; }
@@ -438,7 +438,7 @@
       '<h1><span>Contanos qué buscás.</span> <span class="ac">Nosotros lo encontramos.</span></h1>' +
       '<div style="display:flex;flex-direction:column;gap:14px">' +
       '<form class="buscador" id="fb"><label for="qB" class="sr">Describí lo que buscás</label><textarea id="qB" rows="1" placeholder="' + esc(ejemploFijo()) + '" autocomplete="off"></textarea>' +
-      '<div class="bfila"><label class="enciudad"><span>En</span><select id="cB" aria-label="Ciudad">' + opcionesCiudad(cs) + "</select></label>" +
+      '<div class="bfila"><label class="enciudad"><svg class="bandera" viewBox="0 0 18 12" aria-hidden="true"><rect width="18" height="4" fill="#D52B1E"/><rect y="4" width="18" height="4" fill="#fff"/><rect y="8" width="18" height="4" fill="#0038A8"/><circle cx="9" cy="6" r="1.4" fill="none" stroke="#0B8A50" stroke-width=".7"/></svg><span>En</span><select id="cB" aria-label="Ciudad">' + opcionesCiudad(cs) + "</select></label>" +
       '<button class="btn">Buscar</button></div></form>' +
       '<div class="proba"><b>Probá con</b><div class="rot">' + ej.map(function (t) { return '<button type="button">' + esc(t) + "</button>"; }).join("") + "</div></div></div>" +
       '<div class="contador" id="contador"></div>' +
@@ -510,10 +510,10 @@
   }
   function seccionMapa(cs) {
     if (!VER_MAPA) return "";
-    var conLugar = {}; DATA.forEach(function (a) { if (enPY(a) && a.c) conLugar[a.c] = 1; });
+    var conLugar = {}; TODOS.forEach(function (a) { if (enPY(a) && a.c) conLugar[a.c] = 1; });
     return '<section class="sec mapa-sec" id="mapaSec"><div class="mapa-cab"><h2>' + esc(TITULO_MAPA || "Mapa (prueba)") + "</h2>" +
       '<div class="mapa-ctrl"><div class="seg" role="group" aria-label="Qué mostrar">' +
-      ['["", "Todo"]', '["alquiler", "Alquiler"]', '["venta", "Venta"]'].map(function (j) { var x = JSON.parse(j); return '<button data-mop="' + x[0] + '" aria-pressed="' + (mOp === x[0]) + '">' + x[1] + "</button>"; }).join("") +
+      ['["", "Todo"]', '["alquiler", "Alquiler"]', '["venta", "Venta"]', '["terreno", "Terrenos"]'].map(function (j) { var x = JSON.parse(j); return '<button data-mop="' + x[0] + '" aria-pressed="' + (mOp === x[0]) + '">' + x[1] + "</button>"; }).join("") +
       '</div><label class="sr" for="mCiudad">Ciudad del mapa</label><select id="mCiudad"><option value="">Todo Paraguay</option>' +
       cs.filter(function (c) { return conLugar[c]; }).map(function (c) { return "<option" + (c === mCiudad ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("") +
       '</select><button id="mCerca" class="cerca"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>Cerca mío</button></div></div>' +
@@ -528,6 +528,7 @@
       '<span class="mtx"><b class="mprecio">' + precio(a) + porMes(a) + "</b>" +
       (ex ? '<span class="mex">+ ' + esc(ex) + " de expensas</span>" : "") +
       (a.tp === "terreno" && a.m2 >= 10 ? '<span class="mlug">' + Math.round(a.m2).toLocaleString("es-PY") + " m²" + (porM2(a) ? " · " + esc(porM2(a)) : "") + "</span>" : "") +
+      (a.tp === "terreno" && a.m === "USD" && a.p ? '<span class="mlug">Unos ₲ ' + Math.round(enGs(a) / 1e6).toLocaleString("es-PY") + " millones</span>" : "") +
       '<span class="mtit">' + esc(a.t) + "</span>" +
       '<span class="mlug">' + esc([a.b && a.b !== a.c ? a.b : "", a.c].filter(Boolean).join(", ")) + "</span>" +
       (a.op === "alquiler" && a.g ? '<span class="mlug">Garantía: ' + esc(a.g) + "</span>" : "") +
@@ -536,12 +537,14 @@
   function pintarMapa(ajustar) {
     if (!mapa) return;
     if (capa) mapa.removeLayer(capa);
-    capa = L.markerClusterGroup({ maxClusterRadius: 48, showCoverageOnHover: false, spiderfyOnMaxZoom: true,
-      iconCreateFunction: function (c) { return L.divIcon({ className: "mgrupo", html: "<span>" + c.getChildCount() + "</span>", iconSize: [44, 44] }); } });
-    var lista = DATA.filter(function (a) { return enPY(a) && (!mOp || a.op === mOp) && enCiudad(a, mCiudad); });
+    capa = L.layerGroup();   // sin agrupar: siempre se ve el precio, al hacer zoom se separan
+    var lista = TODOS.filter(function (a) {
+      var ok = !mOp || (mOp === "terreno" ? a.tp === "terreno" : a.tp !== "terreno" && a.op === mOp);
+      return enPY(a) && ok && enCiudad(a, mCiudad);
+    });
     lista.sort(function (x, y) { return destacado(x) - destacado(y); });
     lista.forEach(function (a) {
-      var cls = destacado(a) ? "dest" : a.op === "venta" ? "venta" : "alq";
+      var cls = destacado(a) ? "dest" : a.tp === "terreno" ? "terr" : a.op === "venta" ? "venta" : "alq";
       var m = L.marker([a.lat, a.lng], { icon: L.divIcon({ className: "mpin", html: '<span class="' + cls + '">' + esc(corto(a)) + "</span>", iconSize: null }),
         zIndexOffset: destacado(a) ? 1000 : 0, title: a.t });
       m.bindPopup(tarjetaMapa(a), { maxWidth: 280, minWidth: 240, className: "mpop" });
@@ -658,6 +661,7 @@
     var a = TODOS.find(function (x) { return x.id === id; });
     if (!a) return fichaBaja(id);
     setOp(a.op);
+    if (a.tp === "terreno") { document.body.classList.remove("compra"); document.body.classList.add("terreno"); }
     var fu = FUENTES[a.f] || a.f, ex = expensas(a);
     var costo;
     if (a.op === "alquiler") {
@@ -682,7 +686,7 @@
     $app.innerHTML =
       '<a class="volver" href="javascript:history.back()">← Volver a los resultados</a><div class="ficha">' +
       '<div class="galeria">' + corazon(a.id, true) + '<button type="button" class="ampliar" id="amp" aria-label="Ver fotos en grande"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg><span>Ver en grande</span></button><div class="grande" id="gr" role="button" tabindex="0" aria-label="Ver fotos en grande" style="background-image:url(\'' + esc(mini(a.ph[0], 1200)) + '\')"></div><div class="miniaturas">' +
-      a.ph.map(function (u, i) { return '<button aria-label="Foto ' + (i + 1) + '" aria-current="' + (i === 0) + '" data-u="' + esc(mini(u, 1200)) + '" style="background-image:url(\'' + esc(mini(u, 200)) + '\')"></button>'; }).join("") + "</div>" + '<div class="mudanza" aria-hidden="true"><p>Tu próxima mudanza empieza acá</p><canvas id="mud"></canvas></div></div>' +
+      a.ph.map(function (u, i) { return '<button aria-label="Foto ' + (i + 1) + '" aria-current="' + (i === 0) + '" data-u="' + esc(mini(u, 1200)) + '" style="background-image:url(\'' + esc(mini(u, 200)) + '\')"></button>'; }).join("") + "</div>" + '<div class="mudanza" aria-hidden="true"><canvas id="mud"></canvas></div></div>' +
       '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (a.op !== "alquiler" && ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas</div>" : "") + bloques(a, true) + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' + (a.tp === "terreno" ? iconosTerreno(a) : iconos(a)) +
       '<div class="datos">' + [tipoTxt(a.tp), porM2(a), a.mono ? "Monoambiente" : a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.tp === "terreno" ? "" : a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].concat(a.tp === "terreno" ? [] : extras(a)).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
       (a.f === "dondevivo" && a.wa
@@ -753,26 +757,53 @@
         (v === "no" ? '<i class="x" aria-hidden="true"></i>' : "") + '<b class="tip">' + esc(txt) + "</b></span>" };
     }).sort(function (x, y) { var o = { si: 0, no: 1, nd: 2 }; return o[x.v] - o[y.v]; }).map(function (x) { return x.h; }).join("") + "</div>";
   }
+  var SIMB_TERRENO = '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>' +
+    '<linearGradient id="t-pasto" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B5E06A"/><stop offset="1" stop-color="#7DBA3A"/></linearGradient>' +
+    '<linearGradient id="t-loma" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6EA82"/><stop offset="1" stop-color="#9CD150"/></linearGradient>' +
+    '<linearGradient id="t-tierra" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B9773E"/><stop offset="1" stop-color="#8A5A34"/></linearGradient>' +
+    '<linearGradient id="t-oro" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFE07A"/><stop offset=".5" stop-color="#F2B705"/><stop offset="1" stop-color="#C98F00"/></linearGradient>' +
+    '<linearGradient id="t-borde" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9FD457"/><stop offset="1" stop-color="#6FA92E"/></linearGradient>' +
+    '<radialGradient id="t-halo"><stop offset="0" stop-color="#FFD54F" stop-opacity=".55"/><stop offset="1" stop-color="#FFD54F" stop-opacity="0"/></radialGradient>' +
+    '<symbol id="t-parc" viewBox="0 0 120 92"><ellipse cx="60" cy="84" rx="44" ry="6" fill="#000" opacity=".14"/>' +
+    '<path d="M8 50 Q8 44 14 41 L54 21 Q60 18 66 21 L106 41 Q112 44 112 50 L112 60 Q112 66 106 69 L66 89 Q60 92 54 89 L14 69 Q8 66 8 60 Z" fill="var(--base)"/>' +
+    '<path d="M8 44 Q8 38 14 35 L54 15 Q60 12 66 15 L106 35 Q112 38 112 44 L112 52 Q112 58 106 61 L66 81 Q60 84 54 81 L14 61 Q8 58 8 52 Z" fill="url(#t-borde)"/>' +
+    '<path d="M14 35 L54 15 Q60 12 66 15 L106 35 Q112 38 106 43 L66 63 Q60 66 54 63 L14 43 Q8 40 14 35 Z" fill="url(#t-pasto)"/>' +
+    '<path d="M30 33 Q48 22 66 30 Q52 40 30 33 Z" fill="url(#t-loma)" opacity=".9"/><path d="M60 44 Q80 34 98 40 Q84 52 60 44 Z" fill="url(#t-loma)" opacity=".8"/>' +
+    '<g fill="#5E9E22"><path d="M32 38 C30 30 31 24 33 20 C34 26 34 32 35 37 Z"/><path d="M35 38 C35 29 38 23 41 21 C39 28 38 33 37 38 Z"/><path d="M30 38 C27 32 25 29 23 27 C27 29 30 33 32 38 Z"/><path d="M84 46 C82 39 83 34 85 30 C86 36 86 41 87 46 Z"/><path d="M87 46 C87 38 90 33 93 31 C91 37 90 42 89 46 Z"/></g>' +
+    '<g fill="#6FAE2E"><path d="M50 30 l1 -3 l1 3z M70 52 l1 -3 l1 3z M44 48 l1 -3 l1 3z M94 38 l1 -3 l1 3z M58 56 l1 -3 l1 3z"/></g></symbol>' +
+    '<symbol id="t-top" viewBox="0 0 140 136"><ellipse cx="70" cy="86" rx="68" ry="44" fill="url(#t-halo)"/>' +
+    '<svg x="10" y="40" width="120" height="92" viewBox="0 0 120 92" style="--base:url(#t-oro)"><use href="#t-parc"/></svg>' +
+    '<g transform="translate(70 22)"><path d="M-40 -19 H40 Q47 -19 47 -12 V8 Q47 15 40 15 H9 L0 24 L-9 15 H-40 Q-47 15 -47 8 V-12 Q-47 -19 -40 -19 Z" fill="url(#t-oro)" stroke="#fff" stroke-width="3"/>' +
+    '<path d="M-31 -8l2.6 5.2 5.7.8-4.1 4 1 5.7-5.2-2.7-5.2 2.7 1-5.7-4.1-4 5.7-.8z" fill="#fff"/>' +
+    '<text x="9" y="7" text-anchor="middle" font-size="24" font-weight="800" fill="#fff" style="font-family:system-ui,sans-serif;letter-spacing:1px">TOP</text></g></symbol>' +
+    '</defs></svg>';
+  var CAMBIO = 6450;   // guaraníes por dólar, aproximado (actualizar de vez en cuando)
+  function enGs(a) { return a.p ? (a.m === "USD" ? a.p * CAMBIO : a.p) : null; }
+  var RANGOS = { a: [0, 100e6, "Hasta 100 millones"], b: [100e6, 300e6, "De 100 a 300 millones"], c: [300e6, 700e6, "De 300 a 700 millones"],
+    d: [700e6, 1500e6, "De 700 millones a 1.500 millones"], e: [1500e6, Infinity, "Más de 1.500 millones"] };
   var mapaT = null;
   function verTerrenos(f) {
     f = f || {};
     var cs = {}; TERRENOS.forEach(function (a) { if (a.c) cs[a.c] = (cs[a.c] || 0) + 1; });
     var csL = Object.keys(cs).sort(function (x, y) { return cs[y] - cs[x]; });
-    var lista = TERRENOS.filter(function (a) { return (!f.ciudad || enCiudad(a, f.ciudad)) && (!f.m2 || (a.m2 || 0) >= +f.m2); })
+    var lista = TERRENOS.filter(function (a) {
+        var r = RANGOS[f.pr], g = enGs(a);
+        return (!f.ciudad || enCiudad(a, f.ciudad)) && (!f.m2 || (a.m2 || 0) >= +f.m2) && (!r || (g !== null && g >= r[0] && g < r[1]));
+      })
       .sort(function (x, y) { return (destacado(y) - destacado(x)) || ((x.c || "").localeCompare(y.c || "")); });
     lista.forEach(function (a, i) { a._n = i + 1; });
     $app.innerHTML =
       '<section class="terr"><div class="terr-cab"><div class="toggle" role="group" aria-label="Qué buscás"><a class="tgl" href="#/" data-ir="alquiler"><span class="lg">Busco alquilar</span><span class="ct">Alquilar</span></a><a class="tgl" href="#/" data-ir="venta"><span class="lg">Busco comprar</span><span class="ct">Comprar</span></a><button aria-pressed="true"><span class="lg">Busco terreno</span><span class="ct">Terreno</span></button></div>' +
-      '<h1>Terrenos en todo Paraguay</h1><p class="terr-sub">' + (lista.length ? lista.length + (lista.length === 1 ? " terreno" : " terrenos") + ". Tocá un número para ver el terreno." : "") + "</p>" +
+      '<h1><span class="ac">Terrenos</span> en todo Paraguay</h1><p class="terr-sub">' + (lista.length ? lista.length + (lista.length === 1 ? " terreno" : " terrenos") + ". Tocá un número para ver el terreno." : "") + "</p>" +
       '<form class="terr-fil" id="tf"><label>Ciudad<select name="ciudad"><option value="">Todo Paraguay</option>' +
       (cs["Asunción"] ? '<option value="Asunción"' + (f.ciudad === "Asunción" ? " selected" : "") + ">Asunción</option>" : "") +
       '<option value="@central"' + (f.ciudad === "@central" ? " selected" : "") + ">Central</option>" +
       csL.filter(function (c) { return c !== "Asunción"; }).map(function (c) { return '<option value="' + esc(c) + '"' + (f.ciudad === c ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("") + "</select></label>" +
-      '<label>Superficie mínima<select name="m2"><option value="">Cualquiera</option>' + [300, 500, 1000, 5000, 10000].map(function (n) { return '<option value="' + n + '"' + (String(f.m2) === String(n) ? " selected" : "") + ">" + (n >= 10000 ? n / 10000 + " hectárea" : n.toLocaleString("es-PY") + " m²") + "</option>"; }).join("") + "</select></label></form></div>" +
-      '<div class="terr-mapa"><div id="mapaT"></div>' + (TERRENOS.length ? "" : '<div class="terr-vacio"><b>Estamos juntando terrenos de todo el país.</b><span>En las próximas horas empiezan a aparecer acá.</span></div>') + "</div>" +
-      (lista.length ? '<div class="terr-lista">' + lista.map(function (a) {
-        return '<a class="terr-item" href="#/aviso/' + encodeURIComponent(a.id) + '"><span class="tn">' + a._n + '</span><span class="tf" style="background-image:url(\'' + esc(mini(a.ph[0], 300)) + '\')"></span><span class="tx"><b>' + precio(a) + "</b><span>" + esc([a.m2 >= 10 ? Math.round(a.m2).toLocaleString("es-PY") + " m²" : "", a.c].filter(Boolean).join(" · ")) + "</span></span></a>";
-      }).join("") + "</div>" : "") + "</section>";
+      '<label>Superficie mínima<select name="m2"><option value="">Cualquiera</option>' + [300, 500, 1000, 5000, 10000].map(function (n) { return '<option value="' + n + '"' + (String(f.m2) === String(n) ? " selected" : "") + ">" + (n >= 10000 ? n / 10000 + " hectárea" : n.toLocaleString("es-PY") + " m²") + "</option>"; }).join("") + "</select></label>" +
+      '<label>Precio en guaraníes<select name="pr"><option value="">Cualquiera</option>' + Object.keys(RANGOS).map(function (k) { return '<option value="' + k + '"' + (f.pr === k ? " selected" : "") + ">" + RANGOS[k][2] + "</option>"; }).join("") + "</select></label>" +
+      (f.pr ? '<p class="terr-nota">Los precios en dólares se cuentan a ₲ ' + CAMBIO.toLocaleString("es-PY") + " por dólar.</p>" : "") + "</form></div>" +
+      SIMB_TERRENO + '<div class="terr-mapa"><div id="mapaT"></div>' + (TERRENOS.length ? "" : '<div class="terr-vacio"><b>Estamos juntando terrenos de todo el país.</b><span>En las próximas horas empiezan a aparecer acá.</span></div>') + "</div>" +
+      "</section>";
     $app.querySelectorAll("[data-ir]").forEach(function (b) { b.onclick = function () { setOp(b.dataset.ir); }; });
     document.getElementById("tf").onchange = function () { var o = {}; new FormData(this).forEach(function (v, k) { if (v) o[k] = v; }); location.hash = "#/terrenos" + (q(o) ? "?" + q(o) : ""); };
     window.scrollTo(0, 0);
@@ -786,7 +817,12 @@
       lista.forEach(function (a) {
         var d = dondeEsta(a); if (!d) return;
         pts.push(d.ll);
-        var m = L.marker(d.ll, { icon: L.divIcon({ className: "tpin", html: '<span class="' + (destacado(a) ? "dest" : "") + (d.exacta ? "" : " aprox") + '">' + a._n + "</span>", iconSize: null }), title: a.t });
+        var top = destacado(a);
+        var m = L.marker(d.ll, { icon: L.divIcon({ className: "tpin3d" + (top ? " top" : ""), html: top ?
+            '<svg viewBox="0 0 140 136" width="66" height="64"><use href="#t-top"/></svg>' :
+            '<svg viewBox="0 0 120 92" width="42" height="32" style="--base:url(#t-tierra)"><use href="#t-parc"/></svg>',
+          iconSize: top ? [66, 64] : [42, 32], iconAnchor: top ? [33, 58] : [21, 29], popupAnchor: [0, top ? -50 : -24] }),
+          title: a.t, zIndexOffset: top ? 1000 : 0 });
         m.bindPopup(tarjetaMapa(a) + (d.exacta ? "" : '<p class="mapr">Ubicación exacta, consultá al vendedor.</p>'), { maxWidth: 280, minWidth: 240, className: "mpop" });
         capaT.addLayer(m);
       });
@@ -860,6 +896,7 @@
     var h = location.hash.replace(/^#/, "") || "/";
     if (h.indexOf("/aviso/") === 0) return ficha(decodeURIComponent(h.slice(7)));
     if (h.indexOf("/guardados") === 0) return verGuardados();
+    if (h.indexOf("/terrenos") === 0) { document.body.classList.remove("compra"); document.body.classList.add("terreno"); } else document.body.classList.remove("terreno");
     if (h.indexOf("/terrenos") === 0) return verTerrenos(leerQ(h.split("?")[1]));
     if (h.indexOf("/buscar") === 0) {
       var f = leerQ(h.split("?")[1]);
@@ -870,7 +907,35 @@
     mostrados = 24; inicio();
   }
 
-  $app.innerHTML = '<div class="vacio">Cargando avisos…</div>';
+  /* ---------- caja mágica: animación de carga, solo en el inicio ---------- */
+  function cajaMagica() {
+    return '<div class="cmagica" role="status" aria-label="Cargando avisos"><svg class="cm-esc go" viewBox="0 0 280 252" aria-hidden="true">' +
+      '<defs><clipPath id="cm-cp"><rect x="0" y="0" width="280" height="244"/></clipPath></defs>' +
+      '<ellipse cx="140" cy="246" rx="78" ry="5" fill="#000" opacity=".07"/><rect x="72" y="142" width="136" height="12" fill="#A86F36"/>' +
+      '<g clip-path="url(#cm-cp)">' +
+      '<g class="cm-it cm-1" style="--r:12deg"><rect x="112" y="68" width="64" height="84" rx="9" fill="#1D1D1F"/><rect x="114" y="56" width="60" height="16" rx="6" fill="#2C2C2E"/><rect x="132" y="48" width="24" height="10" rx="3" fill="#2C2C2E"/><path d="M114 74 C104 102 168 132 178 74" fill="none" stroke="#48484A" stroke-width="7" stroke-linecap="round"/><rect x="112" y="124" width="64" height="6" fill="#D92D20"/><rect x="112" y="130" width="64" height="5" fill="#fff"/><rect x="112" y="135" width="64" height="6" fill="#1F4FE0"/><rect x="166" y="80" width="7" height="7" rx="1.5" fill="#D92D20"/><rect x="84" y="108" width="26" height="44" rx="4" fill="#3A2A20"/><rect x="87" y="103" width="20" height="7" rx="2" fill="#C7CDD6"/><rect x="84" y="120" width="26" height="12" fill="#5A3E2E"/></g>' +
+      '<g class="cm-it cm-2" style="--r:-18deg"><ellipse cx="140" cy="140" rx="72" ry="14" fill="#E3CB86"/><path d="M104 140 C104 92 176 92 176 140 Z" fill="#F1E2B0"/><path d="M110 120 q30 -6 60 0M108 130 q32 -5 64 0" stroke="#D9C17F" stroke-width="1.4" fill="none"/><rect x="105" y="126" width="70" height="5" fill="#D92D20"/><rect x="105" y="131" width="70" height="4" fill="#fff"/><rect x="105" y="135" width="70" height="5" fill="#1F4FE0"/><path d="M72 140 q68 14 136 0" stroke="#CFB46E" stroke-width="2" fill="none"/></g>' +
+      '<g class="cm-it cm-3" style="--r:-28deg"><rect x="108" y="66" width="64" height="86" rx="3" fill="#1F4FE0"/><rect x="108" y="66" width="10" height="86" fill="#1739A8"/><rect x="126" y="80" width="38" height="5" rx="2" fill="#fff"/><rect x="126" y="90" width="28" height="4" rx="2" fill="#AFC2FF"/><rect x="172" y="70" width="4" height="78" fill="#F4F1EA"/></g>' +
+      '<g class="cm-it cm-4" style="--r:16deg"><path d="M118 152 L123 118 L157 118 L162 152 Z" fill="#D85A30"/><rect x="120" y="114" width="40" height="8" rx="2" fill="#B5471F"/><path d="M140 116 C126 90 104 96 98 76 C120 74 136 92 140 116 Z" fill="#12B76A"/><path d="M140 116 C150 82 172 80 180 64 C186 92 162 100 140 116 Z" fill="#0B8A50"/><path d="M140 116 C136 88 140 70 139 50 C152 72 150 96 140 116 Z" fill="#32D583"/></g>' +
+      '</g><g class="cm-cuerpo"><rect x="68" y="150" width="144" height="94" rx="4" fill="#E8B57A"/><rect x="68" y="150" width="144" height="9" fill="#D9A066"/><rect x="128" y="150" width="24" height="94" fill="#F2CF9E" opacity=".7"/><rect x="82" y="196" width="36" height="20" rx="2" fill="#fff" opacity=".9"/><path d="M88 203h24M88 209h15" stroke="#1F4FE0" stroke-width="2.5" stroke-linecap="round"/><g transform="translate(170 198)"><rect width="24" height="16" rx="2" fill="#fff"/><rect width="24" height="5.3" fill="#D92D20"/><rect y="10.7" width="24" height="5.3" fill="#1F4FE0"/><circle cx="12" cy="8" r="2" fill="#12B76A"/></g></g>' +
+      '<rect class="cm-fi" x="72" y="145" width="68" height="7" rx="2" fill="#D9A066"/><rect class="cm-fd" x="140" y="145" width="68" height="7" rx="2" fill="#C99258"/></svg></div>';
+  }
+  var esInicio = !/^#\/(?!$)/.test(location.hash || "");
+  var cajaDesde = Date.now(), cajaTimer = null;
+  if (esInicio) {
+    $app.innerHTML = cajaMagica();
+    cajaTimer = setInterval(function () {                                     // si tarda, la caja vuelve a empezar
+      var e = $app.querySelector(".cm-esc"); if (!e) { clearInterval(cajaTimer); return; }
+      e.classList.remove("go"); void e.getBoundingClientRect(); e.classList.add("go");
+    }, 1900);
+  } else {
+    $app.innerHTML = '<div class="vacio">Cargando avisos…</div>';
+  }
+  function cuandoTermineLaCaja(fn) {                                          // que se vea completa al menos una vez
+    if (!esInicio) return fn();
+    var falta = 1800 - (Date.now() - cajaDesde);
+    setTimeout(function () { clearInterval(cajaTimer); fn(); }, Math.max(0, falta));
+  }
   fetch("data/avisos.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
     TODOS = (j.avisos || []).filter(function (a) { return a.ph && a.ph.length >= (a.tp === "terreno" ? 1 : 2); });
     TERRENOS = TODOS.filter(function (a) { return a.tp === "terreno"; });
@@ -889,7 +954,7 @@
     });
     deducirBarrios(); centrosCiudad(); contarGuardados();
     ACT = j.actualizado;
-    var d = new Date(ACT); document.getElementById("actualizado").textContent = "Actualizado " + d.toLocaleString("es-PY", { dateStyle: "short", timeStyle: "short" });
-    window.addEventListener("hashchange", ruta); ruta();
+    
+    cuandoTermineLaCaja(function () { window.addEventListener("hashchange", ruta); ruta(); });
   }).catch(function () { $app.innerHTML = '<div class="vacio">No pudimos cargar los avisos. Probá recargar la página.</div>'; });
 })();

@@ -1,5 +1,6 @@
 :root{--ink:#101828;--gris:#475467;--suave:#F2F4F7;--fondo:#EEF1F6;--azul:#1F4FE0;--verde:#0B7A5E;--ac:var(--azul)}
 body.compra{--ac:var(--verde)}
+body.terreno{--ac:#8A5A34;--tierra:#8A5A34}
 *{box-sizing:border-box}
 body{margin:0;background:var(--fondo);color:var(--ink);font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:inherit}
@@ -264,7 +265,6 @@ body.sin-scroll{overflow:hidden}
 
 /* mudanza en miniatura, abajo de las fotos */
 .mudanza{display:flex;flex-direction:column;height:280px}
-.mudanza p{margin:14px 20px 0;font-size:15px;font-weight:800;color:#344054}
 .mudanza canvas{flex:1;width:100%;min-height:200px;display:block}
 @media (max-width:900px){.mudanza{display:none}}
 
@@ -321,3 +321,39 @@ body.compra .buscador{background:linear-gradient(#fff,#fff) padding-box,linear-g
 @media (max-width:520px){.toggle button,.toggle .tgl{padding:0 10px;font-size:13.5px;min-height:44px}}
 .toggle .ct{display:none}
 @media (max-width:520px){.toggle .lg{display:none}.toggle .ct{display:inline}}
+
+/* terrenos en tono tierra */
+body.terreno .terr-cab h1 .ac{color:var(--tierra)}
+body.terreno .toggle button[aria-pressed="true"]{background:var(--tierra);color:#fff}
+.tpin span{background:#8A5A34}
+.tpin span.aprox{background:#fff;color:#8A5A34;border-color:#8A5A34}
+.terr-item .tn{background:#8A5A34}
+body.terreno .mgrupo span{background:#8A5A34;color:#fff}
+body.terreno .btn-wa,body.terreno .ir{background:var(--tierra)}
+.terr-nota{flex-basis:100%;margin:0;font-size:13px;color:var(--gris)}
+
+/* banderita en el buscador */
+.enciudad .bandera{width:20px;height:14px;border-radius:2px;box-shadow:0 0 0 1px rgba(16,24,40,.12);flex:none}
+
+/* caja mágica (carga del inicio) */
+.cmagica{display:grid;place-items:center;min-height:320px;background:#fff;border-radius:28px;margin-top:20px}
+.cm-esc{width:180px;height:auto}
+.cm-it{opacity:0}
+.cm-esc.go .cm-it{animation:cmEntra .42s linear forwards}
+.cm-esc.go .cm-1{animation-delay:.15s}.cm-esc.go .cm-2{animation-delay:.47s}.cm-esc.go .cm-3{animation-delay:.79s}.cm-esc.go .cm-4{animation-delay:1.11s}
+@keyframes cmEntra{0%{opacity:1;transform:translateY(-250px) rotate(var(--r,0deg));animation-timing-function:cubic-bezier(.55,0,1,.5)}55%{opacity:1;transform:translateY(0) rotate(0) scale(1.06,.92)}68%{opacity:1;transform:translateY(-6px)}100%{opacity:1;transform:translateY(120px)}}
+.cm-fi,.cm-fd{transform-box:view-box}
+.cm-fi{transform-origin:72px 150px}.cm-fd{transform-origin:208px 150px}
+.cm-esc.go .cm-fi{animation:cmAbreI 1.75s ease-in-out forwards}
+.cm-esc.go .cm-fd{animation:cmAbreD 1.75s ease-in-out forwards}
+@keyframes cmAbreI{0%{transform:rotate(0)}9%{transform:rotate(-130deg)}88%{transform:rotate(-130deg)}100%{transform:rotate(0)}}
+@keyframes cmAbreD{0%{transform:rotate(0)}9%{transform:rotate(130deg)}88%{transform:rotate(130deg)}100%{transform:rotate(0)}}
+.cm-cuerpo{transform-box:fill-box;transform-origin:50% 100%}
+.cm-esc.go .cm-cuerpo{animation:cmSac .14s ease-out .38s,cmSac .14s ease-out .70s,cmSac .14s ease-out 1.02s,cmSac .14s ease-out 1.34s,cmSac .18s ease-out 1.72s}
+@keyframes cmSac{0%{transform:scale(1.04,.94)}100%{transform:scale(1,1)}}
+@media (prefers-reduced-motion:reduce){.cm-it{opacity:1}.cm-esc.go *{animation:none!important}}
+
+/* ícono 3D de terreno en el mapa */
+.tpin3d{background:none;border:0}
+.tpin3d svg{display:block;overflow:visible;filter:drop-shadow(0 1px 1px rgba(0,0,0,.15))}
+.mpin .terr{background:#8A5A34;border-color:#8A5A34}.mpin .terr::after{border-top-color:#8A5A34}

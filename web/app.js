@@ -770,6 +770,7 @@
     var asu = {}; BARRIOS_ASU.forEach(function (b) { asu[plano(b).trim()] = b; });
     DATA.forEach(function (a) {
       a.mono = esMono(a);
+      if (a.b && /^(departamento|depto|dpto|casa|duplex|dúplex|terreno|centro|zona|barrio|ciudad|condominio|edificio|monoambiente|local|oficina|sin especificar)$/i.test(String(a.b).trim())) delete a.b;
       var k = plano(String(a.c || "").replace(/^\s*(barrio|b°|bº|bo\.)\s*/i, "")).trim();
       if (/^\s*(barrio|b°|bº)\s/i.test(a.c || "") || (asu[k] && !esCentral(a.c))) {
         if (!a.b || a.b === a.c) a.b = asu[k] || String(a.c).replace(/^\s*(barrio|b°|bº)\s*/i, "");

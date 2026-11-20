@@ -55,19 +55,75 @@
     return String(d || "").replace(/<br\s*\/?>|<\/p>|<\/div>|<\/li>/gi, "\n").replace(/<[^>]+>/g, "")
       .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/[ \t]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
   }
+  /* montos que se leen de la descripción: nunca teléfonos ni números absurdos */
+  function monto(txt, usdCtx) {
+    var raw = String(txt || "").trim();
+    if (/^0\d{8,}/.test(raw.replace(/[.,\s]/g, ""))) return null;          // 0981..., 0986... son teléfonos
+    var n = parseInt(raw.replace(/[.,\s]/g, ""), 10);
+    if (!n || String(n).length > 10) return null;
+    var usd = n < 20000;
+    if (usd ? (n < 20 || n > 20000) : (n < 50000 || n > 60000000)) return null;
+    return { n: n, usd: usd };
+  }
+  function fmt(x) { return (x.usd ? "USD " : "₲ ") + String(x.n).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function expIncl(a) { return /(incluye|incluido|incluidas?|con) (el )?(iva y |las )?expensas|expensas (incluidas?|incluye)/.test(norm(a.d)); }
   function expensas(a) {
-    var m = norm(a.d).match(/expensas?[^0-9]{0,30}?(usd|us\$|u\$s|\$)?\s*([0-9][0-9.,]{2,})/);
+    if (expIncl(a)) return null;
+    var m = norm(a.d).match(/expensas?[^0-9\n]{0,25}?(usd|us\$|u\$s|\$)?\s*([0-9][0-9.,]{2,})/);
     if (!m) return null;
-    var n = parseInt(m[2].replace(/[.,]/g, ""), 10);
-    if (!n || n < 10) return null;
-    var usd = !!m[1] || (n < 5000 && a.m === "USD");
-    if (!usd && n < 10000) return null;
-    return (usd ? "USD " : "₲ ") + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    var x = monto(m[2], !!m[1] || a.m === "USD");
+    return x ? fmt(x) : null;
+  }
+  /* garantía y comisión que el anunciante escribe en la descripción */
+  function costosEntrada(a) {
+    var d = norm(a.d), out = {}, renta = a.p ? { n: a.p, usd: a.m === "USD" } : null;
+    var g = d.match(/garantia[^0-9\n%]{0,25}?(usd|us\$|u\$s|\$|gs\.?|₲)?\s*([0-9][0-9.,]{3,})/);
+    if (g) out.gar = monto(g[2], /us|\$/.test(g[1] || "") || a.m === "USD");
+    if (!out.gar) {
+      var gm = d.match(/garantia[^\n]{0,30}?\b(un|1|dos|2|tres|3) (mes|meses)\b/) || (/garantia[^\n]{0,20}(mismo valor|igual (al|que el) alquiler)/.test(d) ? [0, "1"] : null);
+      if (gm && renta) { var k = { un: 1, dos: 2, tres: 3 }[gm[1]] || +gm[1]; out.gar = { n: renta.n * k, usd: renta.usd, meses: k }; }
+    }
+    var c = d.match(/comision[^0-9\n%]{0,30}?(usd|us\$|u\$s|\$|gs\.?|₲)?\s*([0-9][0-9.,]{3,})(?!\s*%)/);
+    if (c) out.com = monto(c[2], /us|\$/.test(c[1] || "") || a.m === "USD");
+    if (!out.com) {
+      var cp = d.match(/comision[^\n]{0,40}?(\d{1,3}) ?%/), cm = d.match(/comision[^\n]{0,30}?\b(medio|un|1) mes\b/);
+      if (cp && renta) out.com = { n: Math.round(renta.n * (+cp[1]) / 100), usd: renta.usd, pct: +cp[1] };
+      else if (cm && renta) out.com = { n: cm[1] === "medio" ? Math.round(renta.n / 2) : renta.n, usd: renta.usd };
+    }
+    if (!out.com && /sin comision|no cobra(mos)? comision/.test(d)) out.sinCom = true;
+    out.renta = renta;
+    return out;
+  }
+  function bloques(a, grande) {
+    if (a.op !== "alquiler") return "";
+    var ex = expensas(a), ce = a.p ? costosEntrada(a) : {}, e = entrar(a), mes = [], una = [];
+    if (ex) mes.push('<span class="cb ex"><i>Expensas</i>+ ' + esc(ex) + "</span>");
+    else if (expIncl(a)) mes.push('<span class="cb ok"><i>Expensas</i>incluidas</span>');
+    if (ex && a.p) { var xm = expensas(a).replace(/[^0-9]/g, ""), mu = /USD/.test(ex) === (a.m === "USD");
+      if (mu) mes.push('<span class="cb mtot"><i>Total por mes</i>' + fmt({ n: a.p + (+xm), usd: a.m === "USD" }) + "</span>"); }
+    if (ce.gar) una.push('<span class="cb"><i>Garantía</i>' + fmt(ce.gar) + "</span>");
+    if (ce.com) una.push('<span class="cb"><i>Comisión</i>' + fmt(ce.com) + "</span>");
+    else if (ce.sinCom) una.push('<span class="cb ok"><i>Comisión</i>no cobra</span>');
+    if (e) una.push('<span class="cb tot"><i>Para entrar</i>' + e.txt + "</span>");
+    var fila = function (t, l, c) { return l.length ? '<div class="crow ' + c + '"><span class="cl">' + t + "</span>" + l.join("") + "</div>" : ""; };
+    var h = fila("Todos los meses", mes, "m") + fila("Una sola vez, al entrar", una, "u");
+    return h ? '<div class="costos' + (grande ? " grande" : "") + '">' + h + "</div>" : "";
+  }
+  /* total para entrar, solo si el aviso menciona garantía o comisión */
+  function entrar(a) {
+    if (a.op !== "alquiler" || !a.p) return null;
+    var ce = costosEntrada(a); if (!ce.gar && !ce.com) return null;
+    var tot = ce.renta.n, que = ["1 mes"];
+    if (ce.gar && ce.gar.usd === ce.renta.usd) { tot += ce.gar.n; que.push("garantía"); }
+    if (ce.com && ce.com.usd === ce.renta.usd) { tot += ce.com.n; que.push("comisión"); }
+    if (que.length < 2) return null;
+    return { txt: fmt({ n: tot, usd: ce.renta.usd }), que: que.join(" + ") };
   }
   function extras(a) {
     var t = norm(a.t + " " + a.d), o = [];
     if (/negociable|conversable|a convenir|a tratar/.test(t)) o.push("Precio negociable");
     if (/amoblad|amueblad/.test(t) && !/(sin|no) (amoblar|amoblad|amueblad)/.test(t)) o.push("Amoblado");
+    if (a.op === "alquiler" && expIncl(a)) o.push("Expensas incluidas");
     return o;
   }
   function porMes(a) { return a.op === "alquiler" && a.p ? " <small>por mes</small>" : ""; }
@@ -82,7 +138,7 @@
   function enCiudad(a, c) { return !c || (c === "@central" ? esCentral(a.c) : a.c === c); }
   function nomCiudad(c) { return c === "@central" ? "Central" : c; }
   function ciudades() { var m = {}; DATA.forEach(function (a) { if (a.c) m[a.c] = (m[a.c] || 0) + 1; }); return Object.keys(m).sort(function (x, y) { return m[y] - m[x]; }); }
-  function barrios(c) { var m = {}; DATA.forEach(function (a) { if (a.b && a.b !== a.c && enCiudad(a, c)) m[a.b] = 1; }); return Object.keys(m).sort(); }
+  function barrios(c) { var m = {}; DATA.forEach(function (a) { if (a.b && a.b !== a.c && enCiudad(a, c) && !/^(departamento|depto|casa|duplex|terreno|barrio)$/.test(norm(a.b).trim())) m[a.b] = 1; }); return Object.keys(m).sort(); }
 
   /* ---------- lo que el bot interpreta de cada aviso ---------- */
   function plano(s) { return " " + norm(s).replace(/[^a-z0-9]+/g, " ").trim() + " "; }
@@ -139,7 +195,7 @@
   var COMOD = [
     { k: "masc", n: "Mascotas", si: "Acepta mascotas", no: "No acepta mascotas", nd: "El aviso no dice si acepta mascotas" },
     { k: "auto", n: "Estacionamiento", si: "Tiene lugar para el auto", no: "No tiene estacionamiento", nd: "El aviso no dice si tiene estacionamiento",
-      re: / (cochera|cocheras|garaje|garage|estacionamiento|estacionamientos|parking) |lugar para (el |un )?auto/, nore: / (sin|no tiene|no cuenta con|no incluye|no posee) (cochera|garaje|garage|estacionamiento|lugar para)/ },
+      re: / (cochera|cocheras|garaje|garage|estacionamiento|estacionamientos|parking) |lugar para (el |un )?auto/, nore: / (sin|no tiene|no cuenta con|no incluye|no posee) (cochera|garaje|garage|estacionamiento|lugar para)| solo (para )?(moto|motos|motocicleta|motocicletas) / },
     { k: "pile", n: "Piscina", si: "Tiene piscina", no: "No tiene piscina", nd: "El aviso no menciona piscina", re: /piscina|pileta/, nore: / (sin|no tiene|no cuenta con|no posee) (piscina|pileta)/ },
     { k: "aire", n: "Aire acondicionado", si: "Tiene aire acondicionado", no: "No tiene aire acondicionado", nd: "El aviso no menciona aire acondicionado",
       re: /aire acondicionado|aires acondicionados| a a | split|climatizad/, nore: / (sin|no tiene|no cuenta con|no incluye) aire/ },
@@ -156,7 +212,7 @@
   ];
   var NUM = { un: 1, una: 1, dos: 2, tres: 3, cuatro: 4 };
   function comodidades(a) {
-    var t = plano(a.t + " " + a.d), out = [];
+    var t = plano((a.t + " " + a.d).replace(/\u{1F6AB}|\u274C|\u2716\uFE0F?|\u26D4|\u{1F6B7}/gu, " sin ")), out = [];
     COMOD.forEach(function (c) {
       var v = "nd", extra = "";
       if (c.k === "masc") v = a.ms === "si" ? "si" : a.ms === "no" ? "no" : "nd";
@@ -239,7 +295,8 @@
     var enDatos = ciudades(), c = masLargo(t, enDatos.concat(PY));
     if (!c && /\b(central|gran asuncion)\b/.test(t)) f.ciudad = "@central";
     if (c) { var igual = enDatos.find(function (x) { return norm(x) === norm(c); }); f.ciudad = igual || c; }
-    var b = masLargo(t, barrios(f.ciudad).filter(function (x) { return norm(x).length > 3 && norm(x) !== norm(f.ciudad || ""); }));
+    var NO_BARRIO = /^(departamento|depto|casa|duplex|terreno|centro|zona|barrio|ciudad|condominio|edificio|monoambiente|local|oficina)$/;
+    var b = masLargo(t, barrios(f.ciudad).filter(function (x) { return norm(x).length > 3 && norm(x) !== norm(f.ciudad || "") && !NO_BARRIO.test(norm(x).trim()); }));
     if (b) { f.barrio = b; var a = DATA.find(function (x) { return x.b === b && enCiudad(x, f.ciudad); }); if (a && f.ciudad !== "@central") f.ciudad = a.c; }
     return f;
   }
@@ -279,7 +336,7 @@
       '<div class="foto"><img class="fimg" alt="" loading="lazy" src="' + esc(mini(a.ph[0], 640)) + '" data-o="' + esc(seguro(a.ph[0])) + '" onerror="DVfoto(this)"><span class="tag">' + tipoTxt(a.tp) + '</span>' +
       (dest ? '<span class="tag destacado">Destacado</span>' : "") + corazon(a.id) +
       '<span class="src">' + (a.f === "dondevivo" ? "Publicado en DóndeVivo" : "Aviso de " + esc(FUENTES[a.f] || a.f)) + "</span></div>" +
-      '<div class="info"><div class="precio">' + precio(a) + porMes(a) + '</div>' + (ex ? '<div class="expensas">+ ' + esc(ex) + ' de expensas</div>' : "") + '<div class="tit">' + esc(a.t) + '</div><div class="lugar">' + lugar(a) + '</div><div class="datos">' + tags.join("") + "</div></div></a>";
+      '<div class="info"><div class="precio">' + precio(a) + porMes(a) + '</div>' + bloques(a) + '<div class="tit">' + esc(a.t) + '</div><div class="lugar">' + lugar(a) + '</div><div class="datos">' + tags.join("") + "</div></div></a>";
   }
 
   /* ---------- contador ----------
@@ -549,17 +606,22 @@
       '<label>Moneda del precio<select name="mon">' + opt("PYG", "Guaraníes", f.mon) + opt("USD", "Dólares", f.mon) + "</select></label>" +
       '<label>Página de origen<select name="fuente">' + opt("", "Todas", f.fuente) + Object.keys(FUENTES).map(function (k) { return opt(k, FUENTES[k], f.fuente); }).join("") + "</select></label>" +
       '<button class="btn" type="submit">Aplicar</button></form>' +
-      '<section><div class="cabeza"><h1>' + lista.length.toLocaleString("es-PY") + (f.op === "venta" ? " en venta" : " en alquiler") + (f.ciudad ? " en " + esc(nomCiudad(f.ciudad)) : "") + (f.barrio ? ", " + esc(f.barrio) : "") + '</h1><a class="volver" href="#/">← Nueva búsqueda</a></div>' +
+      '<section><form class="rebusca" id="rb"><label for="rbq" class="sr">Tu búsqueda</label><input id="rbq" value="' + esc(f.txt || "") + '" placeholder="Describí lo que buscás, por ejemplo depto con patio en Luque" autocomplete="off"><button class="btn" type="submit">Buscar</button></form>' +
+      '<div class="cabeza"><h1>' + lista.length.toLocaleString("es-PY") + (f.op === "venta" ? " en venta" : " en alquiler") + (f.ciudad ? " en " + esc(nomCiudad(f.ciudad)) : "") + (f.barrio ? ", " + esc(f.barrio) : "") + '</h1><a class="volver" href="#/">← Nueva búsqueda</a></div>' +
       (lista.length ? '<div class="lista">' + lista.slice(0, mostrados).map(tarjeta).join("") + "</div>" + (lista.length > mostrados ? '<button class="mas" id="mas">Ver más</button>' : "")
         : '<div class="vacio">' + (sinCiudad ? "<b>Todavía no tenemos avisos en " + esc(f.ciudad) + ".</b><br>Sumamos avisos nuevos todos los días, volvé a mirar pronto."
           : "<b>Todavía no tenemos avisos con esos filtros.</b><br>Probá sacar alguno. Sumamos avisos nuevos todos los días.") + "</div>") +
       "</section></div>";
     var ff = document.getElementById("ff");
-    function aplicar() { var o = { op: f.op }; new FormData(ff).forEach(function (v, k) { o[k] = v; }); if (o.ciudad !== f.ciudad) o.barrio = ""; mostrados = 24; location.hash = "#/buscar?" + q(o); }
+    function aplicar() { var o = { op: f.op, txt: f.txt }; new FormData(ff).forEach(function (v, k) { o[k] = v; }); if (o.ciudad !== f.ciudad) o.barrio = ""; mostrados = 24; location.hash = "#/buscar?" + q(o); }
     ff.onsubmit = function (e) { e.preventDefault(); aplicar(); };
     ff.querySelectorAll("select").forEach(function (s) { s.onchange = aplicar; });
     ff.querySelectorAll("[data-op]").forEach(function (b) { b.onclick = function () { f.op = b.dataset.op; aplicar(); }; });
     var m = document.getElementById("mas"); if (m) m.onclick = function () { mostrados += 24; buscar(f); };
+    document.getElementById("rb").onsubmit = function (e) {
+      e.preventDefault(); var t = document.getElementById("rbq").value.trim(); mostrados = 24;
+      location.hash = t ? "#/buscar?" + q({ q: t, op: f.op }) : "#/buscar?" + q({ op: f.op });
+    };
   }
 
   /* cuenta visitas y clics de contacto por aviso (privado, solo se puede sumar) */
@@ -579,18 +641,31 @@
     if (!a) return fichaBaja(id);
     setOp(a.op);
     var fu = FUENTES[a.f] || a.f, ex = expensas(a);
-    var costo = a.op === "alquiler"
-      ? (a.g ? "<p>Garantía que pide el anunciante: <b>" + esc(a.g) + "</b>. Consultale si además cobra comisión.</p>"
-        : "<p>Este anunciante no menciona costos de garantía ni comisión, conviene consultarle antes de visitar.</p>")
-      : "<p>Consultale al anunciante si hay gastos de escritura o comisión aparte del precio.</p>";
+    var costo;
+    if (a.op === "alquiler") {
+      var ce = costosEntrada(a), filas = [], suma = ce.renta ? ce.renta.n : 0, mismaMon = !!ce.renta;
+      if (ce.renta) filas.push(["Primer mes de alquiler", fmt(ce.renta)]);
+      if (ce.gar) { filas.push(["Garantía" + (ce.gar.meses ? " (" + ce.gar.meses + (ce.gar.meses > 1 ? " meses)" : " mes)") : ""), fmt(ce.gar)]); if (ce.gar.usd === (ce.renta || {}).usd) suma += ce.gar.n; else mismaMon = false; }
+      else if (a.g) filas.push(["Garantía", esc(a.g)]);
+      if (ce.com) { filas.push(["Comisión" + (ce.com.pct ? " (" + ce.com.pct + "% de un mes)" : ""), fmt(ce.com)]); if (ce.com.usd === (ce.renta || {}).usd) suma += ce.com.n; else mismaMon = false; }
+      else if (ce.sinCom) filas.push(["Comisión", "No cobra"]);
+      if (ce.gar || ce.com) {
+        costo = '<table class="entrada">' + filas.map(function (f) { return "<tr><td>" + f[0] + "</td><td>" + f[1] + "</td></tr>"; }).join("") +
+          (mismaMon && (ce.gar || ce.com) ? '<tr class="tot"><td>Para entrar necesitás</td><td>' + fmt({ n: suma, usd: ce.renta.usd }) + "</td></tr>" : "") + "</table>" +
+          (!ce.gar && !a.g ? "<p>No menciona garantía, conviene consultarle.</p>" : !ce.com && !ce.sinCom ? "<p>No menciona si cobra comisión, conviene consultarle.</p>" : "") +
+          '<p class="aclara">Calculado con lo que dice el aviso. Confirmalo con el anunciante.</p>';
+      } else costo = a.g ? "<p>Garantía que pide el anunciante: <b>" + esc(a.g) + "</b>. Consultale si además cobra comisión.</p>"
+        : "<p>Este anunciante no menciona costos de garantía ni comisión, conviene consultarle antes de visitar.</p>";
+      if (expIncl(a)) costo += "<p>Las <b>expensas están incluidas</b> en el precio, según el aviso.</p>";
+    } else costo = "<p>Consultale al anunciante si hay gastos de escritura o comisión aparte del precio.</p>";
     if (ex) costo += "<p>Además del " + (a.op === "alquiler" ? "alquiler" : "precio") + ", el aviso menciona <b>" + esc(ex) + " de expensas</b>" + (a.op === "alquiler" ? " por mes." : ".") + "</p>";
     var _masc = a.ms === "si" ? "<p><b>Sí, acepta mascotas</b> según el aviso.</p>" : a.ms === "no" ? "<p><b>No acepta mascotas</b> según el aviso.</p>" : "<p>El aviso no dice si acepta mascotas, conviene preguntar.</p>";
     var mapa = a.lat && a.lng ? '<iframe class="mapa" loading="lazy" title="Ubicación aproximada" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (a.lng - 0.012) + "," + (a.lat - 0.008) + "," + (a.lng + 0.012) + "," + (a.lat + 0.008) + "&layer=mapnik&marker=" + a.lat + "," + a.lng + '"></iframe>' : "<p>El anunciante no compartió la ubicación exacta.</p>";
     $app.innerHTML =
       '<a class="volver" href="javascript:history.back()">← Volver a los resultados</a><div class="ficha">' +
-      '<div class="galeria">' + corazon(a.id, true) + '<div class="grande" id="gr" style="background-image:url(\'' + esc(mini(a.ph[0], 1200)) + '\')"></div><div class="miniaturas">' +
-      a.ph.map(function (u, i) { return '<button aria-label="Foto ' + (i + 1) + '" aria-current="' + (i === 0) + '" data-u="' + esc(mini(u, 1200)) + '" style="background-image:url(\'' + esc(mini(u, 200)) + '\')"></button>'; }).join("") + "</div></div>" +
-      '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas" + (a.op === "alquiler" ? " por mes, se pagan aparte" : "") + "</div>" : "") + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' + iconos(a) +
+      '<div class="galeria">' + corazon(a.id, true) + '<button type="button" class="ampliar" id="amp" aria-label="Ver fotos en grande"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg><span>Ver en grande</span></button><div class="grande" id="gr" role="button" tabindex="0" aria-label="Ver fotos en grande" style="background-image:url(\'' + esc(mini(a.ph[0], 1200)) + '\')"></div><div class="miniaturas">' +
+      a.ph.map(function (u, i) { return '<button aria-label="Foto ' + (i + 1) + '" aria-current="' + (i === 0) + '" data-u="' + esc(mini(u, 1200)) + '" style="background-image:url(\'' + esc(mini(u, 200)) + '\')"></button>'; }).join("") + "</div>" + '<div class="mudanza" aria-hidden="true"><p>Tu próxima mudanza empieza acá</p><canvas id="mud"></canvas></div></div>' +
+      '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (a.op !== "alquiler" && ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas</div>" : "") + bloques(a, true) + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' + iconos(a) +
       '<div class="datos">' + [tipoTxt(a.tp), a.mono ? "Monoambiente" : a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].concat(extras(a)).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
       (a.f === "dondevivo" && a.wa
         ? '<a class="ir" href="https://wa.me/' + esc(String(a.wa).replace(/\D/g, "")) + "?text=" + encodeURIComponent("Hola, vi tu aviso " + a.t + " en DóndeVivo") + '" target="_blank" rel="noopener" id="ir">Escribir por WhatsApp</a>'
@@ -602,10 +677,43 @@
       '<div class="bloque"><p style="font-size:13px">' + (a.f === "dondevivo" ? "Publicado directamente en DóndeVivo por su anunciante." : "Aviso de " + esc(fu) + ". DóndeVivo lo encontró y lo revisa todos los días.") + "</p></div></div></div>";
     sumarVisita(a.id, "vista");
     var ir = document.getElementById("ir"); if (ir) ir.addEventListener("click", function () { sumarVisita(a.id, "contacto"); });
-    $app.querySelectorAll(".miniaturas button").forEach(function (b) {
-      b.onclick = function () { document.getElementById("gr").style.backgroundImage = "url('" + b.dataset.u + "')"; $app.querySelectorAll(".miniaturas button").forEach(function (x) { x.setAttribute("aria-current", x === b); }); };
+    var actual = 0;
+    $app.querySelectorAll(".miniaturas button").forEach(function (b, i) {
+      b.onclick = function () { actual = i; document.getElementById("gr").style.backgroundImage = "url('" + b.dataset.u + "')"; $app.querySelectorAll(".miniaturas button").forEach(function (x) { x.setAttribute("aria-current", x === b); }); };
     });
+    var gr = document.getElementById("gr");
+    gr.onclick = function () { verFotos(a, actual); };
+    gr.onkeydown = function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); verFotos(a, actual); } };
+    document.getElementById("amp").onclick = function () { verFotos(a, actual); };
+    var mud = document.getElementById("mud");
+    if (mud && window.Mudanza && getComputedStyle(mud.parentNode).display !== "none" && !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) window.Mudanza(mud, { modo: "auto" });
     window.scrollTo(0, 0);
+  }
+
+  /* ---------- fotos en grande ---------- */
+  function verFotos(a, i) {
+    var n = a.ph.length, v = document.createElement("div"), x0 = null;
+    v.className = "visor"; v.setAttribute("role", "dialog"); v.setAttribute("aria-label", "Fotos del aviso");
+    v.innerHTML = '<button class="vx" aria-label="Cerrar">×</button><span class="vn"></span>' +
+      '<button class="vf ant" aria-label="Foto anterior">‹</button><img alt=""><button class="vf sig" aria-label="Foto siguiente">›</button>';
+    document.body.appendChild(v); document.body.classList.add("sin-scroll");
+    var img = v.querySelector("img");
+    function ir(k) {
+      i = (k + n) % n;
+      img.onerror = function () { img.onerror = null; img.src = seguro(a.ph[i]); };
+      img.src = mini(a.ph[i], 1800); v.querySelector(".vn").textContent = (i + 1) + " de " + n;
+    }
+    function cerrar() { v.remove(); document.body.classList.remove("sin-scroll"); document.removeEventListener("keydown", tecla); }
+    function tecla(e) { if (e.key === "Escape") cerrar(); if (e.key === "ArrowRight") ir(i + 1); if (e.key === "ArrowLeft") ir(i - 1); }
+    v.querySelector(".vx").onclick = cerrar;
+    v.querySelector(".ant").onclick = function (e) { e.stopPropagation(); ir(i - 1); };
+    v.querySelector(".sig").onclick = function (e) { e.stopPropagation(); ir(i + 1); };
+    v.onclick = function (e) { if (e.target === v) cerrar(); };
+    v.addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+    v.addEventListener("touchend", function (e) { if (x0 == null) return; var dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) ir(i + (dx < 0 ? 1 : -1)); x0 = null; });
+    document.addEventListener("keydown", tecla);
+    if (n < 2) v.querySelectorAll(".vf").forEach(function (b) { b.hidden = true; });
+    ir(i); v.querySelector(".vx").focus();
   }
 
   /* ---------- avisos que ya no están: el link guardado sigue andando, con un cartel ---------- */
@@ -649,7 +757,7 @@
     if (h.indexOf("/guardados") === 0) return verGuardados();
     if (h.indexOf("/buscar") === 0) {
       var f = leerQ(h.split("?")[1]);
-      if (f.q) { var t = f.q; delete f.q; f = entender(t, f); if (leerQ(h.split("?")[1]).ciudad) f.ciudad = leerQ(h.split("?")[1]).ciudad; history.replaceState(null, "", "#/buscar?" + q(f)); }
+      if (f.q) { var t = f.q; delete f.q; f = entender(t, f); f.txt = t; if (leerQ(h.split("?")[1]).ciudad) f.ciudad = leerQ(h.split("?")[1]).ciudad; history.replaceState(null, "", "#/buscar?" + q(f)); }
       return buscar(f);
     }
     if (h.indexOf("/publicar") === 0) { location.replace("publicar.html"); return; }
@@ -659,7 +767,15 @@
   $app.innerHTML = '<div class="vacio">Cargando avisos…</div>';
   fetch("data/avisos.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
     DATA = (j.avisos || []).filter(function (a) { return a.ph && a.ph.length >= 2; });
-    DATA.forEach(function (a) { a.mono = esMono(a); });
+    var asu = {}; BARRIOS_ASU.forEach(function (b) { asu[plano(b).trim()] = b; });
+    DATA.forEach(function (a) {
+      a.mono = esMono(a);
+      var k = plano(String(a.c || "").replace(/^\s*(barrio|b°|bº|bo\.)\s*/i, "")).trim();
+      if (/^\s*(barrio|b°|bº)\s/i.test(a.c || "") || (asu[k] && !esCentral(a.c))) {
+        if (!a.b || a.b === a.c) a.b = asu[k] || String(a.c).replace(/^\s*(barrio|b°|bº)\s*/i, "");
+        a.c = asu[k] ? "Asunción" : (a.r === "asuncion" ? "Asunción" : a.c);
+      }
+    });
     deducirBarrios(); contarGuardados();
     ACT = j.actualizado;
     var d = new Date(ACT); document.getElementById("actualizado").textContent = "Actualizado " + d.toLocaleString("es-PY", { dateStyle: "short", timeStyle: "short" });

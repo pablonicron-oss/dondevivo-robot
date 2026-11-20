@@ -222,3 +222,48 @@ body.sin-scroll{overflow:hidden}
 .cm .tip::after{content:"";position:absolute;top:100%;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:#101828}
 .cm:hover .tip,.cm:focus .tip{opacity:1;visibility:visible}
 .comod .cm:first-child .tip{left:0;transform:none}.comod .cm:first-child .tip::after{left:20px}
+
+/* lo que cuesta entrar */
+.entrada{width:100%;border-collapse:collapse;font-size:15px;margin:4px 0 8px}
+.entrada td{padding:8px 0;border-bottom:1px solid #EAECF0;color:var(--gris)}
+.entrada td+td{text-align:right;font-weight:700;color:var(--ink);white-space:nowrap}
+.entrada .tot td{border-bottom:0;padding-top:12px;font-weight:800;color:var(--ink);font-size:16px}
+.entrada .tot td+td{color:var(--ac);font-size:19px}
+.aclara{font-size:12.5px!important;color:#98A2B3!important}
+
+/* fotos en grande */
+.galeria .grande{cursor:zoom-in}
+.ampliar{position:absolute;right:14px;top:66px;z-index:2;display:flex;align-items:center;gap:7px;height:40px;padding:0 14px 0 11px;border:0;border-radius:999px;background:rgba(255,255,255,.95);box-shadow:0 2px 8px rgba(16,24,40,.18);font:inherit;font-weight:800;font-size:13px;cursor:pointer;color:var(--ink)}
+.ampliar svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.visor{position:fixed;inset:0;z-index:100;background:rgba(10,13,20,.94);display:flex;align-items:center;justify-content:center}
+.visor img{max-width:min(94vw,1600px);max-height:86vh;object-fit:contain;border-radius:8px;user-select:none}
+.visor .vx{position:absolute;top:16px;right:18px;width:48px;height:48px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:30px;line-height:1;cursor:pointer}
+.visor .vn{position:absolute;top:28px;left:50%;transform:translateX(-50%);color:#fff;font-weight:700;font-size:14px;opacity:.85}
+.visor .vf{position:absolute;top:50%;transform:translateY(-50%);width:54px;height:54px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:34px;line-height:1;cursor:pointer}
+.visor .vf:hover,.visor .vx:hover{background:rgba(255,255,255,.26)}
+.visor .ant{left:18px}.visor .sig{right:18px}
+@media (max-width:640px){.visor .vf{width:44px;height:44px;font-size:28px}.visor .ant{left:8px}.visor .sig{right:8px}.ampliar span{display:none}.ampliar{padding:0 11px}}
+.entra{font-size:13px;color:var(--gris);margin-top:3px}.entra b{color:var(--ink)}.entra span{font-size:12px;color:#98A2B3}
+.entra.grande{font-size:15px;margin-top:6px}
+.costos{display:flex;flex-direction:column;gap:6px;margin:8px 0 2px}
+.crow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px}
+.cl{flex-basis:100%;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#98A2B3;margin-bottom:-2px}
+.crow.u .cb{background:#EEF4FF;color:#1D3FA8}
+.crow.u .cb.tot{background:var(--ac);color:#fff}
+.crow .cb.ok{background:#E7F8EF;color:#085D46}
+.cb.mtot{background:#FFE7C2;color:#7A2E0E}
+.cb{display:inline-flex;flex-direction:column;line-height:1.15;padding:6px 10px;border-radius:10px;background:#FFF4E5;color:#93370D;font-size:13px;font-weight:800}
+.cb i{font-style:normal;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;opacity:.75}
+.cb.ok{background:#E7F8EF;color:#085D46}
+.cb.tot{background:var(--ac);color:#fff}
+.costos.grande{gap:10px;margin:12px 0 4px}.costos.grande .cb{font-size:15px;padding:8px 13px;border-radius:12px}.costos.grande .cb i{font-size:11px}
+.rebusca{display:flex;gap:8px;margin:0 0 16px;background:#fff;border-radius:18px;padding:8px;border:2px solid var(--ac)}
+.rebusca input{flex:1;min-width:0;border:0;font:inherit;font-size:16px;padding:0 10px;background:transparent;color:var(--ink);outline:none}
+.rebusca .btn{min-height:44px;padding:0 18px;border-radius:12px;flex:none}
+.sr{position:absolute;left:-9999px}
+
+/* mudanza en miniatura, abajo de las fotos */
+.mudanza{display:flex;flex-direction:column;height:280px}
+.mudanza p{margin:14px 20px 0;font-size:15px;font-weight:800;color:#344054}
+.mudanza canvas{flex:1;width:100%;min-height:200px;display:block}
+@media (max-width:900px){.mudanza{display:none}}

@@ -301,6 +301,7 @@
     botanico: ["el Jardín Botánico", -25.2470, -57.5709, /\bjardin botanico\b/],
     defensores: ["el Defensores del Chaco", -25.2920, -57.6574, /\bdefensores del chaco\b/]
   };
+  function cercaDe(k) { var n = LUGARES[k][0]; return /^el /.test(n) ? "Cerca del " + n.slice(3) : "Cerca de " + n; }
   function km(a, l) { var dy = (a.lat - l[1]) * 111, dx = (a.lng - l[2]) * 111 * Math.cos(l[1] * Math.PI / 180); return Math.sqrt(dx * dx + dy * dy); }
   function numero(x, unidad) {                   // "3,5" millones, "3.500.000", "800 mil"
     var n = unidad ? parseFloat(x.replace(",", ".")) : parseFloat(x.replace(/[.,]/g, ""));
@@ -686,7 +687,7 @@
       '<div class="res"><form class="filtros" id="ff" aria-label="Filtros">' +
       '<div class="toggle" role="group"><button type="button" data-op="alquiler" aria-pressed="' + (f.op !== "venta") + '">Alquilar</button><button type="button" data-op="venta" aria-pressed="' + (f.op === "venta") + '">Comprar</button></div>' +
       '<button class="btn aplicar" type="submit">Aplicar filtros</button>' +
-      (f.cerca ? '<div class="cerca-de"><span>Cerca de ' + esc(LUGARES[f.cerca][0]) + '</span><button type="button" id="sinCerca" aria-label="Quitar">Quitar</button><input type="hidden" name="cerca" value="' + esc(f.cerca) + '"></div>' : "") +
+      (f.cerca ? '<div class="cerca-de"><span>' + esc(cercaDe(f.cerca)) + '</span><button type="button" id="sinCerca" aria-label="Quitar">Quitar</button><input type="hidden" name="cerca" value="' + esc(f.cerca) + '"></div>' : "") +
       '<label>Ciudad<select name="ciudad">' + opcionesCiudad(cs, f.ciudad) + "</select></label>" +
       '<label>Barrio<select name="barrio">' + opt("", "Todos los barrios", f.barrio) + bs.map(function (b) { return opt(b, b, f.barrio); }).join("") + "</select></label>" +
       '<label>Tipo<select name="tipo">' + opt("", "Todos", f.tipo) + opt("departamento", "Departamento", f.tipo) + opt("casa", "Casa", f.tipo) + opt("duplex", "Dúplex", f.tipo) + opt("terreno", "Terreno", f.tipo) + "</select></label>" +
@@ -699,7 +700,7 @@
       '<label>Página de origen<select name="fuente">' + opt("", "Todas", f.fuente) + Object.keys(FUENTES).map(function (k) { return opt(k, FUENTES[k], f.fuente); }).join("") + "</select></label>" +
       "</form>" +
       '<section><form class="rebusca" id="rb"><label for="rbq" class="sr">Tu búsqueda</label><input id="rbq" value="' + esc(f.txt || "") + '" placeholder="Describí lo que buscás, por ejemplo depto con patio en Luque" autocomplete="off"><button class="btn" type="submit">Buscar</button></form>' +
-      '<div class="cabeza"><h1>' + lista.length.toLocaleString("es-PY") + (f.op === "venta" ? " en venta" : " en alquiler") + (f.ciudad ? " en " + esc(nomCiudad(f.ciudad)) : "") + (f.barrio ? ", " + esc(f.barrio) : "") + (f.cerca ? " cerca de " + esc(LUGARES[f.cerca][0]) : "") + '</h1><a class="volver" href="#/">← Nueva búsqueda</a></div>' +
+      '<div class="cabeza"><h1>' + lista.length.toLocaleString("es-PY") + (f.op === "venta" ? " en venta" : " en alquiler") + (f.ciudad ? " en " + esc(nomCiudad(f.ciudad)) : "") + (f.barrio ? ", " + esc(f.barrio) : "") + (f.cerca ? " c" + esc(cercaDe(f.cerca).slice(1)) : "") + '</h1><a class="volver" href="#/">← Nueva búsqueda</a></div>' +
       (lista.length ? '<div class="lista">' + lista.slice(0, mostrados).map(tarjeta).join("") + "</div>" + (lista.length > mostrados ? '<button class="mas" id="mas">Ver más</button>' : "")
         : '<div class="vacio">' + (sinCiudad ? "<b>Todavía no tenemos avisos en " + esc(f.ciudad) + ".</b><br>Sumamos avisos nuevos todos los días, volvé a mirar pronto."
           : "<b>Todavía no tenemos avisos con esos filtros.</b><br>Probá sacar alguno. Sumamos avisos nuevos todos los días.") + "</div>") +

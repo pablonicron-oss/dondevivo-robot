@@ -133,11 +133,15 @@
   function leerQ(s) { var o = {}; (s || "").split("&").forEach(function (p) { if (!p) return; var i = p.indexOf("="); o[decodeURIComponent(p.slice(0, i))] = decodeURIComponent(p.slice(i + 1)); }); return o; }
   function setOp(op) { estado.op = op; document.body.classList.toggle("compra", op === "venta"); }
   var CENTRAL = ["san lorenzo", "luque", "lambare", "fernando de la mora", "mariano roque alonso", "capiata", "nemby", "limpio", "villa elisa",
-    "san antonio", "itaugua", "aregua", "ypane", "guarambare", "ita", "j. augusto saldivar", "villeta", "nueva italia"];
+    "san antonio", "itaugua", "aregua", "ypane", "guarambare", "ita", "j. augusto saldivar", "villeta", "nueva italia", "ypacarai"];
   function esCentral(c) { return CENTRAL.indexOf(norm(c)) >= 0; }
   function enCiudad(a, c) { return !c || (c === "@central" ? esCentral(a.c) : a.c === c); }
   function nomCiudad(c) { return c === "@central" ? "Central" : c; }
   function ciudades() { var m = {}; DATA.forEach(function (a) { if (a.c) m[a.c] = (m[a.c] || 0) + 1; }); return Object.keys(m).sort(function (x, y) { return m[y] - m[x]; }); }
+  function ciudadesOrden(cs) {                                           // Asunción, Central y sus ciudades, después el resto
+    var asu = cs.filter(function (c) { return c === "Asunción"; }), cen = cs.filter(esCentral), resto = cs.filter(function (c) { return c !== "Asunción" && !esCentral(c); });
+    return { asu: asu, cen: cen, resto: resto };
+  }
   function barrios(c) { var m = {}; DATA.forEach(function (a) { if (a.b && a.b !== a.c && enCiudad(a, c) && !/^(departamento|depto|casa|duplex|terreno|barrio)$/.test(norm(a.b).trim())) m[a.b] = 1; }); return Object.keys(m).sort(); }
 
   /* ---------- lo que el bot interpreta de cada aviso ---------- */
@@ -313,6 +317,7 @@
       if (f.dor === "0") { if (!a.mono) return false; }
       else if (f.dor && (a.mono || (a.dor || 0) < +f.dor)) return false;
       if (f.fuente && a.f !== f.fuente) return false;
+      if (f.con && !comodidades(a).some(function (c) { return c.k === f.con && c.v === "si"; })) return false;
       if (f.max && a.p && a.m === (f.mon || "PYG") && a.p > +f.max) return false;
       return true;
     }).map(function (a, i) { return [a, i]; })
@@ -430,14 +435,15 @@
     $app.innerHTML =
       '<section class="hero"><div class="card-hero">' +
       '<div class="toggle" role="group" aria-label="Qué buscás"><button data-op="alquiler" aria-pressed="' + rent + '">Busco alquilar</button><button data-op="venta" aria-pressed="' + !rent + '">Busco comprar</button></div>' +
-      '<h1>Contanos qué buscás. <span class="ac">Nosotros lo encontramos.</span></h1>' +
+      '<h1><span>Contanos qué buscás.</span> <span class="ac">Nosotros lo encontramos.</span></h1>' +
       '<div style="display:flex;flex-direction:column;gap:14px">' +
-      '<form class="buscador" id="fb"><label for="qB" style="position:absolute;left:-9999px">Describí lo que buscás</label><input id="qB" placeholder="' + esc(ejemploFijo()) + '" autocomplete="off">' +
-      '<label for="cB" style="position:absolute;left:-9999px">Ciudad</label><select id="cB"><option value="">Todo Paraguay</option>' + cs.map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("") + "</select>" +
-      '<button class="btn">Buscar</button></form>' +
+      '<form class="buscador" id="fb"><label for="qB" class="sr">Describí lo que buscás</label><textarea id="qB" rows="1" placeholder="' + esc(ejemploFijo()) + '" autocomplete="off"></textarea>' +
+      '<div class="bfila"><label class="enciudad"><span>En</span><select id="cB" aria-label="Ciudad">' + opcionesCiudad(cs) + "</select></label>" +
+      '<button class="btn">Buscar</button></div></form>' +
       '<div class="proba"><b>Probá con</b><div class="rot">' + ej.map(function (t) { return '<button type="button">' + esc(t) + "</button>"; }).join("") + "</div></div></div>" +
       '<div class="contador" id="contador"></div>' +
-      '<div class="chips"><button class="chip" data-chip="masc">Amigos de las mascotas</button><button class="chip" data-chip="office">Home office friendly</button><button class="chip" data-chip="1dorm">Para arrancar solo</button><button class="chip" data-chip="pozo">En pozo, para invertir</button><button class="chip" data-chip="estrenar">A estrenar</button></div>' +
+      '<div class="chips">' + [["masc", "Me mudo con mis mascotas"], ["office", "Home office friendly"], ["1dorm", "Para arrancar solo"], ["pozo", "En pozo para invertir"], ["estrenar", "A estrenar"], ["mono", "Monoambiente"], ["amob", "Depto amoblado"], ["pile", "Con piscina"]]
+        .map(function (c) { return '<button class="chip" data-chip="' + c[0] + '">' + c[1] + "</button>"; }).join("") + "</div>" +
       "</div>" +
       '<div class="lado"><div style="display:flex;flex-direction:column;gap:8px"><div class="mini">O buscá de otra forma</div><div class="grande">Armá tu lugar desde cero</div><div style="font-size:15px;line-height:1.5;color:#D0D5DD">Personalizá tu lugar con habitaciones, tu perro, el sofá o el auto. Te buscamos lo más parecido.</div></div>' +
       '<div class="float" aria-hidden="true"><div class="iso">' + PREVIEW + '</div></div>' +
@@ -453,6 +459,10 @@
     prepararMapa();
     $app.querySelectorAll("[data-op]").forEach(function (b) { b.onclick = function () { setOp(b.dataset.op); inicio(); }; });
     $app.querySelectorAll(".rot button").forEach(function (b) { b.onclick = function () { document.getElementById("qB").value = b.textContent; document.getElementById("fb").requestSubmit(); }; });
+    var qB = document.getElementById("qB");
+    function alto() { qB.style.height = "auto"; qB.style.height = Math.min(qB.scrollHeight, 120) + "px"; }
+    qB.oninput = alto; alto();
+    qB.onkeydown = function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); document.getElementById("fb").requestSubmit(); } };
     document.getElementById("fb").onsubmit = function (e) {
       e.preventDefault();
       var f = entender(document.getElementById("qB").value, { op: estado.op });
@@ -464,10 +474,18 @@
         var f = { op: estado.op }, k = b.dataset.chip;
         if (k === "masc") f.masc = "confirmado"; if (k === "pozo") { f.op = "venta"; f.estado = "en_pozo"; }
         if (k === "estrenar") f.estado = "a_estrenar"; if (k === "1dorm") { f.tipo = "departamento"; f.dor = "1"; }
-        if (k === "office") f.dor = "2";
+        if (k === "office") f.dor = "2"; if (k === "mono") f.dor = "0";
+        if (k === "amob") { f.tipo = "departamento"; f.con = "mueb"; } if (k === "pile") f.con = "pile";
         location.hash = "#/buscar?" + q(f);
       };
     });
+  }
+
+  function opcionesCiudad(cs, sel) {
+    var o = ciudadesOrden(cs), op = function (v, t) { return '<option value="' + esc(v) + '"' + ((sel || "") === v ? " selected" : "") + ">" + esc(t) + "</option>"; };
+    return op("", "Todo Paraguay") + o.asu.map(function (c) { return op(c, c); }).join("") + op("@central", "Central") +
+      (o.cen.length ? '<optgroup label="Ciudades de Central">' + o.cen.map(function (c) { return op(c, c); }).join("") + "</optgroup>" : "") +
+      (o.resto.length ? '<optgroup label="Resto del país">' + o.resto.map(function (c) { return op(c, c); }).join("") + "</optgroup>" : "");
   }
 
   /* ---------- mapa con precios ---------- */
@@ -594,12 +612,11 @@
     $app.innerHTML =
       '<div class="res"><form class="filtros" id="ff" aria-label="Filtros">' +
       '<div class="toggle" role="group"><button type="button" data-op="alquiler" aria-pressed="' + (f.op !== "venta") + '">Alquilar</button><button type="button" data-op="venta" aria-pressed="' + (f.op === "venta") + '">Comprar</button></div>' +
-      '<label>Ciudad<select name="ciudad">' + opt("", "Todo Paraguay", f.ciudad) + opt("@central", "Central (todas sus ciudades)", f.ciudad) +
-        (csCen.length ? '<optgroup label="Ciudades de Central">' + csCen.map(function (c) { return opt(c, c, f.ciudad); }).join("") + "</optgroup>" : "") +
-        '<optgroup label="Asunción y resto del país">' + csOtras.map(function (c) { return opt(c, c, f.ciudad); }).join("") + "</optgroup></select></label>" +
+      '<label>Ciudad<select name="ciudad">' + opcionesCiudad(cs, f.ciudad) + "</select></label>" +
       '<label>Barrio<select name="barrio">' + opt("", "Todos los barrios", f.barrio) + bs.map(function (b) { return opt(b, b, f.barrio); }).join("") + "</select></label>" +
       '<label>Tipo<select name="tipo">' + opt("", "Todos", f.tipo) + opt("departamento", "Departamento", f.tipo) + opt("casa", "Casa", f.tipo) + opt("duplex", "Dúplex", f.tipo) + opt("terreno", "Terreno", f.tipo) + "</select></label>" +
       '<label>Mascotas<select name="masc">' + opt("", "Me da igual", f.masc) + opt("si", "Tengo mascota (oculta los que no aceptan)", f.masc) + opt("confirmado", "Solo los que dicen que aceptan", f.masc) + "</select></label>" +
+      '<label>Que tenga<select name="con">' + opt("", "Me da igual", f.con) + opt("mueb", "Amoblado", f.con) + opt("pile", "Piscina", f.con) + opt("auto", "Estacionamiento", f.con) + opt("patio", "Patio o jardín", f.con) + opt("aire", "Aire acondicionado", f.con) + "</select></label>" +
       '<label>Estado<select name="estado">' + opt("", "Cualquiera", f.estado) + opt("en_pozo", "En pozo", f.estado) + opt("a_estrenar", "A estrenar", f.estado) + "</select></label>" +
       '<label>Dormitorios<select name="dor">' + opt("", "Cualquiera", f.dor) + opt("0", "Monoambiente", f.dor) + opt("1", "1 o más", f.dor) + opt("2", "2 o más", f.dor) + opt("3", "3 o más", f.dor) + opt("4", "4 o más", f.dor) + "</select></label>" +
       '<label>Precio máximo<input name="max" inputmode="numeric" placeholder="Ej. 3500000" value="' + esc(f.max || "") + '"></label>' +
@@ -771,6 +788,8 @@
     DATA.forEach(function (a) {
       a.mono = esMono(a);
       if (a.b && /^(departamento|depto|dpto|casa|duplex|dúplex|terreno|centro|zona|barrio|ciudad|condominio|edificio|monoambiente|local|oficina|sin especificar)$/i.test(String(a.b).trim())) delete a.b;
+      var pc = String(a.c || "").match(/^(.+?)\s*\((.+)\)\s*$/);
+      if (pc) { var k1 = plano(pc[1]).trim(), k2 = plano(pc[2]).trim(); if ((asu[k1] || asu[k2]) && !esCentral(a.c)) { if (!a.b || a.b === a.c) a.b = asu[k1] || asu[k2]; a.c = "Asunción"; } }
       var k = plano(String(a.c || "").replace(/^\s*(barrio|b°|bº|bo\.)\s*/i, "")).trim();
       if (/^\s*(barrio|b°|bº)\s/i.test(a.c || "") || (asu[k] && !esCentral(a.c))) {
         if (!a.b || a.b === a.c) a.b = asu[k] || String(a.c).replace(/^\s*(barrio|b°|bº)\s*/i, "");

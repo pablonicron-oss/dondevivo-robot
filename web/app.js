@@ -778,7 +778,7 @@
     window.scrollTo(0, 0);
     cargarMapaLib(function () {
       var el = document.getElementById("mapaT"); if (!el) return;
-      mapaT = L.map(el, { scrollWheelZoom: true }).setView([-23.4, -58.3], 6);
+      mapaT = L.map(el, { scrollWheelZoom: true }).setView([-25.2, -57.4], 7);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap", referrerPolicy: "strict-origin-when-cross-origin" }).addTo(mapaT);
       var capaT = L.markerClusterGroup({ maxClusterRadius: 40, showCoverageOnHover: false, spiderfyOnMaxZoom: true,
         iconCreateFunction: function (c) { return L.divIcon({ className: "mgrupo", html: "<span>" + c.getChildCount() + "</span>", iconSize: [44, 44] }); } });
@@ -791,7 +791,7 @@
         capaT.addLayer(m);
       });
       mapaT.addLayer(capaT);
-      if (pts.length && f.ciudad) mapaT.fitBounds(L.latLngBounds(pts).pad(0.1), { maxZoom: 14 });
+      if (pts.length) mapaT.fitBounds(L.latLngBounds(pts).pad(0.15), { maxZoom: f.ciudad ? 14 : 9 });
     });
   }
 

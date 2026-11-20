@@ -270,6 +270,113 @@
     });
     if (location.hash.indexOf("#/guardados") === 0 && !on) verGuardados();
   }, true);
+
+  /* ---------- comparar: dos avisos lado a lado; la elección queda guardada aunque cambies de búsqueda ---------- */
+  var ultimaBusqueda = "#/buscar";
+  function cmpLista() { try { return JSON.parse(localStorage.getItem("dv:comparar") || "[]"); } catch (e) { return []; } }
+  function cmpAviso(id) { return TODOS.find(function (x) { return x.id === id; }); }
+  function cmpValidos() { return cmpLista().filter(cmpAviso).slice(-2); }
+  function cmpAlternar(id) {
+    var l = cmpValidos(), i = l.indexOf(id);
+    if (i >= 0) l.splice(i, 1); else { l.push(id); if (l.length > 2) l.shift(); }
+    try { localStorage.setItem("dv:comparar", JSON.stringify(l)); } catch (e) {}
+    cmpPintar();
+  }
+  function cmpBoton(id) { var on = cmpLista().indexOf(id) >= 0; return '<button type="button" class="cmpb' + (on ? " on" : "") + '" data-cmp="' + esc(id) + '" aria-pressed="' + on + '">' + (on ? "✓ Elegido" : "⇄ Comparar") + "</button>"; }
+  function cmpFoto(a) { return esc(mini(a.ph[0], 160)); }
+  function cmpPintar() {
+    var l = cmpValidos();
+    document.querySelectorAll("[data-cmp]").forEach(function (b) { var on = l.indexOf(b.dataset.cmp) >= 0; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); b.textContent = on ? "✓ Elegido" : "⇄ Comparar"; var t = b.closest(".tarjeta"); if (t) t.classList.toggle("cmpsel", on); });
+    document.querySelectorAll(".cmp-fil b").forEach(function (b) { b.textContent = l.length ? l.length + "/2" : ""; });
+    var tr = document.getElementById("cmpTray");
+    if (!tr) { tr = document.createElement("div"); tr.id = "cmpTray"; tr.className = "cmptray"; document.body.appendChild(tr); cmpSoltar(tr); }
+    var enComparar = location.hash.indexOf("#/comparar") === 0;
+    tr.classList.toggle("ver", !!l.length && !enComparar);
+    function slot(id) { var a = cmpAviso(id); return '<div class="sl"><img alt="" src="' + cmpFoto(a) + '"><div><b>' + precio(a) + '</b><span>' + esc(a.t) + '</span></div><button type="button" class="qx" data-cmpx="' + esc(id) + '" aria-label="Sacar de la comparación">✕</button></div>'; }
+    tr.innerHTML = l.length ? slot(l[0]) + '<span class="vs">vs</span>' + (l[1] ? slot(l[1]) + '<a class="go" href="#/comparar">Comparar ahora</a>' : '<div class="sl vacio-sl">Elegí otro aviso, de cualquier búsqueda</div>') : "";
+  }
+  function cmpSoltar(tr) {                                                  // en la compu también se puede arrastrar un aviso a la barra
+    tr.addEventListener("dragover", function (e) { e.preventDefault(); tr.classList.add("sobre"); });
+    tr.addEventListener("dragleave", function () { tr.classList.remove("sobre"); });
+    tr.addEventListener("drop", function (e) {
+      e.preventDefault(); tr.classList.remove("sobre", "arrastra");
+      var u = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain") || "", m = u.match(/#\/aviso\/([^\s]+)/);
+      if (m) { var id = decodeURIComponent(m[1]); if (cmpLista().indexOf(id) < 0 && cmpAviso(id)) cmpAlternar(id); }
+    });
+  }
+  document.addEventListener("dragstart", function (e) { var t = e.target.closest && e.target.closest(".tarjeta"); var tr = document.getElementById("cmpTray"); if (t && tr && location.hash.indexOf("#/comparar") !== 0) { if (!cmpValidos().length) tr.innerHTML = '<div class="sl vacio-sl">Soltá el aviso acá para compararlo</div>'; tr.classList.add("ver", "arrastra"); } });
+  document.addEventListener("dragend", function () { var tr = document.getElementById("cmpTray"); if (tr) { tr.classList.remove("arrastra", "sobre"); cmpPintar(); } });
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-cmp],[data-cmpx]"); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    cmpAlternar(b.dataset.cmp || b.dataset.cmpx);
+    if (location.hash.indexOf("#/comparar") === 0) verComparar();
+  }, true);
+  function cmpNombre(a, otro) {
+    var art = { departamento: "El depto", casa: "La casa", duplex: "El dúplex", terreno: "El terreno" }[a.tp] || "El de", zona = a.b && a.b !== a.c ? a.b : a.c || "";
+    var n = art + (zona ? " de " + zona : "");
+    var o = otro && ({ departamento: "El depto", casa: "La casa", duplex: "El dúplex", terreno: "El terreno" }[otro.tp] || "El de") + (otro.b && otro.b !== otro.c ? " de " + otro.b : otro.c ? " de " + otro.c : "");
+    if (n === o) n += " de " + (a.m === "USD" ? "USD " : "₲ ") + Math.round(a.p).toLocaleString("es-PY");
+    return n;
+  }
+  var CMP_PAL = { auto: /cochera|garage|garaje|estacion|auto/, pile: /piscina|pileta|pile/, aire: /aire|split/, mueb: /amoblad|amueblad|mueble/, wifi: /wifi|internet/, balc: /balcon/, patio: /patio|jardin/, quin: /quincho|parrilla/, gym: /gimnasio|gym/, segu: /seguridad|guardia|vigilancia/, asce: /ascensor/, lava: /lavadero|lavarropa/ };
+  function cmpTiene(a, k) { var c = comodidades(a).find(function (x) { return x.k === k; }); return c ? c.v : "nd"; }
+  function cmpResumen(a, b, A, B) {
+    var o = [], ga = enGs(a), gb = enGs(b);
+    if (ga && gb && ga !== gb) { var bar = ga < gb ? A : B; o.push("<b>Precio.</b> " + bar + " sale ₲ " + Math.round(Math.abs(ga - gb)).toLocaleString("es-PY") + " menos" + (a.op === "alquiler" && b.op === "alquiler" ? " por mes" : "") + "."); }
+    if (a.m2 >= 10 && b.m2 >= 10 && Math.round(a.m2) !== Math.round(b.m2)) o.push("<b>Espacio.</b> " + (a.m2 > b.m2 ? A : B) + " tiene " + Math.round(Math.abs(a.m2 - b.m2)) + " m² más.");
+    if (a.dor && b.dor && a.dor !== b.dor) o.push("<b>Dormitorios.</b> " + A + " tiene " + a.dor + " y " + B.charAt(0).toLowerCase() + B.slice(1) + " tiene " + b.dor + ".");
+    if (a.ms !== b.ms && (a.ms === "si" || b.ms === "si")) { var si = a.ms === "si" ? [A, b] : [B, a]; o.push("<b>Mascotas.</b> " + si[0] + " acepta mascotas, el otro " + (si[1].ms === "no" ? "no." : "no lo aclara.")); }
+    var solo = [[], []];
+    Object.keys(CMP_PAL).forEach(function (k) { var x = cmpTiene(a, k), y = cmpTiene(b, k), n = (COMOD.find(function (c) { return c.k === k; }) || {}).n; if (!n) return; if (x === "si" && y !== "si") solo[0].push(n.toLowerCase()); if (y === "si" && x !== "si") solo[1].push(n.toLowerCase()); });
+    function lista(l) { return l.length > 1 ? l.slice(0, -1).join(", ") + " y " + l[l.length - 1] : l[0]; }
+    if (solo[0].length || solo[1].length) o.push("<b>Lo que suma.</b> " + [solo[0].length ? A + " tiene " + lista(solo[0].slice(0, 3)) + "." : "", solo[1].length ? B + " tiene " + lista(solo[1].slice(0, 3)) + "." : ""].filter(Boolean).join(" "));
+    if ((a.c || "") !== (b.c || "")) o.push("<b>Zona.</b> " + A + " está en " + esc(a.c || "Paraguay") + " y " + B.charAt(0).toLowerCase() + B.slice(1) + " en " + esc(b.c || "Paraguay") + ".");
+    if (!o.length) o.push("Son muy parecidos. Te conviene mirar las fotos y la ubicación de cada uno.");
+    return o;
+  }
+  function cmpResponder(txt, a, b, A, B) {
+    var t = norm(txt), num = (t.match(/\d+/) || [])[0], n = num ? +num : (/\bdos\b/.test(t) ? 2 : /\btres\b/.test(t) ? 3 : /\buno?\b|\buna\b/.test(t) ? 1 : 0), par = [[A, a], [B, b]];
+    function uno(fn) { return par.map(function (p) { return fn(p[0], p[1]); }).join(" "); }
+    if (/habitac|dormitor|dorm\b|pieza|cuarto/.test(t)) return uno(function (N, x) { if (x.mono) return N + " es monoambiente."; if (!x.dor) return N + " no dice cuántas habitaciones tiene."; return n ? N + (x.dor >= n ? " sí, tiene " : " no, tiene ") + x.dor + (x.dor === 1 ? " habitación." : " habitaciones.") : N + " tiene " + x.dor + (x.dor === 1 ? " habitación." : " habitaciones."); });
+    if (/bano/.test(t)) return uno(function (N, x) { return x.ban ? N + " tiene " + x.ban + (x.ban === 1 ? " baño." : " baños.") : N + " no dice cuántos baños tiene."; });
+    if (/metro|m2|tamano|grande|superficie|espacio/.test(t)) return uno(function (N, x) { return x.m2 >= 10 ? N + " tiene " + Math.round(x.m2) + " m²." : N + " no dice los metros."; });
+    if (/precio|cuesta|sale|barato|caro|plata|guarani|dolar/.test(t)) return uno(function (N, x) { return N + " está " + precio(x).replace(/<[^>]+>/g, "") + (x.op === "alquiler" ? " por mes." : "."); });
+    if (/mascota|perro|gato|perrito|gatito/.test(t)) return uno(function (N, x) { return N + (x.ms === "si" ? " sí acepta mascotas." : x.ms === "no" ? " no acepta mascotas." : " no aclara si acepta mascotas."); });
+    if (/garantia|entrada|mudar/.test(t)) return uno(function (N, x) { return x.g ? N + " pide garantía " + esc(x.g) + "." : N + " no dice qué garantía pide."; });
+    for (var k in CMP_PAL) if (CMP_PAL[k].test(t)) { var nom = ((COMOD.find(function (c) { return c.k === k; }) || {}).n || "eso").toLowerCase(); return uno(function (N, x) { var v = cmpTiene(x, k); return N + (v === "si" ? " sí incluye " : v === "no" ? " no incluye " : " no menciona ") + nom + "."; }); }
+    return "Eso no lo dicen los avisos. Te conviene consultarlo con el anunciante, desde el botón de cada aviso.";
+  }
+  function verComparar() {
+    var l = cmpValidos();
+    document.body.classList.remove("compra", "terreno");
+    if (l.length < 2) { $app.innerHTML = '<div class="cmpv"><a class="volver" href="' + esc(ultimaBusqueda) + '">← Volver a los resultados</a><h1>Comparar avisos</h1><div class="vacio"><b>Elegí dos avisos para compararlos.</b><br>Tocá ⇄ Comparar en la foto de cada aviso. Pueden ser de búsquedas distintas.</div></div>'; cmpPintar(); return; }
+    var a = cmpAviso(l[0]), b = cmpAviso(l[1]), A = cmpNombre(a, b), B = cmpNombre(b, a);
+    function gana(x, y, mayor) { return x == null || y == null || x === y ? 0 : (x > y) === mayor ? 1 : 2; }
+    function fila(k, va, vb, w) { return '<div class="r"><span class="k">' + k + '</span><span class="' + (w === 1 ? "gana" : "") + '">' + va + '</span><span class="' + (w === 2 ? "gana" : "") + '">' + vb + "</span></div>"; }
+    function ms(v) { return v === "si" ? "Acepta" : v === "no" ? "No acepta" : "No dice"; }
+    function cm(x, k) { var v = cmpTiene(x, k); return v === "si" ? "Sí" : v === "no" ? "No" : "No dice"; }
+    var filas = fila("Precio", precio(a) + porMes(a), precio(b) + porMes(b), gana(enGs(a), enGs(b), false)) +
+      fila("Superficie", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "No dice", b.m2 >= 10 ? Math.round(b.m2) + " m²" : "No dice", gana(a.m2 >= 10 ? a.m2 : null, b.m2 >= 10 ? b.m2 : null, true)) +
+      fila("Dormitorios", a.mono ? "Monoambiente" : a.dor || "No dice", b.mono ? "Monoambiente" : b.dor || "No dice", gana(a.dor || null, b.dor || null, true)) +
+      fila("Baños", a.ban || "No dice", b.ban || "No dice", gana(a.ban || null, b.ban || null, true)) +
+      fila("Mascotas", ms(a.ms), ms(b.ms), a.ms === "si" && b.ms !== "si" ? 1 : b.ms === "si" && a.ms !== "si" ? 2 : 0);
+    ["auto", "pile", "mueb", "aire", "patio"].forEach(function (k) { var x = cmpTiene(a, k), y = cmpTiene(b, k); if (x === "nd" && y === "nd") return; filas += fila((COMOD.find(function (c) { return c.k === k; }) || {}).n, cm(a, k), cm(b, k), x === "si" && y !== "si" ? 1 : y === "si" && x !== "si" ? 2 : 0); });
+    filas += fila("Zona", lugar(a), lugar(b), 0);
+    function cab(x) { return '<a class="cmpc" href="#/aviso/' + encodeURIComponent(x.id) + '"><img alt="" src="' + esc(mini(x.ph[0], 640)) + '" data-o="' + esc(seguro(x.ph[0])) + '" onerror="DVfoto(this)"><div class="tx"><div class="pr">' + precio(x) + porMes(x) + '</div><div class="ti">' + esc(x.t) + '</div><div class="lu">' + lugar(x) + '</div><span class="mver">Ver aviso →</span></div></a>'; }
+    $app.innerHTML = '<div class="cmpv"><a class="volver" href="' + esc(ultimaBusqueda) + '">← Volver a los resultados</a><h1>Comparando 2 avisos</h1>' +
+      '<div class="cmph">' + cab(a) + cab(b) + '</div><div class="cmpt">' + filas + "</div>" +
+      '<div class="cmpai"><div class="who"><span class="av"><svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><path d="M7 29L32 9l25 20" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21" cy="44" r="9.5" fill="#fff"/><circle cx="21" cy="45" r="4.8" fill="#101828"/><circle cx="43" cy="44" r="9.5" fill="#fff"/><circle cx="43" cy="45" r="4.8" fill="#101828"/></svg></span>Asistente DóndeVivo</div>' +
+      '<div id="cmpChat" aria-live="polite"><div class="bub">¡Hola! Te comento las principales diferencias.<ul>' + cmpResumen(a, b, A, B).map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul></div></div>" +
+      '<form class="ask" id="cmpAsk"><label for="cmpQ" class="sr">Preguntá sobre estos avisos</label><input id="cmpQ" autocomplete="off" placeholder="¿Qué más querés saber?"><button class="btn" type="submit">Preguntar</button></form></div></div>';
+    document.getElementById("cmpAsk").onsubmit = function (e) {
+      e.preventDefault(); var i = document.getElementById("cmpQ"), v = i.value.trim(); if (!v) { i.focus(); return; }
+      var ch = document.getElementById("cmpChat");
+      ch.insertAdjacentHTML("beforeend", '<div class="me">' + esc(v) + '</div><div class="bub">' + cmpResponder(v, a, b, A, B) + "</div>");
+      i.value = ""; ch.lastElementChild.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    };
+    scrollTo(0, 0); cmpPintar();
+  }
   function verGuardados() {
     var l = guardados();
     $app.innerHTML = '<div class="cabeza"><h1>Tus guardados</h1><a class="volver" href="#/buscar">← Seguir buscando</a></div>' +
@@ -393,9 +500,9 @@
     extras(a).forEach(function (x) { tags.push("<span>" + x + "</span>"); });
     var ex = a.op === "alquiler" ? expensas(a) : null;
     var dest = destacado(a);
-    return '<a class="tarjeta' + (dest ? " dest" : "") + '" href="#/aviso/' + encodeURIComponent(a.id) + '">' +
+    return '<a class="tarjeta' + (dest ? " dest" : "") + (cmpLista().indexOf(a.id) >= 0 ? " cmpsel" : "") + '" href="#/aviso/' + encodeURIComponent(a.id) + '">' +
       '<div class="foto"><img class="fimg" alt="" loading="lazy" src="' + esc(mini(a.ph[0], 640)) + '" data-o="' + esc(seguro(a.ph[0])) + '" onerror="DVfoto(this)"><span class="tag">' + tipoTxt(a.tp) + '</span>' +
-      (dest ? '<span class="tag destacado">Destacado</span>' : "") + corazon(a.id) +
+      (dest ? '<span class="tag destacado">Destacado</span>' : "") + corazon(a.id) + cmpBoton(a.id) +
       '<span class="src">' + (a.f === "dondevivo" ? "Publicado en DóndeVivo" : "Aviso de " + esc(FUENTES[a.f] || a.f)) + "</span></div>" +
       '<div class="info"><div class="precio">' + precio(a) + porMes(a) + '</div>' + bloques(a) + '<div class="tit">' + esc(a.t) + '</div><div class="lugar">' + lugar(a) + '</div><div class="datos">' + tags.join("") + "</div></div></a>";
   }
@@ -689,6 +796,7 @@
       '<div class="fil-top"><b>Filtros</b><button type="button" id="cerrarFil" aria-label="Cerrar filtros">✕</button></div>' +
       '<div class="toggle" role="group"><button type="button" data-op="alquiler" aria-pressed="' + (f.op !== "venta") + '">Alquilar</button><button type="button" data-op="venta" aria-pressed="' + (f.op === "venta") + '">Comprar</button></div>' +
       '<button class="btn aplicar" type="submit">Aplicar filtros</button>' +
+      '<a class="cmp-fil" href="#/comparar">⇄ Comparar anuncios <b>' + (cmpValidos().length ? cmpValidos().length + "/2" : "") + '</b></a>' +
       (f.cerca ? '<div class="cerca-de"><span>' + esc(cercaDe(f.cerca)) + '</span><button type="button" id="sinCerca" aria-label="Quitar">Quitar</button><input type="hidden" name="cerca" value="' + esc(f.cerca) + '"></div>' : "") +
       '<label>Ciudad<select name="ciudad">' + opcionesCiudad(cs, f.ciudad) + "</select></label>" +
       '<label>Barrio<select name="barrio">' + opt("", "Todos los barrios", f.barrio) + bs.map(function (b) { return opt(b, b, f.barrio); }).join("") + "</select></label>" +
@@ -976,12 +1084,15 @@
 
   function ruta() {
     document.body.classList.remove("sin-scroll");
+    setTimeout(cmpPintar, 0);
     var h = location.hash.replace(/^#/, "") || "/";
     if (h.indexOf("/aviso/") === 0) return ficha(decodeURIComponent(h.slice(7)));
     if (h.indexOf("/guardados") === 0) return verGuardados();
+    if (h.indexOf("/comparar") === 0) return verComparar();
     if (h.indexOf("/terrenos") === 0) { document.body.classList.remove("compra"); document.body.classList.add("terreno"); } else document.body.classList.remove("terreno");
     if (h.indexOf("/terrenos") === 0) return verTerrenos(leerQ(h.split("?")[1]));
     if (h.indexOf("/buscar") === 0) {
+      ultimaBusqueda = location.hash;
       var f = leerQ(h.split("?")[1]);
       if (f.q) { var t = f.q; delete f.q; f = entender(t, f); f.txt = t; if (leerQ(h.split("?")[1]).ciudad) f.ciudad = leerQ(h.split("?")[1]).ciudad; history.replaceState(null, "", "#/buscar?" + q(f)); }
       return buscar(f);

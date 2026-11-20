@@ -4,12 +4,12 @@
 3) Deja un resumen con el % de avance hacia la meta de 3.000."""
 import os, sys, time, json, traceback, requests
 from datetime import datetime, timedelta, timezone
-from . import db, infocasas, buscodepto, remax, fotos
+from . import db, infocasas, buscodepto, remax, clasipar, fotos
 from .config import GEMINI_KEY, SUPABASE_KEY, CENTRAL, CDE, META, MAX_NUEVOS, MAX_REVISAR, MAX_LISTADOS, MINUTOS_MAX, MIN_FOTOS, MIN_FOTOS_TERRENO, META_TERRENOS
 from .util import Bloqueado
 
 INICIO = time.time()
-FUENTES = {"infocasas": infocasas, "buscodepto": buscodepto, "remax": remax}
+FUENTES = {"infocasas": infocasas, "buscodepto": buscodepto, "remax": remax, "clasipar": clasipar}
 
 
 def queda_tiempo():
@@ -57,7 +57,7 @@ def _peso(url):
         z = 4
     else:
         z = 6
-    return z + (0 if "alquiler" in u else 1)
+    return z + (0 if "alquil" in u else 1)
 
 
 def preparar_cola():

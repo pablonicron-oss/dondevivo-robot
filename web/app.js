@@ -122,7 +122,8 @@
   function extras(a) {
     var t = norm(a.t + " " + a.d), o = [];
     if (/negociable|conversable|a convenir|a tratar/.test(t)) o.push("Precio negociable");
-    if (/amoblad|amueblad/.test(t) && !/(sin|no) (amoblar|amoblad|amueblad)/.test(t)) o.push("Amoblado");
+    var tm = t.replace(/(semi|medio) ?(amoblad|amueblad)\w*|(cocina|placares?|roperos?|bano|banos|placard) (semi )?(amoblad|amueblad)\w*/g, " ");   // cocina amoblada o semi amoblado no es amoblado
+    if (/amoblad|amueblad/.test(tm) && !/(sin|no) (amoblar|amoblad|amueblad)/.test(tm)) o.push("Amoblado");
     if (a.op === "alquiler" && expIncl(a)) o.push("Expensas incluidas");
     return o;
   }
@@ -204,7 +205,7 @@
     { k: "aire", n: "Aire acondicionado", si: "Tiene aire acondicionado", no: "No tiene aire acondicionado", nd: "El aviso no menciona aire acondicionado",
       re: /aire acondicionado|aires acondicionados| a a | split|climatizad/, nore: / (sin|no tiene|no cuenta con|no incluye) aire/ },
     { k: "mueb", n: "Amoblado", si: "Viene amoblado", no: "Se entrega sin muebles", nd: "El aviso no dice si viene amoblado",
-      re: /amoblad|amueblad|equipad/, nore: / (sin|no) (amoblar|amoblad|amueblad|muebles)/ },
+      re: /(?<!semi |semi|medio |cocina |placares |placard |roperos? )(amoblad|amueblad)|totalmente equipad/, nore: / (sin|no) (amoblar|amoblad|amueblad|muebles)/ },
     { k: "wifi", n: "Wifi", si: "Tiene wifi o internet", no: "No incluye internet", nd: "El aviso no menciona internet", re: / wi ?fi |internet|fibra optica/, nore: / (sin|no incluye) (wifi|internet)/ },
     { k: "balc", n: "Balcón", si: "Tiene balcón o terraza", no: "No tiene balcón", nd: "", re: /balcon|terraza/, nore: / sin balcon/ },
     { k: "patio", n: "Patio o jardín", si: "Tiene patio o jardín", no: "No tiene patio", nd: "", re: / (patio|patios|jardin|jardines) /, nore: / sin (patio|jardin)/ },
@@ -491,7 +492,7 @@
   /* ---------- mapa con precios ---------- */
   var TITULO_MAPA = "Precios cerca tuyo";
   var VER_MAPA = !!TITULO_MAPA || /[?&]mapa=1/.test(location.search);
-  var mapa = null, capa = null, yo = null, mOp = "", mCiudad = "";
+  var mapa = null, capa = null, yo = null, mOp = "alquiler", mCiudad = "";
   function cargarMapaLib(listo) {
     if (window.L && L.markerClusterGroup) return listo();
     [["https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"], ["https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"]].forEach(function (h) {
@@ -564,7 +565,7 @@
         mapa = L.map("mapa", { scrollWheelZoom: true, zoomControl: true }).setView([-25.3, -57.6], 11);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap", referrerPolicy: "strict-origin-when-cross-origin" }).addTo(mapa);
         pintarMapa(false);   // arranca en Asunción, donde están la mayoría de los avisos
-        mapa.setView([-25.295, -57.58], 12);
+        mapa.setView([-25.292, -57.585], 14);   // más cerca, para que los precios no se encimen
       });
     }
     if ("IntersectionObserver" in window) {
@@ -907,34 +908,21 @@
     mostrados = 24; inicio();
   }
 
-  /* ---------- caja mágica: animación de carga, solo en el inicio ---------- */
-  function cajaMagica() {
-    return '<div class="cmagica" role="status" aria-label="Cargando avisos"><svg class="cm-esc go" viewBox="0 0 280 252" aria-hidden="true">' +
-      '<defs><clipPath id="cm-cp"><rect x="0" y="0" width="280" height="244"/></clipPath></defs>' +
-      '<ellipse cx="140" cy="246" rx="78" ry="5" fill="#000" opacity=".07"/><rect x="72" y="142" width="136" height="12" fill="#A86F36"/>' +
-      '<g clip-path="url(#cm-cp)">' +
-      '<g class="cm-it cm-1" style="--r:12deg"><rect x="112" y="68" width="64" height="84" rx="9" fill="#1D1D1F"/><rect x="114" y="56" width="60" height="16" rx="6" fill="#2C2C2E"/><rect x="132" y="48" width="24" height="10" rx="3" fill="#2C2C2E"/><path d="M114 74 C104 102 168 132 178 74" fill="none" stroke="#48484A" stroke-width="7" stroke-linecap="round"/><rect x="112" y="124" width="64" height="6" fill="#D92D20"/><rect x="112" y="130" width="64" height="5" fill="#fff"/><rect x="112" y="135" width="64" height="6" fill="#1F4FE0"/><rect x="166" y="80" width="7" height="7" rx="1.5" fill="#D92D20"/><rect x="84" y="108" width="26" height="44" rx="4" fill="#3A2A20"/><rect x="87" y="103" width="20" height="7" rx="2" fill="#C7CDD6"/><rect x="84" y="120" width="26" height="12" fill="#5A3E2E"/></g>' +
-      '<g class="cm-it cm-2" style="--r:-18deg"><ellipse cx="140" cy="140" rx="72" ry="14" fill="#E3CB86"/><path d="M104 140 C104 92 176 92 176 140 Z" fill="#F1E2B0"/><path d="M110 120 q30 -6 60 0M108 130 q32 -5 64 0" stroke="#D9C17F" stroke-width="1.4" fill="none"/><rect x="105" y="126" width="70" height="5" fill="#D92D20"/><rect x="105" y="131" width="70" height="4" fill="#fff"/><rect x="105" y="135" width="70" height="5" fill="#1F4FE0"/><path d="M72 140 q68 14 136 0" stroke="#CFB46E" stroke-width="2" fill="none"/></g>' +
-      '<g class="cm-it cm-3" style="--r:-28deg"><rect x="108" y="66" width="64" height="86" rx="3" fill="#1F4FE0"/><rect x="108" y="66" width="10" height="86" fill="#1739A8"/><rect x="126" y="80" width="38" height="5" rx="2" fill="#fff"/><rect x="126" y="90" width="28" height="4" rx="2" fill="#AFC2FF"/><rect x="172" y="70" width="4" height="78" fill="#F4F1EA"/></g>' +
-      '<g class="cm-it cm-4" style="--r:16deg"><path d="M118 152 L123 118 L157 118 L162 152 Z" fill="#D85A30"/><rect x="120" y="114" width="40" height="8" rx="2" fill="#B5471F"/><path d="M140 116 C126 90 104 96 98 76 C120 74 136 92 140 116 Z" fill="#12B76A"/><path d="M140 116 C150 82 172 80 180 64 C186 92 162 100 140 116 Z" fill="#0B8A50"/><path d="M140 116 C136 88 140 70 139 50 C152 72 150 96 140 116 Z" fill="#32D583"/></g>' +
-      '</g><g class="cm-cuerpo"><rect x="68" y="150" width="144" height="94" rx="4" fill="#E8B57A"/><rect x="68" y="150" width="144" height="9" fill="#D9A066"/><rect x="128" y="150" width="24" height="94" fill="#F2CF9E" opacity=".7"/><rect x="82" y="196" width="36" height="20" rx="2" fill="#fff" opacity=".9"/><path d="M88 203h24M88 209h15" stroke="#1F4FE0" stroke-width="2.5" stroke-linecap="round"/><g transform="translate(170 198)"><rect width="24" height="16" rx="2" fill="#fff"/><rect width="24" height="5.3" fill="#D92D20"/><rect y="10.7" width="24" height="5.3" fill="#1F4FE0"/><circle cx="12" cy="8" r="2" fill="#12B76A"/></g></g>' +
-      '<rect class="cm-fi" x="72" y="145" width="68" height="7" rx="2" fill="#D9A066"/><rect class="cm-fd" x="140" y="145" width="68" height="7" rx="2" fill="#C99258"/></svg></div>';
-  }
-  var esInicio = !/^#\/(?!$)/.test(location.hash || "");
-  var cajaDesde = Date.now(), cajaTimer = null;
-  if (esInicio) {
-    $app.innerHTML = cajaMagica();
-    cajaTimer = setInterval(function () {                                     // si tarda, la caja vuelve a empezar
-      var e = $app.querySelector(".cm-esc"); if (!e) { clearInterval(cajaTimer); return; }
-      e.classList.remove("go"); void e.getBoundingClientRect(); e.classList.add("go");
-    }, 1900);
-  } else {
-    $app.innerHTML = '<div class="vacio">Cargando avisos…</div>';
-  }
+
+  var caja = document.getElementById("cajaCarga"), esInicio = !!caja;
+  var cajaDesde = window.CAJA_DESDE || Date.now(), cajaTimer = null;
+  $app.innerHTML = esInicio ? "" : '<div class="vacio">Cargando avisos…</div>';
+  if (esInicio) cajaTimer = setInterval(function () {                          // si tarda, la caja vuelve a empezar
+    var e = caja.querySelector(".cm-esc"); e.classList.remove("go"); void e.getBoundingClientRect(); e.classList.add("go");
+  }, 1500);
   function cuandoTermineLaCaja(fn) {                                          // que se vea completa al menos una vez
     if (!esInicio) return fn();
-    var falta = 1800 - (Date.now() - cajaDesde);
-    setTimeout(function () { clearInterval(cajaTimer); fn(); }, Math.max(0, falta));
+    var falta = 1400 - (Date.now() - cajaDesde);
+    setTimeout(function () {
+      clearInterval(cajaTimer); fn();
+      caja.classList.add("fuera"); document.documentElement.classList.remove("cargando");
+      setTimeout(function () { caja.remove(); }, 300);
+    }, Math.max(0, falta));
   }
   fetch("data/avisos.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
     TODOS = (j.avisos || []).filter(function (a) { return a.ph && a.ph.length >= (a.tp === "terreno" ? 1 : 2); });

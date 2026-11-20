@@ -335,21 +335,23 @@ body.terreno .btn-wa,body.terreno .ir{background:var(--tierra)}
 /* banderita en el buscador */
 .enciudad .bandera{width:20px;height:14px;border-radius:2px;box-shadow:0 0 0 1px rgba(16,24,40,.12);flex:none}
 
-/* caja mágica (carga del inicio) */
-.cmagica{display:grid;place-items:center;min-height:320px;background:#fff;border-radius:28px;margin-top:20px}
+/* caja mágica (carga del inicio): pantalla completa, solo la animación */
+.cmagica{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:var(--fondo,#EEF1F6);transition:opacity .3s}
+.cmagica.fuera{opacity:0;pointer-events:none}
+html.cargando body{overflow:hidden}
 .cm-esc{width:180px;height:auto}
 .cm-it{opacity:0}
-.cm-esc.go .cm-it{animation:cmEntra .42s linear forwards}
-.cm-esc.go .cm-1{animation-delay:.15s}.cm-esc.go .cm-2{animation-delay:.47s}.cm-esc.go .cm-3{animation-delay:.79s}.cm-esc.go .cm-4{animation-delay:1.11s}
+.cm-esc.go .cm-it{animation:cmEntra .34s linear forwards}
+.cm-esc.go .cm-1{animation-delay:.12s}.cm-esc.go .cm-2{animation-delay:.37s}.cm-esc.go .cm-3{animation-delay:.62s}.cm-esc.go .cm-4{animation-delay:.87s}
 @keyframes cmEntra{0%{opacity:1;transform:translateY(-250px) rotate(var(--r,0deg));animation-timing-function:cubic-bezier(.55,0,1,.5)}55%{opacity:1;transform:translateY(0) rotate(0) scale(1.06,.92)}68%{opacity:1;transform:translateY(-6px)}100%{opacity:1;transform:translateY(120px)}}
 .cm-fi,.cm-fd{transform-box:view-box}
 .cm-fi{transform-origin:72px 150px}.cm-fd{transform-origin:208px 150px}
-.cm-esc.go .cm-fi{animation:cmAbreI 1.75s ease-in-out forwards}
-.cm-esc.go .cm-fd{animation:cmAbreD 1.75s ease-in-out forwards}
+.cm-esc.go .cm-fi{animation:cmAbreI 1.38s ease-in-out forwards}
+.cm-esc.go .cm-fd{animation:cmAbreD 1.38s ease-in-out forwards}
 @keyframes cmAbreI{0%{transform:rotate(0)}9%{transform:rotate(-130deg)}88%{transform:rotate(-130deg)}100%{transform:rotate(0)}}
 @keyframes cmAbreD{0%{transform:rotate(0)}9%{transform:rotate(130deg)}88%{transform:rotate(130deg)}100%{transform:rotate(0)}}
 .cm-cuerpo{transform-box:fill-box;transform-origin:50% 100%}
-.cm-esc.go .cm-cuerpo{animation:cmSac .14s ease-out .38s,cmSac .14s ease-out .70s,cmSac .14s ease-out 1.02s,cmSac .14s ease-out 1.34s,cmSac .18s ease-out 1.72s}
+.cm-esc.go .cm-cuerpo{animation:cmSac .12s ease-out .30s,cmSac .12s ease-out .55s,cmSac .12s ease-out .80s,cmSac .12s ease-out 1.05s,cmSac .16s ease-out 1.36s}
 @keyframes cmSac{0%{transform:scale(1.04,.94)}100%{transform:scale(1,1)}}
 @media (prefers-reduced-motion:reduce){.cm-it{opacity:1}.cm-esc.go *{animation:none!important}}
 

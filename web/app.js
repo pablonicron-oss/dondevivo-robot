@@ -431,7 +431,7 @@
 
   function ficha(id) {
     var a = DATA.find(function (x) { return x.id === id; });
-    if (!a) { $app.innerHTML = '<div class="vacio"><b>Este aviso ya no está disponible.</b><br>Puede que se haya alquilado o vendido. <a href="#/">Volver a buscar</a></div>'; return; }
+    if (!a) return fichaBaja(id);
     setOp(a.op);
     var fu = FUENTES[a.f] || a.f, ex = expensas(a);
     var costo = a.op === "alquiler"
@@ -461,6 +461,40 @@
       b.onclick = function () { document.getElementById("gr").style.backgroundImage = "url('" + b.dataset.u + "')"; $app.querySelectorAll(".miniaturas button").forEach(function (x) { x.setAttribute("aria-current", x === b); }); };
     });
     window.scrollTo(0, 0);
+  }
+
+  /* ---------- avisos que ya no están: el link guardado sigue andando, con un cartel ---------- */
+  var BAJAS = null;
+  var CARTEL = { alquilado: ["Ya se alquiló", "Este inmueble ya se alquiló."], vendido: ["Ya se vendió", "Este inmueble ya se vendió."],
+    pausado: ["No disponible por ahora", "El anunciante pausó este aviso."], no_disponible: ["Ya no está disponible", "Este aviso ya no está publicado. Puede que se haya alquilado o vendido."] };
+  function parecidos(b) {
+    var lista = DATA.filter(function (x) { return x.op === b.op && x.c === b.c && x.id !== b.id; });
+    lista.forEach(function (x) {
+      var pts = (x.b && x.b === b.b ? 0 : 2) + (x.tp === b.tp ? 0 : 1);
+      if (b.p && x.p && x.m === b.m) pts += Math.min(3, Math.abs(x.p - b.p) / b.p * 4); else pts += 3;
+      x._pp = pts;
+    });
+    return lista.sort(function (x, y) { return x._pp - y._pp; }).slice(0, 6);
+  }
+  function fichaBaja(id) {
+    var pintar = function () {
+      var b = (BAJAS || []).find(function (x) { return x.id === id; });
+      if (!b) { $app.innerHTML = '<div class="vacio"><b>Este aviso ya no está disponible.</b><br>Puede que se haya alquilado o vendido. <a href="#/">Volver a buscar</a></div>'; return; }
+      setOp(b.op);
+      var c = CARTEL[b.e] || CARTEL.no_disponible, par = parecidos(b);
+      $app.innerHTML = '<a class="volver" href="#/">← Buscar otros inmuebles</a>' +
+        '<div class="baja"><div class="baja-cartel ' + esc(b.e) + '"><b>' + c[0] + '</b><span>' + c[1] + "</span></div>" +
+        '<div class="baja-cuerpo"><div class="baja-foto" style="background-image:url(\'' + esc(mini((b.ph || [])[0], 800)) + '\')"><span>' + c[0] + "</span></div>" +
+        '<div><div class="precio" style="font-size:26px;text-decoration:line-through;opacity:.6">' + precio(b) + porMes(b) + "</div><h1>" + esc(b.t) + '</h1><div class="lugar">' + lugar(b) + "</div>" +
+        '<div class="datos">' + [tipoTxt(b.tp), b.dor ? b.dor + " dormitorios" : "", b.m2 >= 10 ? Math.round(b.m2) + " m²" : ""].filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div></div></div></div>" +
+        (par.length ? '<h2 class="baja-tit">Parecidos y disponibles en ' + esc(b.c || "la zona") + "</h2><div class=\"lista\">" + par.map(tarjeta).join("") + "</div>" : "") +
+        '<p style="text-align:center;margin:26px 0"><a class="baja-btn" href="#/buscar">Ver todos los inmuebles</a></p>';
+      window.scrollTo(0, 0);
+    };
+    if (BAJAS) return pintar();
+    $app.innerHTML = '<div class="vacio">Cargando…</div>';
+    fetch("data/bajas.json?v=" + Date.now()).then(function (r) { return r.json(); }).then(function (j) { BAJAS = j.bajas || []; pintar(); })
+      .catch(function () { BAJAS = []; pintar(); });
   }
 
   function ruta() {

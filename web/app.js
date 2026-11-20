@@ -1005,6 +1005,14 @@
     function enAsu(a) { return !a.lat || (a.lat > -25.37 && a.lat < -25.21 && a.lng > -57.69 && a.lng < -57.53); }
     var nom = {}; TODOS.forEach(function (a) { if (!a.c) return; var k = norm(a.c), v = nom[k], pt = function (x) { return (x.match(/[^\x00-\x7f]/g) || []).length * 10 - (x.match(/[A-Z]/g) || []).length; }; if (!v || pt(a.c) > pt(v)) nom[k] = a.c; });
     TODOS.forEach(function (a) { if (a.c) a.c = nom[norm(a.c)]; });
+    TODOS.forEach(function (a) {                    // algunos avisos dicen venta en la página pero el título y el precio son de alquiler, o al revés
+      var t = norm(a.t), alq = /\b(alquil|en alquiler|se alquila|alquilo)/.test(t), ven = /\b(venta|vendo|se vende|en venta)\b/.test(t);
+      if (alq && !ven) a.op = "alquiler"; else if (ven && !alq) a.op = "venta";
+      else if (a.p && a.tp !== "terreno") {
+        var g = a.m === "USD" ? a.p * 6450 : a.p;
+        if (a.op === "venta" && g < 40e6) a.op = "alquiler"; else if (a.op === "alquiler" && g > 150e6) a.op = "venta";
+      }
+    });
     TODOS.forEach(function (a) {
       a.mono = esMono(a);
       if (a.b && /^(departamento|depto|dpto|casa|duplex|dúplex|terreno|centro|zona|barrio|ciudad|condominio|edificio|monoambiente|local|oficina|sin especificar)$/i.test(String(a.b).trim())) delete a.b;

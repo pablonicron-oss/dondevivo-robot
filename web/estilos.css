@@ -378,8 +378,8 @@ html.cargando body{overflow:hidden}
 .buscador::after{content:"";position:absolute;inset:-2px;border-radius:24px;border:2px solid transparent;z-index:-1;
   background:linear-gradient(#fff,#fff) padding-box,conic-gradient(from var(--ang),#1F4FE0,#2E90FA,#12B76A,#A0703F,#1F4FE0) border-box}
 .buscador::before{content:"";position:absolute;inset:2px;border-radius:24px;z-index:-2;pointer-events:none;
-  background:conic-gradient(from var(--ang),#1F4FE0,#2E90FA,#12B76A,#A0703F,#1F4FE0);filter:blur(18px);opacity:.75;transition:opacity .25s}
-.buscador:focus-within::before{opacity:.95}
+  background:conic-gradient(from var(--ang),#1F4FE0,#2E90FA,#12B76A,#A0703F,#1F4FE0);filter:blur(14px);opacity:.35;transition:opacity .25s}
+.buscador:focus-within::before{opacity:.5}
 .buscador:focus-within{box-shadow:none}
 @keyframes giro{to{--ang:360deg}}
 @media (prefers-reduced-motion:reduce){.buscador{animation:none}}

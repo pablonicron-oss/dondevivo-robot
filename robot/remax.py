@@ -35,7 +35,7 @@ def nuevos():
     urls = re.findall(r"<loc>([^<]+)</loc>", r.text)
     out = [u for u in urls if "/es-py/" in u and (_partes(u)[0] in TIPOS or "terreno" in _partes(u)[0] or "lote" in _partes(u)[0]) and _partes(u)[1] in ("alquiler", "venta")]
     random.shuffle(out)
-    return sorted(out, key=_prioridad)
+    return sorted(out, key=lambda u: (_partes(u)[1] != "alquiler", _prioridad(u)))   # alquileres primero
 
 
 def _buscar(mlsid):

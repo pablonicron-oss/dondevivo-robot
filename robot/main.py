@@ -24,6 +24,9 @@ def progreso():
     p = {r: db.contar("avisos", activo="eq.true", region=f"eq.{r}", tipo="neq.terreno") for r in META}
     p["total"] = sum(p.values())
     p["terrenos"] = db.contar("avisos", activo="eq.true", tipo="eq.terreno")
+    for r in META:   # mitad alquiler y mitad venta en cada zona
+        p[f"{r}:venta"] = db.contar("avisos", activo="eq.true", region=f"eq.{r}", tipo="neq.terreno", operacion="eq.venta")
+        p[f"{r}:alquiler"] = p[r] - p[f"{r}:venta"]
     p["porcentaje"] = round(100 * sum(min(p[r], META[r]) for r in META) / sum(META.values()), 1)
     return p
 
@@ -162,7 +165,7 @@ def revisar_fotos_pendientes(stats, tope=60):
 
 
 def sumar_nuevos(stats, prog):
-    llenas = {r for r in META if prog[r] >= META[r]}
+    mitad = {r: META[r] // 2 for r in META}
     bloqueadas = set()
     ultima_web = time.time()
     leidos = 0
@@ -190,8 +193,11 @@ def sumar_nuevos(stats, prog):
         if terreno:
             if prog.get("terrenos", 0) >= META_TERRENOS:
                 continue   # ya llegamos al cupo de terrenos
-        elif aviso["region"] in llenas:
-            continue   # esa zona ya llegó a su meta; lo dejamos para más adelante
+        else:
+            op = "alquiler" if aviso.get("operacion") == "alquiler" else "venta"
+            clave = f"{aviso['region']}:{op}"
+            if prog.get(clave, 0) >= mitad.get(aviso["region"], 0):
+                continue   # esa zona ya tiene su mitad de alquileres o de ventas; lo dejamos para más adelante
         if aviso["fotos_total"] < minimo:
             db.upsert("descartados", {"id": aviso["id"], "motivo": "sin fotos" if terreno else "menos de 2 fotos"}); stats["descartados"] += 1; continue
         revisadas = True
@@ -213,6 +219,8 @@ def sumar_nuevos(stats, prog):
         db.upsert("avisos", aviso)
         if terreno:
             prog["terrenos"] = prog.get("terrenos", 0) + 1
+        else:
+            prog[clave] = prog.get(clave, 0) + 1
         stats["nuevos"] += 1
         stats.setdefault("por_fuente", {}).setdefault(nombre, 0)
         stats["por_fuente"][nombre] += 1

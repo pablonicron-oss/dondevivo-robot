@@ -359,3 +359,27 @@ html.cargando body{overflow:hidden}
 .tpin3d{background:none;border:0}
 .tpin3d svg{display:block;overflow:visible;filter:drop-shadow(0 1px 1px rgba(0,0,0,.15))}
 .mpin .terr{background:#8A5A34;border-color:#8A5A34}.mpin .terr::after{border-top-color:#8A5A34}
+
+/* panel de filtros: se mueve con la página y el botón queda arriba */
+@media (min-width:861px){.filtros{max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}}
+.filtros .aplicar{width:100%;min-height:46px}
+.filtros .rango{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.filtros .rango legend{font-weight:700;font-size:14px;padding:0;margin-bottom:6px}
+.filtros .rango div{display:flex;align-items:center;gap:6px}
+.filtros .rango div input{flex:1;min-width:0;width:100%}
+.filtros .rango span{font-weight:700;color:var(--gris);font-size:14px}
+.cerca-de{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#EEF2FF;border-radius:12px;padding:10px 12px;font-weight:700;font-size:14px}
+.cerca-de button{border:0;background:#fff;border-radius:10px;padding:6px 10px;font:inherit;font-size:13px;font-weight:800;cursor:pointer;color:var(--ink)}
+.mapa-ctrl select[hidden]{display:none}
+
+/* destello alrededor del buscador del inicio, en los colores de DóndeVivo */
+@property --ang{syntax:"<angle>";inherits:true;initial-value:0deg}
+.buscador,body.compra .buscador{background:transparent;box-shadow:none;isolation:isolate;animation:giro 6s linear infinite}
+.buscador::after{content:"";position:absolute;inset:-2px;border-radius:24px;border:2px solid transparent;z-index:-1;
+  background:linear-gradient(#fff,#fff) padding-box,conic-gradient(from var(--ang),#1F4FE0,#2E90FA,#12B76A,#A0703F,#1F4FE0) border-box}
+.buscador::before{content:"";position:absolute;inset:2px;border-radius:24px;z-index:-2;pointer-events:none;
+  background:conic-gradient(from var(--ang),#1F4FE0,#2E90FA,#12B76A,#A0703F,#1F4FE0);filter:blur(18px);opacity:.75;transition:opacity .25s}
+.buscador:focus-within::before{opacity:.95}
+.buscador:focus-within{box-shadow:none}
+@keyframes giro{to{--ang:360deg}}
+@media (prefers-reduced-motion:reduce){.buscador{animation:none}}

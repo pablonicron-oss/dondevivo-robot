@@ -282,9 +282,53 @@
     window.scrollTo(0, 0);
   }
 
+  /* ---------- lugares conocidos: "cerca de la UNA" ordena por distancia ---------- */
+  var LUGARES = {
+    una: ["la UNA", -25.3310, -57.5207, /\b(la una|universidad nacional( de asuncion)?|campus (universitario|de la una)|ciudad universitaria|(facu|facultad)\w* (de |del )?(la )?una|politecnica)\b/],
+    clinicas: ["el Hospital de Clínicas", -25.3244, -57.5235, /\b(hospital de )?clinicas\b/],
+    uca: ["la Católica", -25.2811, -57.6321, /\b(la uca|uca|universidad catolica|la catolica)\b/],
+    americana: ["la Americana", -25.2787, -57.5995, /\b(universidad americana|la americana)\b/],
+    uaa: ["la Autónoma", -25.2875, -57.6431, /\b(uaa|universidad autonoma|la autonoma)\b/],
+    uninorte: ["UniNorte", -25.2845, -57.6170, /\b(uninorte|universidad del norte)\b/],
+    columbia: ["la Columbia", -25.2862, -57.6118, /\b(universidad columbia|la columbia)\b/],
+    delsol: ["el Shopping del Sol", -25.2829, -57.5675, /\b(shopping )?del sol\b/],
+    galeria: ["Paseo La Galería", -25.2851, -57.5634, /\b(paseo )?la galeria\b/],
+    mariscal: ["el Shopping Mariscal", -25.2953, -57.5810, /\bshopping (mariscal|mcal)( lopez)?\b/],
+    villamorra: ["el Shopping Villa Morra", -25.2944, -57.5806, /\bshopping villa morra\b/],
+    pinedo: ["el Pinedo Shopping", -25.3231, -57.5196, /\bpinedo\b/],
+    aeropuerto: ["el aeropuerto", -25.2356, -57.5156, /\b(aeropuerto|silvio pettirossi)\b/],
+    nuguasu: ["el Ñu Guasu", -25.2627, -57.5439, /\bnu guasu\b/],
+    botanico: ["el Jardín Botánico", -25.2470, -57.5709, /\bjardin botanico\b/],
+    defensores: ["el Defensores del Chaco", -25.2920, -57.6574, /\bdefensores del chaco\b/]
+  };
+  function km(a, l) { var dy = (a.lat - l[1]) * 111, dx = (a.lng - l[2]) * 111 * Math.cos(l[1] * Math.PI / 180); return Math.sqrt(dx * dx + dy * dy); }
+  function numero(x, unidad) {                   // "3,5" millones, "3.500.000", "800 mil"
+    var n = unidad ? parseFloat(x.replace(",", ".")) : parseFloat(x.replace(/[.,]/g, ""));
+    if (/^(millon|millones|palo|palos|m)$/.test(unidad || "")) n *= 1e6; else if (/^(mil|k)$/.test(unidad || "")) n *= 1e3;
+    return Math.round(n);
+  }
+
   /* ---------- lo que escribe la persona → filtros ---------- */
   function entender(texto, base) {
     var t = norm(texto), f = Object.assign({}, base);
+    Object.keys(LUGARES).some(function (k) { if (LUGARES[k][3].test(t)) { f.cerca = k; t = t.replace(LUGARES[k][3], " "); return true; } });
+    var M = "(\\d[\\d.,]*)\\s*(millones|millon|palos|palo|mil|k|m)?\\b";
+    var usd = /(usd|u\$s|us\$|dolar)/.test(t);
+    var ent = t.match(new RegExp("entre " + M + " y " + M)), hs = t.match(new RegExp("(hasta|maximo|max|menos de|no mas de|tope|presupuesto( de)?) (de )?(gs\\.? |usd |₲ )?" + M)),
+      ds = t.match(new RegExp("(desde|minimo|mas de) (gs\\.? |usd |₲ )?" + M));
+    if (ent) { f.min = numero(ent[1], ent[2] || ent[4]); f.max = numero(ent[3], ent[4]); }
+    else {
+      if (hs) f.max = numero(hs[5], hs[6]);
+      if (ds) f.min = numero(ds[3], ds[4]);
+      if (!hs && !ds) { var su = t.match(new RegExp("(\\d[\\d.,]*)\\s*(millones|millon|palos|palo)\\b")); if (su) f.max = numero(su[1], su[2]); }
+    }
+    ["min", "max"].forEach(function (k) { if (f[k] && f[k] < 100) delete f[k]; });
+    if ((f.min || f.max) && usd) f.mon = "USD";
+    if (/\b(piscina|pileta)\b/.test(t)) f.con = "pile";
+    else if (/\b(amoblad|amueblad)/.test(t) && !/sin amobla/.test(t)) f.con = "mueb";
+    else if (/\b(patio|jardin)\b/.test(t)) f.con = "patio";
+    else if (/\b(cochera|garage|garaje|estacionamiento)\b/.test(t)) f.con = "auto";
+    else if (/\baire( acondicionado)?\b/.test(t)) f.con = "aire";
     if (/\b(comprar|compro|venta|invertir|mi primera casa)\b/.test(t)) f.op = "venta";
     if (/\b(alquil|alquiler|rentar)/.test(t)) f.op = "alquiler";
     if (/\b(depto|departamento)\b/.test(t)) f.tipo = "departamento";
@@ -307,7 +351,7 @@
   }
 
   function filtrar(f) {
-    return DATA.filter(function (a) {
+    var out = DATA.filter(function (a) {
       if (f.op && a.op !== f.op) return false;
       if (f.ciudad && !enCiudad(a, f.ciudad)) return false;
       if (f.barrio && a.b !== f.barrio) return false;
@@ -319,9 +363,19 @@
       else if (f.dor && (a.mono || (a.dor || 0) < +f.dor)) return false;
       if (f.fuente && a.f !== f.fuente) return false;
       if (f.con && !comodidades(a).some(function (c) { return c.k === f.con && c.v === "si"; })) return false;
-      if (f.max && a.p && a.m === (f.mon || "PYG") && a.p > +f.max) return false;
+      if (f.min || f.max) {
+        var g = enGs(a), k = f.mon === "USD" ? CAMBIO : 1, mn = +String(f.min || "").replace(/\D/g, "") * k, mx = +String(f.max || "").replace(/\D/g, "") * k;
+        if (g === null || (mn && g < mn) || (mx && g > mx)) return false;
+      }
       return true;
-    }).map(function (a, i) { return [a, i]; })
+    });
+    var l = LUGARES[f.cerca];
+    if (l) {                                       // los más cercanos al lugar, ampliando el radio si hay pocos
+      var con = out.filter(function (a) { return a.lat && a.lng; }).map(function (a) { return [a, km(a, l)]; }), r = [1.5, 2.5, 4, 6, 9].find(function (x) {
+        return con.filter(function (c) { return c[1] <= x; }).length >= 12; }) || 9;
+      return con.filter(function (c) { return c[1] <= r; }).sort(function (x, y) { return (destacado(y[0]) - destacado(x[0])) || (x[1] - y[1]); }).map(function (c) { return c[0]; });
+    }
+    return out.map(function (a, i) { return [a, i]; })
       .sort(function (x, y) { return (destacado(y[0]) - destacado(x[0])) || (x[1] - y[1]); })
       .map(function (x) { return x[0]; });
   }
@@ -492,7 +546,13 @@
   /* ---------- mapa con precios ---------- */
   var TITULO_MAPA = "Precios cerca tuyo";
   var VER_MAPA = !!TITULO_MAPA || /[?&]mapa=1/.test(location.search);
-  var mapa = null, capa = null, yo = null, mOp = "alquiler", mCiudad = "";
+  var mapa = null, capa = null, yo = null, mOp = "alquiler", mCiudad = "", mPr = "";
+  var RANGOS_MAPA = {
+    alquiler: [[0, 2e6, "Hasta 2 millones"], [2e6, 3.5e6, "De 2 a 3,5 millones"], [3.5e6, 5e6, "De 3,5 a 5 millones"], [5e6, 8e6, "De 5 a 8 millones"], [8e6, Infinity, "Más de 8 millones"]],
+    venta: [[0, 300e6, "Hasta 300 millones"], [300e6, 700e6, "De 300 a 700 millones"], [700e6, 1500e6, "De 700 a 1.500 millones"], [1500e6, 3000e6, "De 1.500 a 3.000 millones"], [3000e6, Infinity, "Más de 3.000 millones"]]
+  };
+  function rangosMapa() { return mOp === "terreno" ? Object.keys(RANGOS).map(function (k) { return RANGOS[k]; }) : RANGOS_MAPA[mOp] || []; }
+  function opcionesPrecio() { return '<option value="">Cualquier precio</option>' + rangosMapa().map(function (r, i) { return '<option value="' + i + '"' + (String(mPr) === String(i) ? " selected" : "") + ">" + r[2] + "</option>"; }).join(""); }
   function cargarMapaLib(listo) {
     if (window.L && L.markerClusterGroup) return listo();
     [["https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"], ["https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"]].forEach(function (h) {
@@ -517,7 +577,8 @@
       ['["", "Todo"]', '["alquiler", "Alquiler"]', '["venta", "Venta"]', '["terreno", "Terrenos"]'].map(function (j) { var x = JSON.parse(j); return '<button data-mop="' + x[0] + '" aria-pressed="' + (mOp === x[0]) + '">' + x[1] + "</button>"; }).join("") +
       '</div><label class="sr" for="mCiudad">Ciudad del mapa</label><select id="mCiudad"><option value="">Todo Paraguay</option>' +
       cs.filter(function (c) { return conLugar[c]; }).map(function (c) { return "<option" + (c === mCiudad ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("") +
-      '</select><button id="mCerca" class="cerca"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>Cerca mío</button></div></div>' +
+      '</select><label class="sr" for="mPrecio">Precio</label><select id="mPrecio"' + (mOp ? "" : " hidden") + ">" + opcionesPrecio() + "</select>" +
+      '<button id="mCerca" class="cerca"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>Cerca mío</button></div></div>' +
       '<div class="mapa-caja" id="mapaCaja"><div id="mapa" aria-label="Mapa de avisos"></div>' +
       '<button id="mFull" class="mfull" aria-label="Pantalla completa"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg></button>' +
       '<div class="mmsg" id="mMsg" hidden></div></div></section>';
@@ -541,7 +602,8 @@
     capa = L.layerGroup();   // sin agrupar: siempre se ve el precio, al hacer zoom se separan
     var lista = TODOS.filter(function (a) {
       var ok = !mOp || (mOp === "terreno" ? a.tp === "terreno" : a.tp !== "terreno" && a.op === mOp);
-      return enPY(a) && ok && enCiudad(a, mCiudad);
+      var r = mPr !== "" && rangosMapa()[mPr], g = enGs(a);
+      return enPY(a) && ok && enCiudad(a, mCiudad) && (!r || (g !== null && g >= r[0] && g < r[1]));
     });
     lista.sort(function (x, y) { return destacado(x) - destacado(y); });
     lista.forEach(function (a) {
@@ -573,8 +635,12 @@
       io.observe(sec);
     } else iniciar();
     sec.querySelectorAll("[data-mop]").forEach(function (b) {
-      b.onclick = function () { mOp = b.dataset.mop; sec.querySelectorAll("[data-mop]").forEach(function (x) { x.setAttribute("aria-pressed", x === b); }); pintarMapa(true); };
+      b.onclick = function () {
+        mOp = b.dataset.mop; mPr = ""; sec.querySelectorAll("[data-mop]").forEach(function (x) { x.setAttribute("aria-pressed", x === b); });
+        var mp = document.getElementById("mPrecio"); mp.innerHTML = opcionesPrecio(); mp.hidden = !mOp; pintarMapa(true);
+      };
     });
+    document.getElementById("mPrecio").onchange = function (e) { mPr = e.target.value; pintarMapa(true); };
     document.getElementById("mCiudad").onchange = function (e) { mCiudad = e.target.value; pintarMapa(true); };
     document.getElementById("mCerca").onclick = function () {
       var msg = document.getElementById("mMsg"), btn = this;
@@ -608,6 +674,8 @@
   var mostrados = 24;
   function buscar(f) {
     if (f.barrio && f.barrio === f.ciudad) delete f.barrio;
+    if (f.barrio && !f.ciudad) { var conB = DATA.find(function (a) { return a.b === f.barrio; }); if (conB) f.ciudad = conB.c; }
+    if (!LUGARES[f.cerca]) delete f.cerca;
     setOp(f.op || "alquiler");
     var lista = filtrar(f), cs = ciudades(), bs = barrios(f.ciudad);
     if (f.ciudad && f.ciudad !== "@central" && cs.indexOf(f.ciudad) < 0) cs = [f.ciudad].concat(cs);
@@ -617,27 +685,30 @@
     $app.innerHTML =
       '<div class="res"><form class="filtros" id="ff" aria-label="Filtros">' +
       '<div class="toggle" role="group"><button type="button" data-op="alquiler" aria-pressed="' + (f.op !== "venta") + '">Alquilar</button><button type="button" data-op="venta" aria-pressed="' + (f.op === "venta") + '">Comprar</button></div>' +
+      '<button class="btn aplicar" type="submit">Aplicar filtros</button>' +
+      (f.cerca ? '<div class="cerca-de"><span>Cerca de ' + esc(LUGARES[f.cerca][0]) + '</span><button type="button" id="sinCerca" aria-label="Quitar">Quitar</button><input type="hidden" name="cerca" value="' + esc(f.cerca) + '"></div>' : "") +
       '<label>Ciudad<select name="ciudad">' + opcionesCiudad(cs, f.ciudad) + "</select></label>" +
       '<label>Barrio<select name="barrio">' + opt("", "Todos los barrios", f.barrio) + bs.map(function (b) { return opt(b, b, f.barrio); }).join("") + "</select></label>" +
       '<label>Tipo<select name="tipo">' + opt("", "Todos", f.tipo) + opt("departamento", "Departamento", f.tipo) + opt("casa", "Casa", f.tipo) + opt("duplex", "Dúplex", f.tipo) + opt("terreno", "Terreno", f.tipo) + "</select></label>" +
+      '<fieldset class="rango"><legend>Precio' + (f.op === "venta" ? "" : " por mes") + '</legend><div><input name="min" inputmode="numeric" aria-label="Desde" placeholder="Desde" value="' + esc(f.min ? (+String(f.min).replace(/\D/g, "")).toLocaleString("es-PY") : "") + '"><span>a</span><input name="max" inputmode="numeric" aria-label="Hasta" placeholder="Hasta" value="' + esc(f.max ? (+String(f.max).replace(/\D/g, "")).toLocaleString("es-PY") : "") + '"></div>' +
+      '<select name="mon" aria-label="Moneda">' + opt("PYG", "En guaraníes", f.mon) + opt("USD", "En dólares", f.mon) + "</select></fieldset>" +
       '<label>Mascotas<select name="masc">' + opt("", "Me da igual", f.masc) + opt("si", "Tengo mascota (oculta los que no aceptan)", f.masc) + opt("confirmado", "Solo los que dicen que aceptan", f.masc) + "</select></label>" +
       '<label>Que tenga<select name="con">' + opt("", "Me da igual", f.con) + opt("mueb", "Amoblado", f.con) + opt("pile", "Piscina", f.con) + opt("auto", "Estacionamiento", f.con) + opt("patio", "Patio o jardín", f.con) + opt("aire", "Aire acondicionado", f.con) + "</select></label>" +
       '<label>Estado<select name="estado">' + opt("", "Cualquiera", f.estado) + opt("en_pozo", "En pozo", f.estado) + opt("a_estrenar", "A estrenar", f.estado) + "</select></label>" +
       '<label>Dormitorios<select name="dor">' + opt("", "Cualquiera", f.dor) + opt("0", "Monoambiente", f.dor) + opt("1", "1 o más", f.dor) + opt("2", "2 o más", f.dor) + opt("3", "3 o más", f.dor) + opt("4", "4 o más", f.dor) + "</select></label>" +
-      '<label>Precio máximo<input name="max" inputmode="numeric" placeholder="Ej. 3500000" value="' + esc(f.max || "") + '"></label>' +
-      '<label>Moneda del precio<select name="mon">' + opt("PYG", "Guaraníes", f.mon) + opt("USD", "Dólares", f.mon) + "</select></label>" +
       '<label>Página de origen<select name="fuente">' + opt("", "Todas", f.fuente) + Object.keys(FUENTES).map(function (k) { return opt(k, FUENTES[k], f.fuente); }).join("") + "</select></label>" +
-      '<button class="btn" type="submit">Aplicar</button></form>' +
+      "</form>" +
       '<section><form class="rebusca" id="rb"><label for="rbq" class="sr">Tu búsqueda</label><input id="rbq" value="' + esc(f.txt || "") + '" placeholder="Describí lo que buscás, por ejemplo depto con patio en Luque" autocomplete="off"><button class="btn" type="submit">Buscar</button></form>' +
-      '<div class="cabeza"><h1>' + lista.length.toLocaleString("es-PY") + (f.op === "venta" ? " en venta" : " en alquiler") + (f.ciudad ? " en " + esc(nomCiudad(f.ciudad)) : "") + (f.barrio ? ", " + esc(f.barrio) : "") + '</h1><a class="volver" href="#/">← Nueva búsqueda</a></div>' +
+      '<div class="cabeza"><h1>' + lista.length.toLocaleString("es-PY") + (f.op === "venta" ? " en venta" : " en alquiler") + (f.ciudad ? " en " + esc(nomCiudad(f.ciudad)) : "") + (f.barrio ? ", " + esc(f.barrio) : "") + (f.cerca ? " cerca de " + esc(LUGARES[f.cerca][0]) : "") + '</h1><a class="volver" href="#/">← Nueva búsqueda</a></div>' +
       (lista.length ? '<div class="lista">' + lista.slice(0, mostrados).map(tarjeta).join("") + "</div>" + (lista.length > mostrados ? '<button class="mas" id="mas">Ver más</button>' : "")
         : '<div class="vacio">' + (sinCiudad ? "<b>Todavía no tenemos avisos en " + esc(f.ciudad) + ".</b><br>Sumamos avisos nuevos todos los días, volvé a mirar pronto."
           : "<b>Todavía no tenemos avisos con esos filtros.</b><br>Probá sacar alguno. Sumamos avisos nuevos todos los días.") + "</div>") +
       "</section></div>";
     var ff = document.getElementById("ff");
-    function aplicar() { var o = { op: f.op, txt: f.txt }; new FormData(ff).forEach(function (v, k) { o[k] = v; }); if (o.ciudad !== f.ciudad) o.barrio = ""; mostrados = 24; location.hash = "#/buscar?" + q(o); }
+    function aplicar() { var o = { op: f.op, txt: f.txt }; new FormData(ff).forEach(function (v, k) { o[k] = v; }); if ((o.ciudad || "") !== (f.ciudad || "") && o.barrio === (f.barrio || "")) o.barrio = ""; mostrados = 24; location.hash = "#/buscar?" + q(o); }
     ff.onsubmit = function (e) { e.preventDefault(); aplicar(); };
     ff.querySelectorAll("select").forEach(function (s) { s.onchange = aplicar; });
+    var sc = document.getElementById("sinCerca"); if (sc) sc.onclick = function () { ff.querySelector("[name=cerca]").value = ""; aplicar(); };
     ff.querySelectorAll("[data-op]").forEach(function (b) { b.onclick = function () { f.op = b.dataset.op; aplicar(); }; });
     var m = document.getElementById("mas"); if (m) m.onclick = function () { mostrados += 24; buscar(f); };
     document.getElementById("rb").onsubmit = function (e) {
@@ -929,13 +1000,17 @@
     TERRENOS = TODOS.filter(function (a) { return a.tp === "terreno"; });
     DATA = TODOS.filter(function (a) { return a.tp !== "terreno"; });
     var asu = {}; BARRIOS_ASU.forEach(function (b) { asu[plano(b).trim()] = b; });
-    DATA.forEach(function (a) {
+    [["catedral", "La Catedral"], ["general diaz", "Gral. Díaz"], ["canada del ybaray", "Cañada del Ybyray"], ["santa librada", "Santa Librada"], ["mariscal lopez", "Mcal. López"], ["barrio jara", "Jara"]].forEach(function (x) { asu[x[0]] = x[1]; });
+    function enAsu(a) { return !a.lat || (a.lat > -25.37 && a.lat < -25.21 && a.lng > -57.69 && a.lng < -57.53); }
+    var nom = {}; TODOS.forEach(function (a) { if (!a.c) return; var k = norm(a.c), v = nom[k], pt = function (x) { return (x.match(/[^\x00-\x7f]/g) || []).length * 10 - (x.match(/[A-Z]/g) || []).length; }; if (!v || pt(a.c) > pt(v)) nom[k] = a.c; });
+    TODOS.forEach(function (a) { if (a.c) a.c = nom[norm(a.c)]; });
+    TODOS.forEach(function (a) {
       a.mono = esMono(a);
       if (a.b && /^(departamento|depto|dpto|casa|duplex|dúplex|terreno|centro|zona|barrio|ciudad|condominio|edificio|monoambiente|local|oficina|sin especificar)$/i.test(String(a.b).trim())) delete a.b;
       var pc = String(a.c || "").match(/^(.+?)\s*\((.+)\)\s*$/);
-      if (pc) { var k1 = plano(pc[1]).trim(), k2 = plano(pc[2]).trim(); if ((asu[k1] || asu[k2]) && !esCentral(a.c)) { if (!a.b || a.b === a.c) a.b = asu[k1] || asu[k2]; a.c = "Asunción"; } }
+      if (pc) { var k1 = plano(pc[1]).trim(), k2 = plano(pc[2]).trim(); if ((asu[k1] || asu[k2]) && !esCentral(a.c) && enAsu(a)) { if (!a.b || a.b === a.c) a.b = asu[k1] || asu[k2]; a.c = "Asunción"; } }
       var k = plano(String(a.c || "").replace(/^\s*(barrio|b°|bº|bo\.)\s*/i, "")).trim();
-      if (/^\s*(barrio|b°|bº)\s/i.test(a.c || "") || (asu[k] && !esCentral(a.c))) {
+      if (/^\s*(barrio|b°|bº)\s/i.test(a.c || "") || (asu[k] && !esCentral(a.c) && enAsu(a))) {
         if (!a.b || a.b === a.c) a.b = asu[k] || String(a.c).replace(/^\s*(barrio|b°|bº)\s*/i, "");
         a.c = asu[k] ? "Asunción" : (a.r === "asuncion" ? "Asunción" : a.c);
       }

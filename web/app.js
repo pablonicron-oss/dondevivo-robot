@@ -76,15 +76,157 @@
   function q(params) { return Object.keys(params).filter(function (k) { return params[k] !== "" && params[k] != null; }).map(function (k) { return k + "=" + encodeURIComponent(params[k]); }).join("&"); }
   function leerQ(s) { var o = {}; (s || "").split("&").forEach(function (p) { if (!p) return; var i = p.indexOf("="); o[decodeURIComponent(p.slice(0, i))] = decodeURIComponent(p.slice(i + 1)); }); return o; }
   function setOp(op) { estado.op = op; document.body.classList.toggle("compra", op === "venta"); }
+  var CENTRAL = ["san lorenzo", "luque", "lambare", "fernando de la mora", "mariano roque alonso", "capiata", "nemby", "limpio", "villa elisa",
+    "san antonio", "itaugua", "aregua", "ypane", "guarambare", "ita", "j. augusto saldivar", "villeta", "nueva italia"];
+  function esCentral(c) { return CENTRAL.indexOf(norm(c)) >= 0; }
+  function enCiudad(a, c) { return !c || (c === "@central" ? esCentral(a.c) : a.c === c); }
+  function nomCiudad(c) { return c === "@central" ? "Central" : c; }
   function ciudades() { var m = {}; DATA.forEach(function (a) { if (a.c) m[a.c] = (m[a.c] || 0) + 1; }); return Object.keys(m).sort(function (x, y) { return m[y] - m[x]; }); }
-  function barrios(c) { var m = {}; DATA.forEach(function (a) { if (a.b && a.b !== a.c && (!c || a.c === c)) m[a.b] = 1; }); return Object.keys(m).sort(); }
+  function barrios(c) { var m = {}; DATA.forEach(function (a) { if (a.b && a.b !== a.c && enCiudad(a, c)) m[a.b] = 1; }); return Object.keys(m).sort(); }
+
+  /* ---------- lo que el bot interpreta de cada aviso ---------- */
+  function plano(s) { return " " + norm(s).replace(/[^a-z0-9]+/g, " ").trim() + " "; }
+  function esMono(a) {
+    var t = plano(a.t), d = plano(a.d);
+    if (/ mono ?ambiente| monoamb| loft /.test(t)) return true;
+    return / mono ?ambiente/.test(d) && (!a.dor || a.dor <= 1) && !/ (2|3|dos|tres) (dormitorios|habitaciones|piezas) /.test(t + d);
+  }
+  var BARRIOS_ASU = ["Bañado Cara Cara", "Bella Vista", "Bernardino Caballero", "Botánico", "Cañada del Ybyray", "Carmelitas", "Ciudad Nueva", "Dr. Francia", "Gral. Díaz",
+    "Herrera", "Hipódromo", "Itá Enramada", "Itá Pytã Punta", "Jara", "Jukyty", "La Catedral", "La Encarnación", "Las Lomas", "Las Mercedes", "Loma Pytã", "Los Laureles",
+    "Madame Lynch", "Manorá", "Mburicaó", "Mburucuyá", "Mbocayaty", "Mcal. Estigarribia", "Nazareth", "Ñu Guasú", "Obrero", "Pettirossi", "Pinozá", "Recoleta", "Republicano",
+    "Ricardo Brugada", "Roberto L. Petit", "Sajonia", "San Blas", "San Cayetano", "San Cristóbal", "San Jorge", "San Pablo", "San Roque", "San Vicente", "Santa Ana",
+    "Santa María", "Santa Rosa", "Santísima Trinidad", "Santo Domingo", "Tablada Nueva", "Tacumbú", "Tembetary", "Terminal", "Villa Aurelia", "Villa Morra",
+    "Virgen de Fátima", "Virgen de la Asunción", "Virgen del Huerto", "Vista Alegre", "Ycuá Satí", "Ytay", "Zeballos Cué"];
+  /* Si el aviso no dice el barrio, lo deducimos del título o la descripción, y si no, de los avisos vecinos en el mapa */
+  function deducirBarrios() {
+    var dic = {}, conB = [];
+    function sumar(c, b) { var k = plano(b).trim(); if (k.length > 3 && k !== plano(c).trim()) { (dic[c] = dic[c] || {})[k] = (dic[c][k] || b); } }
+    DATA.forEach(function (a) { if (a.b && a.b !== a.c) { sumar(a.c, a.b); if (a.lat && a.lng) conB.push(a); } });
+    BARRIOS_ASU.forEach(function (b) { sumar("Asunción", b); });
+    DATA.forEach(function (a) {
+      if (a.b && a.b !== a.c) return;
+      var d = dic[a.c], t = plano(a.t + " " + a.d), mejor = "";
+      if (d) Object.keys(d).forEach(function (k) { if (t.indexOf(" " + k + " ") >= 0 && k.length > mejor.length) mejor = k; });
+      if (mejor) { a.b = d[mejor]; return; }
+      if (!a.lat || !a.lng) return;
+      var votos = {}, km = 111;
+      conB.forEach(function (x) {
+        if (x.c !== a.c) return;
+        var dist = Math.hypot((x.lat - a.lat) * km, (x.lng - a.lng) * km * 0.9);
+        if (dist < 0.6) votos[x.b] = (votos[x.b] || 0) + 1 / (dist + 0.05);
+      });
+      var gana = Object.keys(votos).sort(function (p, q) { return votos[q] - votos[p]; })[0];
+      if (gana) a.b = gana;
+    });
+  }
+
+  /* comodidades: sí (verde), no (rojo) o no lo dice (gris) */
+  var IC = {
+    masc: '<path d="M8.5 13.5c1.6-2.1 5.4-2.1 7 0 1.3 1.7 2.5 3.4 2.5 4.6 0 1.6-1.4 2.4-3 2.1-1.2-.2-2-.7-3-.7s-1.8.5-3 .7c-1.6.3-3-.5-3-2.1 0-1.2 1.2-2.9 2.5-4.6z"/><ellipse cx="6" cy="9.5" rx="1.7" ry="2.2"/><ellipse cx="9.6" cy="5.8" rx="1.7" ry="2.3"/><ellipse cx="14.4" cy="5.8" rx="1.7" ry="2.3"/><ellipse cx="18" cy="9.5" rx="1.7" ry="2.2"/>',
+    auto: '<path d="M5 16.5V12l1.8-4.6A2 2 0 0 1 8.7 6h6.6a2 2 0 0 1 1.9 1.4L19 12v4.5"/><path d="M4 12h16v4.5H4z"/><path d="M6.5 16.5V19M17.5 16.5V19"/><circle cx="7.6" cy="14.2" r=".6"/><circle cx="16.4" cy="14.2" r=".6"/>',
+    pile: '<path d="M8 15V5.5a2 2 0 0 1 4 0M14 15V5.5a2 2 0 0 1 4 0M8 9h6M8 12.5h6"/><path d="M3 17.5c1.5 0 1.5 1 3 1s1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1"/>',
+    aire: '<rect x="3" y="5" width="18" height="7" rx="2"/><path d="M6 9.5h12M8 15.5c0 1.2-1 1.5-1 2.8M12 15.5c0 1.2-1 1.5-1 2.8M16 15.5c0 1.2-1 1.5-1 2.8"/>',
+    mueb: '<path d="M5 11V8.5A2.5 2.5 0 0 1 7.5 6h9A2.5 2.5 0 0 1 19 8.5V11"/><path d="M3 12.5a1.5 1.5 0 0 1 3 0V14h12v-1.5a1.5 1.5 0 0 1 3 0V17H3z"/><path d="M5 17v2M19 17v2"/>',
+    wifi: '<path d="M4 9.5a12 12 0 0 1 16 0M7 12.8a7.5 7.5 0 0 1 10 0M10 16a3 3 0 0 1 4 0"/><circle cx="12" cy="19" r=".9"/>',
+    balc: '<path d="M4 11h16M4 11v9M20 11v9M4 20h16M8 11v9M12 11v9M16 11v9"/><path d="M7 11V5h10v6"/>',
+    quin: '<path d="M5 9h14a7 7 0 0 1-14 0z"/><path d="M8 16l-2 4M16 16l2 4M12 16v4M9 6c0-1 1-1 1-2M12 6c0-1 1-1 1-2M15 6c0-1 1-1 1-2"/>',
+    patio: '<path d="M12 21v-6"/><path d="M12 15a4 4 0 0 1-4-4c0-3 4-7 4-7s4 4 4 7a4 4 0 0 1-4 4z"/><path d="M4 21h16"/>',
+    gym: '<path d="M7 8v8M17 8v8M4.5 10v4M19.5 10v4M7 12h10"/>',
+    segu: '<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>',
+    asce: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M12 3v18M8.5 10l1.5-2 1.5 2M12.5 14l1.5 2 1.5-2"/>',
+    lava: '<rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="4.5"/><path d="M7.5 6.5h.01M10.5 6.5h3"/>'
+  };
+  var COMOD = [
+    { k: "masc", n: "Mascotas", si: "Acepta mascotas", no: "No acepta mascotas", nd: "El aviso no dice si acepta mascotas" },
+    { k: "auto", n: "Estacionamiento", si: "Tiene lugar para el auto", no: "No tiene estacionamiento", nd: "El aviso no dice si tiene estacionamiento",
+      re: / (cochera|cocheras|garaje|garage|estacionamiento|estacionamientos|parking) |lugar para (el |un )?auto/, nore: / (sin|no tiene|no cuenta con|no incluye|no posee) (cochera|garaje|garage|estacionamiento|lugar para)/ },
+    { k: "pile", n: "Piscina", si: "Tiene piscina", no: "No tiene piscina", nd: "El aviso no menciona piscina", re: /piscina|pileta/, nore: / (sin|no tiene|no cuenta con|no posee) (piscina|pileta)/ },
+    { k: "aire", n: "Aire acondicionado", si: "Tiene aire acondicionado", no: "No tiene aire acondicionado", nd: "El aviso no menciona aire acondicionado",
+      re: /aire acondicionado|aires acondicionados| a a | split|climatizad/, nore: / (sin|no tiene|no cuenta con|no incluye) aire/ },
+    { k: "mueb", n: "Amoblado", si: "Viene amoblado", no: "Se entrega sin muebles", nd: "El aviso no dice si viene amoblado",
+      re: /amoblad|amueblad|equipad/, nore: / (sin|no) (amoblar|amoblad|amueblad|muebles)/ },
+    { k: "wifi", n: "Wifi", si: "Tiene wifi o internet", no: "No incluye internet", nd: "El aviso no menciona internet", re: / wi ?fi |internet|fibra optica/, nore: / (sin|no incluye) (wifi|internet)/ },
+    { k: "balc", n: "Balcón", si: "Tiene balcón o terraza", no: "No tiene balcón", nd: "", re: /balcon|terraza/, nore: / sin balcon/ },
+    { k: "patio", n: "Patio o jardín", si: "Tiene patio o jardín", no: "No tiene patio", nd: "", re: / (patio|patios|jardin|jardines) /, nore: / sin (patio|jardin)/ },
+    { k: "quin", n: "Quincho o parrilla", si: "Tiene quincho o parrilla", no: "", nd: "", re: /quincho|parrilla|asador|barbacoa/ },
+    { k: "gym", n: "Gimnasio", si: "Tiene gimnasio", no: "", nd: "", re: /gimnasio| gym |fitness/ },
+    { k: "segu", n: "Seguridad", si: "Tiene seguridad o portería", no: "", nd: "", re: /seguridad 24|guardia|vigilancia|porteria|portero|barrio cerrado|condominio cerrado|circuito cerrado/ },
+    { k: "asce", n: "Ascensor", si: "Tiene ascensor", no: "No tiene ascensor", nd: "", re: /ascensor/, nore: / sin ascensor/ },
+    { k: "lava", n: "Lavadero", si: "Tiene lavadero", no: "", nd: "", re: /lavadero|lavanderia/ }
+  ];
+  var NUM = { un: 1, una: 1, dos: 2, tres: 3, cuatro: 4 };
+  function comodidades(a) {
+    var t = plano(a.t + " " + a.d), out = [];
+    COMOD.forEach(function (c) {
+      var v = "nd", extra = "";
+      if (c.k === "masc") v = a.ms === "si" ? "si" : a.ms === "no" ? "no" : "nd";
+      else if (c.nore && c.nore.test(t)) v = "no";
+      else if (c.re.test(t)) v = "si";
+      if (c.k === "auto" && v === "si") {
+        var m = t.match(/ (\d|dos|tres|cuatro) (cocheras|lugares|estacionamientos|autos|vehiculos)/);
+        var n = m ? (NUM[m[1]] || +m[1]) : 0;
+        if (n > 1) extra = ", para " + n + " autos";
+      }
+      if (v === "nd" && !c.nd) return;
+      out.push({ k: c.k, v: v, n: c.n, txt: (v === "si" ? c.si + extra : v === "no" ? c.no : c.nd) });
+    });
+    return out.sort(function (x, y) { var o = { si: 0, no: 1, nd: 2 }; return o[x.v] - o[y.v]; });
+  }
+  function iconos(a) {
+    return '<div class="comod" role="list">' + comodidades(a).map(function (c) {
+      return '<span class="cm ' + c.v + '" role="listitem" tabindex="0" aria-label="' + esc(c.txt) + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + IC[c.k] + "</svg>" +
+        (c.v === "no" ? '<i class="x" aria-hidden="true"></i>' : "") + '<b class="tip">' + esc(c.txt) + "</b></span>";
+    }).join("") + "</div>";
+  }
+
+  /* ---------- guardados: quedan en este celular o compu, sin crear cuenta ---------- */
+  function guardados() { try { return JSON.parse(localStorage.getItem("dv:guardados") || "[]"); } catch (e) { return []; } }
+  function esGuardado(id) { return guardados().some(function (g) { return g.id === id; }); }
+  function alternarGuardado(id) {
+    var l = guardados(), i = l.findIndex(function (g) { return g.id === id; });
+    if (i >= 0) l.splice(i, 1);
+    else { var a = DATA.find(function (x) { return x.id === id; }); if (!a) return false; l.unshift({ id: a.id, t: a.t, ph: [a.ph[0]], p: a.p, m: a.m, op: a.op, tp: a.tp, c: a.c, b: a.b, dor: a.dor, g: Date.now() }); }
+    try { localStorage.setItem("dv:guardados", JSON.stringify(l.slice(0, 200))); } catch (e) {}
+    contarGuardados();
+    return i < 0;
+  }
+  function contarGuardados() {
+    var n = guardados().length, el = document.getElementById("nGuard");
+    if (el) { el.textContent = n ? n : ""; el.parentNode.classList.toggle("tiene", !!n); }
+  }
+  function corazon(id, grande) {
+    var on = esGuardado(id);
+    return '<button type="button" class="fav' + (grande ? " grande" : "") + (on ? " on" : "") + '" data-fav="' + esc(id) + '" aria-pressed="' + on + '" aria-label="' + (on ? "Sacar de guardados" : "Guardar este aviso") + '">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>' + (grande ? "<span>" + (on ? "Guardado" : "Guardar") + "</span>" : "") + "</button>";
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-fav]"); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var on = alternarGuardado(b.dataset.fav);
+    document.querySelectorAll('[data-fav="' + CSS.escape(b.dataset.fav) + '"]').forEach(function (x) {
+      x.classList.toggle("on", on); x.setAttribute("aria-pressed", on); x.setAttribute("aria-label", on ? "Sacar de guardados" : "Guardar este aviso");
+      var s = x.querySelector("span"); if (s) s.textContent = on ? "Guardado" : "Guardar";
+    });
+    if (location.hash.indexOf("#/guardados") === 0 && !on) verGuardados();
+  }, true);
+  function verGuardados() {
+    var l = guardados();
+    $app.innerHTML = '<div class="cabeza"><h1>Tus guardados</h1><a class="volver" href="#/buscar">← Seguir buscando</a></div>' +
+      '<p class="nota-g">Quedan guardados en este celular o compu, sin crear cuenta. Si borrás los datos del navegador, se borran.</p>' +
+      (l.length ? '<div class="lista">' + l.map(function (g) {
+        var a = DATA.find(function (x) { return x.id === g.id; });
+        if (a) return tarjeta(a);
+        return '<a class="tarjeta baja-g" href="#/aviso/' + encodeURIComponent(g.id) + '"><div class="foto" style="background-image:url(\'' + esc(mini(g.ph[0], 640)) + '\')"><span class="tag nd">Ya no está disponible</span>' + corazon(g.id) + '</div><div class="info"><div class="tit">' + esc(g.t) + '</div><div class="lugar">' + lugar(g) + "</div></div></a>";
+      }).join("") + "</div>" : '<div class="vacio"><b>Todavía no guardaste ningún aviso.</b><br>Tocá el corazón de un aviso para guardarlo y verlo más tarde.</div>');
+    window.scrollTo(0, 0);
+  }
 
   /* ---------- lo que escribe la persona → filtros ---------- */
   function entender(texto, base) {
     var t = norm(texto), f = Object.assign({}, base);
     if (/\b(comprar|compro|venta|invertir|mi primera casa)\b/.test(t)) f.op = "venta";
     if (/\b(alquil|alquiler|rentar)/.test(t)) f.op = "alquiler";
-    if (/\b(depto|departamento|monoambiente)\b/.test(t)) f.tipo = "departamento";
+    if (/\b(depto|departamento)\b/.test(t)) f.tipo = "departamento";
     else if (/\bduplex\b/.test(t)) f.tipo = "duplex";
     else if (/\bcasa\b/.test(t)) f.tipo = "casa";
     else if (/\bterreno\b/.test(t)) f.tipo = "terreno";
@@ -93,24 +235,26 @@
     if (/\b(estrenar|nuevo)\b/.test(t)) f.estado = "a_estrenar";
     var d = t.match(/(\d)\s*(dormitorio|habitacion|hab|cuarto|pieza)/) || (/\b(un|1) dormitorio\b/.test(t) ? [0, "1"] : null);
     if (d) f.dor = d[1];
-    if (/monoambiente/.test(t)) f.dor = "";
+    if (/mono ?ambiente|\bmono\b|\bloft\b/.test(t)) f.dor = "0";
     var enDatos = ciudades(), c = masLargo(t, enDatos.concat(PY));
+    if (!c && /\b(central|gran asuncion)\b/.test(t)) f.ciudad = "@central";
     if (c) { var igual = enDatos.find(function (x) { return norm(x) === norm(c); }); f.ciudad = igual || c; }
     var b = masLargo(t, barrios(f.ciudad).filter(function (x) { return norm(x).length > 3 && norm(x) !== norm(f.ciudad || ""); }));
-    if (b) { f.barrio = b; var a = DATA.find(function (x) { return x.b === b && (!f.ciudad || x.c === f.ciudad); }); if (a) f.ciudad = a.c; }
+    if (b) { f.barrio = b; var a = DATA.find(function (x) { return x.b === b && enCiudad(x, f.ciudad); }); if (a && f.ciudad !== "@central") f.ciudad = a.c; }
     return f;
   }
 
   function filtrar(f) {
     return DATA.filter(function (a) {
       if (f.op && a.op !== f.op) return false;
-      if (f.ciudad && a.c !== f.ciudad) return false;
+      if (f.ciudad && !enCiudad(a, f.ciudad)) return false;
       if (f.barrio && a.b !== f.barrio) return false;
       if (f.tipo && a.tp !== f.tipo) return false;
       if (f.masc === "si" && a.ms === "no") return false;
       if (f.masc === "confirmado" && a.ms !== "si") return false;
       if (f.estado && a.eo !== f.estado) return false;
-      if (f.dor && (a.dor || 0) < +f.dor) return false;
+      if (f.dor === "0") { if (!a.mono) return false; }
+      else if (f.dor && (a.mono || (a.dor || 0) < +f.dor)) return false;
       if (f.fuente && a.f !== f.fuente) return false;
       if (f.max && a.p && a.m === (f.mon || "PYG") && a.p > +f.max) return false;
       return true;
@@ -122,7 +266,7 @@
   /* ---------- tarjeta ---------- */
   function tarjeta(a) {
     var tags = [];
-    if (a.dor) tags.push("<span>" + a.dor + " dorm.</span>");
+    if (a.mono) tags.push("<span>Monoambiente</span>"); else if (a.dor) tags.push("<span>" + a.dor + " dorm.</span>");
     if (a.m2 >= 10) tags.push("<span>" + Math.round(a.m2) + " m²</span>");
     if (a.ms === "si") tags.push('<span class="si">Acepta mascotas</span>');
     if (a.ms === "no") tags.push('<span class="no">Sin mascotas</span>');
@@ -133,7 +277,7 @@
     var dest = destacado(a);
     return '<a class="tarjeta' + (dest ? " dest" : "") + '" href="#/aviso/' + encodeURIComponent(a.id) + '">' +
       '<div class="foto"><img class="fimg" alt="" loading="lazy" src="' + esc(mini(a.ph[0], 640)) + '" data-o="' + esc(seguro(a.ph[0])) + '" onerror="DVfoto(this)"><span class="tag">' + tipoTxt(a.tp) + '</span>' +
-      (dest ? '<span class="tag destacado">Destacado</span>' : "") +
+      (dest ? '<span class="tag destacado">Destacado</span>' : "") + corazon(a.id) +
       '<span class="src">' + (a.f === "dondevivo" ? "Publicado en DóndeVivo" : "Aviso de " + esc(FUENTES[a.f] || a.f)) + "</span></div>" +
       '<div class="info"><div class="precio">' + precio(a) + porMes(a) + '</div>' + (ex ? '<div class="expensas">+ ' + esc(ex) + ' de expensas</div>' : "") + '<div class="tit">' + esc(a.t) + '</div><div class="lugar">' + lugar(a) + '</div><div class="datos">' + tags.join("") + "</div></div></a>";
   }
@@ -318,7 +462,7 @@
     if (capa) mapa.removeLayer(capa);
     capa = L.markerClusterGroup({ maxClusterRadius: 48, showCoverageOnHover: false, spiderfyOnMaxZoom: true,
       iconCreateFunction: function (c) { return L.divIcon({ className: "mgrupo", html: "<span>" + c.getChildCount() + "</span>", iconSize: [44, 44] }); } });
-    var lista = DATA.filter(function (a) { return enPY(a) && (!mOp || a.op === mOp) && (!mCiudad || a.c === mCiudad); });
+    var lista = DATA.filter(function (a) { return enPY(a) && (!mOp || a.op === mOp) && enCiudad(a, mCiudad); });
     lista.sort(function (x, y) { return destacado(x) - destacado(y); });
     lista.forEach(function (a) {
       var cls = destacado(a) ? "dest" : a.op === "venta" ? "venta" : "alq";
@@ -338,10 +482,8 @@
     function iniciar() {
       cargarMapaLib(function () {
         if (!document.getElementById("mapa") || mapa) return;
-        mapa = L.map("mapa", { scrollWheelZoom: false, zoomControl: true }).setView([-25.3, -57.6], 11);
+        mapa = L.map("mapa", { scrollWheelZoom: true, zoomControl: true }).setView([-25.3, -57.6], 11);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap", referrerPolicy: "strict-origin-when-cross-origin" }).addTo(mapa);
-        mapa.on("click focus", function () { mapa.scrollWheelZoom.enable(); });
-        mapa.on("mouseout", function () { mapa.scrollWheelZoom.disable(); });
         pintarMapa(false);   // arranca en Asunción, donde están la mayoría de los avisos
         mapa.setView([-25.295, -57.58], 12);
       });
@@ -388,23 +530,26 @@
     if (f.barrio && f.barrio === f.ciudad) delete f.barrio;
     setOp(f.op || "alquiler");
     var lista = filtrar(f), cs = ciudades(), bs = barrios(f.ciudad);
-    if (f.ciudad && cs.indexOf(f.ciudad) < 0) cs = [f.ciudad].concat(cs);
-    var sinCiudad = f.ciudad && !DATA.some(function (a) { return a.c === f.ciudad; });
+    if (f.ciudad && f.ciudad !== "@central" && cs.indexOf(f.ciudad) < 0) cs = [f.ciudad].concat(cs);
+    var sinCiudad = f.ciudad && !DATA.some(function (a) { return enCiudad(a, f.ciudad); });
+    var csCen = cs.filter(esCentral), csOtras = cs.filter(function (c) { return !esCentral(c); });
     function opt(v, t, sel) { return '<option value="' + esc(v) + '"' + (String(sel || "") === String(v) ? " selected" : "") + ">" + esc(t) + "</option>"; }
     $app.innerHTML =
       '<div class="res"><form class="filtros" id="ff" aria-label="Filtros">' +
       '<div class="toggle" role="group"><button type="button" data-op="alquiler" aria-pressed="' + (f.op !== "venta") + '">Alquilar</button><button type="button" data-op="venta" aria-pressed="' + (f.op === "venta") + '">Comprar</button></div>' +
-      '<label>Ciudad<select name="ciudad">' + opt("", "Todo Paraguay", f.ciudad) + cs.map(function (c) { return opt(c, c, f.ciudad); }).join("") + "</select></label>" +
+      '<label>Ciudad<select name="ciudad">' + opt("", "Todo Paraguay", f.ciudad) + opt("@central", "Central (todas sus ciudades)", f.ciudad) +
+        (csCen.length ? '<optgroup label="Ciudades de Central">' + csCen.map(function (c) { return opt(c, c, f.ciudad); }).join("") + "</optgroup>" : "") +
+        '<optgroup label="Asunción y resto del país">' + csOtras.map(function (c) { return opt(c, c, f.ciudad); }).join("") + "</optgroup></select></label>" +
       '<label>Barrio<select name="barrio">' + opt("", "Todos los barrios", f.barrio) + bs.map(function (b) { return opt(b, b, f.barrio); }).join("") + "</select></label>" +
       '<label>Tipo<select name="tipo">' + opt("", "Todos", f.tipo) + opt("departamento", "Departamento", f.tipo) + opt("casa", "Casa", f.tipo) + opt("duplex", "Dúplex", f.tipo) + opt("terreno", "Terreno", f.tipo) + "</select></label>" +
       '<label>Mascotas<select name="masc">' + opt("", "Me da igual", f.masc) + opt("si", "Tengo mascota (oculta los que no aceptan)", f.masc) + opt("confirmado", "Solo los que dicen que aceptan", f.masc) + "</select></label>" +
       '<label>Estado<select name="estado">' + opt("", "Cualquiera", f.estado) + opt("en_pozo", "En pozo", f.estado) + opt("a_estrenar", "A estrenar", f.estado) + "</select></label>" +
-      '<label>Dormitorios<select name="dor">' + opt("", "Cualquiera", f.dor) + opt("1", "1 o más", f.dor) + opt("2", "2 o más", f.dor) + opt("3", "3 o más", f.dor) + opt("4", "4 o más", f.dor) + "</select></label>" +
+      '<label>Dormitorios<select name="dor">' + opt("", "Cualquiera", f.dor) + opt("0", "Monoambiente", f.dor) + opt("1", "1 o más", f.dor) + opt("2", "2 o más", f.dor) + opt("3", "3 o más", f.dor) + opt("4", "4 o más", f.dor) + "</select></label>" +
       '<label>Precio máximo<input name="max" inputmode="numeric" placeholder="Ej. 3500000" value="' + esc(f.max || "") + '"></label>' +
       '<label>Moneda del precio<select name="mon">' + opt("PYG", "Guaraníes", f.mon) + opt("USD", "Dólares", f.mon) + "</select></label>" +
       '<label>Página de origen<select name="fuente">' + opt("", "Todas", f.fuente) + Object.keys(FUENTES).map(function (k) { return opt(k, FUENTES[k], f.fuente); }).join("") + "</select></label>" +
       '<button class="btn" type="submit">Aplicar</button></form>' +
-      '<section><div class="cabeza"><h1>' + lista.length.toLocaleString("es-PY") + (f.op === "venta" ? " en venta" : " en alquiler") + (f.ciudad ? " en " + esc(f.ciudad) : "") + (f.barrio ? ", " + esc(f.barrio) : "") + '</h1><a class="volver" href="#/">← Nueva búsqueda</a></div>' +
+      '<section><div class="cabeza"><h1>' + lista.length.toLocaleString("es-PY") + (f.op === "venta" ? " en venta" : " en alquiler") + (f.ciudad ? " en " + esc(nomCiudad(f.ciudad)) : "") + (f.barrio ? ", " + esc(f.barrio) : "") + '</h1><a class="volver" href="#/">← Nueva búsqueda</a></div>' +
       (lista.length ? '<div class="lista">' + lista.slice(0, mostrados).map(tarjeta).join("") + "</div>" + (lista.length > mostrados ? '<button class="mas" id="mas">Ver más</button>' : "")
         : '<div class="vacio">' + (sinCiudad ? "<b>Todavía no tenemos avisos en " + esc(f.ciudad) + ".</b><br>Sumamos avisos nuevos todos los días, volvé a mirar pronto."
           : "<b>Todavía no tenemos avisos con esos filtros.</b><br>Probá sacar alguno. Sumamos avisos nuevos todos los días.") + "</div>") +
@@ -439,19 +584,19 @@
         : "<p>Este anunciante no menciona costos de garantía ni comisión, conviene consultarle antes de visitar.</p>")
       : "<p>Consultale al anunciante si hay gastos de escritura o comisión aparte del precio.</p>";
     if (ex) costo += "<p>Además del " + (a.op === "alquiler" ? "alquiler" : "precio") + ", el aviso menciona <b>" + esc(ex) + " de expensas</b>" + (a.op === "alquiler" ? " por mes." : ".") + "</p>";
-    var masc = a.ms === "si" ? "<p><b>Sí, acepta mascotas</b> según el aviso.</p>" : a.ms === "no" ? "<p><b>No acepta mascotas</b> según el aviso.</p>" : "<p>El aviso no dice si acepta mascotas, conviene preguntar.</p>";
+    var _masc = a.ms === "si" ? "<p><b>Sí, acepta mascotas</b> según el aviso.</p>" : a.ms === "no" ? "<p><b>No acepta mascotas</b> según el aviso.</p>" : "<p>El aviso no dice si acepta mascotas, conviene preguntar.</p>";
     var mapa = a.lat && a.lng ? '<iframe class="mapa" loading="lazy" title="Ubicación aproximada" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (a.lng - 0.012) + "," + (a.lat - 0.008) + "," + (a.lng + 0.012) + "," + (a.lat + 0.008) + "&layer=mapnik&marker=" + a.lat + "," + a.lng + '"></iframe>' : "<p>El anunciante no compartió la ubicación exacta.</p>";
     $app.innerHTML =
       '<a class="volver" href="javascript:history.back()">← Volver a los resultados</a><div class="ficha">' +
-      '<div class="galeria"><div class="grande" id="gr" style="background-image:url(\'' + esc(mini(a.ph[0], 1200)) + '\')"></div><div class="miniaturas">' +
+      '<div class="galeria">' + corazon(a.id, true) + '<div class="grande" id="gr" style="background-image:url(\'' + esc(mini(a.ph[0], 1200)) + '\')"></div><div class="miniaturas">' +
       a.ph.map(function (u, i) { return '<button aria-label="Foto ' + (i + 1) + '" aria-current="' + (i === 0) + '" data-u="' + esc(mini(u, 1200)) + '" style="background-image:url(\'' + esc(mini(u, 200)) + '\')"></button>'; }).join("") + "</div></div>" +
-      '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas" + (a.op === "alquiler" ? " por mes, se pagan aparte" : "") + "</div>" : "") + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' +
-      '<div class="datos">' + [tipoTxt(a.tp), a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].concat(extras(a)).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
+      '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas" + (a.op === "alquiler" ? " por mes, se pagan aparte" : "") + "</div>" : "") + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' + iconos(a) +
+      '<div class="datos">' + [tipoTxt(a.tp), a.mono ? "Monoambiente" : a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].concat(extras(a)).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
       (a.f === "dondevivo" && a.wa
         ? '<a class="ir" href="https://wa.me/' + esc(String(a.wa).replace(/\D/g, "")) + "?text=" + encodeURIComponent("Hola, vi tu aviso " + a.t + " en DóndeVivo") + '" target="_blank" rel="noopener" id="ir">Escribir por WhatsApp</a>'
         : '<a class="ir" href="' + esc(seguro(a.u)) + '" target="_blank" rel="noopener nofollow" id="ir">Escribir al anunciante <small>· en ' + esc(fu) + "</small></a>") +
       '<div class="bloque"><h2>Lo que cuesta entrar</h2>' + costo + "</div>" +
-      '<div class="bloque"><h2>Mascotas</h2>' + masc + "</div>" +
+      
       '<div class="bloque"><h2>Ubicación</h2>' + mapa + "</div>" +
       (a.d ? '<div class="bloque"><h2>Lo que dice el aviso</h2><p class="desc">' + esc(limpio(a.d)) + "</p></div>" : "") +
       '<div class="bloque"><p style="font-size:13px">' + (a.f === "dondevivo" ? "Publicado directamente en DóndeVivo por su anunciante." : "Aviso de " + esc(fu) + ". DóndeVivo lo encontró y lo revisa todos los días.") + "</p></div></div></div>";
@@ -501,6 +646,7 @@
     document.body.classList.remove("sin-scroll");
     var h = location.hash.replace(/^#/, "") || "/";
     if (h.indexOf("/aviso/") === 0) return ficha(decodeURIComponent(h.slice(7)));
+    if (h.indexOf("/guardados") === 0) return verGuardados();
     if (h.indexOf("/buscar") === 0) {
       var f = leerQ(h.split("?")[1]);
       if (f.q) { var t = f.q; delete f.q; f = entender(t, f); if (leerQ(h.split("?")[1]).ciudad) f.ciudad = leerQ(h.split("?")[1]).ciudad; history.replaceState(null, "", "#/buscar?" + q(f)); }
@@ -513,6 +659,8 @@
   $app.innerHTML = '<div class="vacio">Cargando avisos…</div>';
   fetch("data/avisos.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
     DATA = (j.avisos || []).filter(function (a) { return a.ph && a.ph.length >= 2; });
+    DATA.forEach(function (a) { a.mono = esMono(a); });
+    deducirBarrios(); contarGuardados();
     ACT = j.actualizado;
     var d = new Date(ACT); document.getElementById("actualizado").textContent = "Actualizado " + d.toLocaleString("es-PY", { dateStyle: "short", timeStyle: "short" });
     window.addEventListener("hashchange", ruta); ruta();

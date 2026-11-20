@@ -89,7 +89,7 @@
   function esMono(a) {
     var t = plano(a.t), d = plano(a.d);
     if (/ mono ?ambiente| monoamb| loft /.test(t)) return true;
-    return / mono ?ambiente/.test(d) && (!a.dor || a.dor <= 1) && !/ (2|3|dos|tres) (dormitorios|habitaciones|piezas) /.test(t + d);
+    return / mono ?ambiente /.test(d) && (!a.dor || a.dor <= 1) && !/ (2|3|dos|tres) (dormitorios|habitaciones|piezas) /.test(t + d);
   }
   var BARRIOS_ASU = ["Bañado Cara Cara", "Bella Vista", "Bernardino Caballero", "Botánico", "Cañada del Ybyray", "Carmelitas", "Ciudad Nueva", "Dr. Francia", "Gral. Díaz",
     "Herrera", "Hipódromo", "Itá Enramada", "Itá Pytã Punta", "Jara", "Jukyty", "La Catedral", "La Encarnación", "Las Lomas", "Las Mercedes", "Loma Pytã", "Los Laureles",

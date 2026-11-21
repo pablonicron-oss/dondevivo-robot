@@ -4,12 +4,12 @@
 3) Deja un resumen con el % de avance hacia la meta de 3.000."""
 import os, sys, time, json, traceback, requests
 from datetime import datetime, timedelta, timezone
-from . import db, infocasas, buscodepto, remax, clasipar, fotos
+from . import db, infocasas, buscodepto, remax, clasipar, estate, fotos
 from .config import GEMINI_KEY, SUPABASE_KEY, CENTRAL, CDE, META, MAX_NUEVOS, MAX_REVISAR, MAX_LISTADOS, MINUTOS_MAX, MIN_FOTOS, MIN_FOTOS_TERRENO, META_TERRENOS
 from .util import Bloqueado
 
 INICIO = time.time()
-FUENTES = {"infocasas": infocasas, "buscodepto": buscodepto, "remax": remax, "clasipar": clasipar}
+FUENTES = {"estate": estate, "infocasas": infocasas, "buscodepto": buscodepto, "remax": remax, "clasipar": clasipar}
 
 
 def queda_tiempo():
@@ -138,6 +138,7 @@ def candidatos(stats):
         for nombre in list(por_fuente):
             if por_fuente[nombre]:
                 mezcla.append((nombre, por_fuente[nombre].pop(0)))
+    mezcla.sort(key=lambda x: 0 if "alquil" in x[1].lower() else 1)   # primero todo lo que parece alquiler, de cualquier fuente
     return mezcla
 
 
@@ -196,7 +197,7 @@ def sumar_nuevos(stats, prog):
         else:
             op = "alquiler" if aviso.get("operacion") == "alquiler" else "venta"
             clave = f"{aviso['region']}:{op}"
-            if prog.get(clave, 0) >= mitad.get(aviso["region"], 0):
+            if op == "venta" and prog.get(clave, 0) >= mitad.get(aviso["region"], 0):   # los alquileres no tienen tope
                 continue   # esa zona ya tiene su mitad de alquileres o de ventas; lo dejamos para más adelante
         if aviso["fotos_total"] < minimo:
             db.upsert("descartados", {"id": aviso["id"], "motivo": "sin fotos" if terreno else "menos de 2 fotos"}); stats["descartados"] += 1; continue

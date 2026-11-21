@@ -24,16 +24,19 @@ def _op_de_url(u):
 
 
 def nuevos():
-    urls = []
+    urls, estados = [], []
     for cat in CATEGORIAS:
         for p in range(1, PAGINAS + 1):
             r = pedir(f"{BASE}/inmuebles/{cat}/" + (f"page-{p}" if p > 1 else ""))
             if r.status_code != 200:
+                estados.append(f"{cat} p{p}: {r.status_code}")
                 break
             hallados = re.findall(rf'href="(https://clasipar\.paraguay\.com/inmuebles/{cat}/[a-z0-9-]+-\d{5,})"', r.text)
             if not hallados:
                 break
             urls += [u for u in hallados if not re.search(r"/(busco|compro|necesito)-", u)]
+    if not urls and estados:
+        raise RuntimeError("Clasipar no devolvió avisos (" + ", ".join(estados[:4]) + ")")
     urls = list(dict.fromkeys(urls))
     return sorted(urls, key=lambda u: 0 if _op_de_url(u) == "alquiler" else 1)   # alquileres primero
 

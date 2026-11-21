@@ -24,6 +24,8 @@ a{color:#101828}a:hover{color:#1F4FE0}
 .opt{transition:transform .15s ease, border-color .15s ease, background .15s ease}.opt:hover{transform:translateY(-2px)}
 input,select,textarea{font:inherit}
 @media (prefers-reduced-motion: reduce){.in{animation:none}}
+.pasos-mini{display:none}
+@media (max-width:760px){.paso-btn{display:none!important}.pasos-mini{display:flex}.pasos-tit{display:none}.pasos-ayuda{margin-top:4px!important;min-height:36px!important}}
 </style>
 </head>
 <body>
@@ -41,15 +43,16 @@ input,select,textarea{font:inherit}
 <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
 
 <aside style="flex: 1 1 250px; max-width: 100%; background: #FFFFFF; border-radius: 28px; padding: 22px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box">
-<div style="font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #667085; padding: 0 8px 8px">Tu publicación</div>
+<div class="pasos-tit" style="font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #667085; padding: 0 8px 8px">Tu publicación</div>
+<div class="pasos-mini" style="align-items: center; gap: 12px; padding: 0 4px"><span style="flex: none; width: 34px; height: 34px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; background: {{accent}}; color: #FFFFFF">{{pasoNum}}</span><span style="display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 700; color: #667085">Paso {{pasoNum}} de 9</span><span style="font-size: 17px; font-weight: 800">{{pasoNombre}}</span></span></div>
 <sc-for list="{{steps}}" as="s" hint-placeholder-count="9">
-<button onClick="{{s.go}}" style="border: 0; cursor: pointer; font: inherit; text-align: left; display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 10px; border-radius: 14px; background: {{s.bg}}; color: #101828">
+<button class="paso-btn" onClick="{{s.go}}" style="border: 0; cursor: pointer; font: inherit; text-align: left; display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 10px; border-radius: 14px; background: {{s.bg}}; color: #101828">
 <span style="flex: none; width: 28px; height: 28px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; background: {{s.dotBg}}; color: {{s.dotFg}}">{{s.num}}</span>
 <span style="font-size: 15px; font-weight: {{s.weight}}">{{s.name}}</span>
 </button>
 </sc-for>
 <div style="margin: 10px 8px 0; height: 8px; border-radius: 999px; background: #EAECF0; overflow: hidden"><div style="height: 100%; border-radius: 999px; background: {{accent}}; width: {{progress}}%; transition: width .4s ease"></div></div>
-<a href="https://wa.me/595983458755?text=Hola%2C%20necesito%20ayuda%20para%20publicar%20en%20D%C3%B3ndeVivo" target="_blank" rel="noopener" style="margin: 14px 2px 0; text-decoration: none; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 14px; font-size: 14px; font-weight: 700; color: #475467"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.5-.2z"></path></svg>Pedí ayuda al equipo de DóndeVivo</a>
+<a class="pasos-ayuda" href="https://wa.me/595983458755?text=Hola%2C%20necesito%20ayuda%20para%20publicar%20en%20D%C3%B3ndeVivo" target="_blank" rel="noopener" style="margin: 14px 2px 0; text-decoration: none; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 14px; font-size: 14px; font-weight: 700; color: #475467"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.5-.2z"></path></svg>Pedí ayuda al equipo de DóndeVivo</a>
 </aside>
 
 <main style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border-radius: 32px; padding: clamp(22px, 3.5vw, 40px); box-sizing: border-box; display: flex; flex-direction: column; gap: 26px">
@@ -294,8 +297,22 @@ input,select,textarea{font:inherit}
 </article>
 <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 12px">
 <div style="font-size: 16px; line-height: 1.5; color: #475467">Revisamos cada inmueble antes de publicarlo para que todo lo que se ve acá sea real. Te avisamos por correo apenas esté aprobado.</div>
+<div style="border-radius: 22px; background: #FEF0C7; border: 2px solid #FDB022; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="align-self: flex-start; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; background: #FDB022; color: #101828; padding: 5px 10px; border-radius: 999px">Recomendado</span>
+<div style="font-size: 21px; font-weight: 800; letter-spacing: -0.02em; color: #101828">Destacá tu aviso desde {{destDesde}}</div>
+<div style="font-size: 14px; line-height: 1.45; color: #475467">Sale primero en las búsquedas, con la etiqueta Destacado.</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{plans}}" as="pl" hint-placeholder-count="3">
+<button onClick="{{pl.pick}}" style="cursor: pointer; font: inherit; flex: 1 1 0; min-width: 0; text-align: left; border-radius: 14px; padding: 10px 12px; border: 2px solid {{pl.bd}}; background: {{pl.bg}}; color: {{pl.fg}}; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 800">{{pl.days}}</span><span style="font-size: 13px; font-weight: 700">{{pl.reach}}</span></button>
+</sc-for>
+</div>
+<button onClick="{{sendDest}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 17px; min-height: 56px; padding: 0 24px; border-radius: 16px; border: 0; background: #101828; color: #FFFFFF; opacity: {{sendOp}}">{{sendDestLabel}}</button>
+</div>
 <sc-if value="{{sendMsg}}"><div style="font-size: 15px; font-weight: 700; color: #B42318">{{sendMsg}}</div></sc-if>
-<button onClick="{{send}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 17px; min-height: 58px; padding: 0 28px; border-radius: 16px; border: 0; background: {{accent}}; color: #FFFFFF; opacity: {{sendOp}}">{{sendLabel}}</button>
+<button onClick="{{sendFree}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 16px; min-height: 54px; padding: 0 24px; border-radius: 16px; border: 2px solid #D0D5DD; background: #FFFFFF; color: #101828; opacity: {{sendOp}}">{{sendLabel}}</button>
+<button id="dvEnviar" onClick="{{send}}" style="display: none" tabindex="-1" aria-hidden="true"></button>
 </div>
 </div>
 </div>
@@ -308,25 +325,25 @@ input,select,textarea{font:inherit}
 <h2 style="margin: 0; font-size: clamp(28px, 3.2vw, 40px); letter-spacing: -0.035em; font-weight: 800">{{s9Title}}</h2>
 <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #475467; max-width: 560px">{{s9Text}}</p>
 </div>
-<div style="border-radius: 26px; background: #101828; color: #FFFFFF; padding: 26px; display: flex; flex-direction: column; gap: 18px">
+<div style="border-radius: 26px; background: #FEF0C7; border: 2px solid #FDB022; color: #101828; padding: 26px; display: flex; flex-direction: column; gap: 18px">
 <div style="display: flex; flex-direction: column; gap: 6px">
 <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.02em">¿Querés que lo vea más gente?</div>
-<div style="font-size: 15px; color: #D0D5DD">Destacado aparece primero en las búsquedas que coinciden con tu inmueble, con la etiqueta Destacado.</div>
+<div style="font-size: 15px; color: #475467">Destacado aparece primero en las búsquedas que coinciden con tu inmueble, con la etiqueta Destacado.</div>
 </div>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 10px">
 <sc-for list="{{plans}}" as="pl" hint-placeholder-count="3">
-<button onClick="{{pl.pick}}" class="opt" style="cursor: pointer; font: inherit; text-align: left; border-radius: 20px; padding: 18px; border: 2px solid {{pl.bd}}; background: {{pl.bg}}; color: #FFFFFF; display: flex; flex-direction: column; gap: 6px">
+<button onClick="{{pl.pick}}" class="opt" style="cursor: pointer; font: inherit; text-align: left; border-radius: 20px; padding: 18px; border: 2px solid {{pl.bd}}; background: {{pl.bg}}; color: {{pl.fg}}; display: flex; flex-direction: column; gap: 6px">
 <span style="font-size: 18px; font-weight: 800">{{pl.days}}</span>
-<span style="font-size: 26px; font-weight: 800; color: #C8F250">{{pl.reach}}</span>
-<span style="font-size: 14px; color: #D0D5DD">{{pl.price}}</span>
+<span style="font-size: 26px; font-weight: 800">{{pl.reach}}</span>
+<span style="font-size: 14px; opacity: .75">{{pl.price}}</span>
 </button>
 </sc-for>
 </div>
 <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between">
-<span style="font-size: 14px; color: #D0D5DD">Pagás por transferencia y lo activamos al toque.</span>
+<span style="font-size: 14px; color: #475467">Pagás por transferencia y lo activamos al toque.</span>
 <div style="display: flex; flex-wrap: wrap; gap: 10px">
-<a href="./" style="text-decoration: none; font-weight: 800; font-size: 15px; color: #FFFFFF; padding: 15px 18px; border-radius: 14px">Ahora no</a>
-<sc-if value="{{canPay}}"><button onClick="{{goPay}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 15px; background: #FFFFFF; color: #101828; padding: 15px 22px; border-radius: 14px; border: 0">Pagar por transferencia</button></sc-if>
+<a href="./" style="text-decoration: none; font-weight: 800; font-size: 15px; color: #101828; padding: 15px 18px; border-radius: 14px">Ahora no</a>
+<sc-if value="{{canPay}}"><button onClick="{{goPay}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 15px; background: #101828; color: #FFFFFF; padding: 15px 22px; border-radius: 14px; border: 0">Pagar por transferencia</button></sc-if>
 </div>
 </div>
 </div>
@@ -482,7 +499,7 @@ var CFG = window.DV || {};
 var DIAS = [7, 15, 30];
 var precioPlan = (d) => (CFG.planes || {})[d] || null;
 var gsTxt = (n) => 'Gs. ' + fmt(n);
-var plans = DIAS.map((d, i) => { var pr = precioPlan(d); return { days: d + ' días', reach: pr ? gsTxt(pr) : 'Más visitas', price: pr ? 'Primero en las búsquedas' : 'Precio por WhatsApp', bd: planSel === i ? '#C8F250' : '#344054', bg: planSel === i ? '#1D2939' : 'transparent', pick: () => set({ plan: i }) }; });
+var plans = DIAS.map((d, i) => { var pr = precioPlan(d); return { days: d + ' días', reach: pr ? gsTxt(pr) : 'Más visitas', price: pr ? 'Primero en las búsquedas' : 'Precio por WhatsApp', bd: planSel === i ? '#101828' : '#FEC84B', bg: planSel === i ? '#101828' : '#FFFFFF', fg: planSel === i ? '#FFFFFF' : '#101828', pick: () => set({ plan: i }) }; });
 var diasSel = DIAS[planSel], precioSel = precioPlan(diasSel);
 var cuenta = CFG.cuenta || {};
 var cupOk = !!(st.cupon && st.cupDias === diasSel && st.cupMonto != null);
@@ -554,7 +571,11 @@ titleShow: tipo + (rent ? ' en alquiler' : ' en venta') + ' en ' + (campos.barri
 setCity: (e) => set({ city: e.target.value }), cityVal: st.city || 'Asunción',
 firstLabel: fotos.length ? '' : 'Tu primera foto', firstBg: fotos.length ? 'center / cover no-repeat url(' + fotos[0].url + ')' : '#D9E0EC',
 campos: campos, inp: inp, infOn: (st.campos || {}).inf === true, gotPhotos: gotPhotos, photoMsg: st.photoMsg || '',
-navMsg: st.navMsg || '', sendMsg: st.sendMsg || '', sendLabel: st.sending ? 'Enviando...' : 'Enviar a revisión', sendOp: st.sending ? 0.6 : 1,
+navMsg: st.navMsg || '', sendMsg: st.sendMsg || '', sendLabel: st.sending ? 'Enviando...' : 'o publicá gratis', sendDestLabel: st.sending ? 'Enviando...' : 'Publicar y destacar' + (precioSel ? ' · ' + gsTxt(precioSel) : ''),
+destDesde: gsTxt(Math.min.apply(null, DIAS.map(precioPlan).filter(Boolean).concat([50000]))),
+pasoNum: Math.min(step, 8) + 1, pasoNombre: names[Math.min(step, 8)] || '',
+sendFree: () => { this.state.quiereDestacar = false; var b = document.getElementById('dvEnviar'); if (b) b.click(); },
+sendDest: () => { this.state.quiereDestacar = true; var b = document.getElementById('dvEnviar'); if (b) b.click(); }, sendOp: st.sending ? 0.6 : 1,
 canPay: canPay, goPay: () => set({ step: 10, payCode: st.payCode || ('DV-' + Math.floor(1000 + Math.random() * 9000)), payMsg: '' }),
 payAmount: montoPagar != null ? gsTxt(montoPagar) : '', payDays: diasSel + ' días',
 cupTxt: st.cupTxt || '', cupInput: (e) => { this.state.cupTxt = e.target.value; },
@@ -618,7 +639,7 @@ send: async () => {
       extras: { cocheras: cnt.coch, mascotas_tipo: ans.mascotas === 'si' ? (st.pets || 'Perros y gatos') : null, respuestas: ans },
       fotos: (this.state.fotos || []).map((f) => ({ data: f.data, mime: f.mime }))
     });
-    if (r && r.ok) { set({ sending: false, step: 9, avisoId: r.id, numero: r.numero || null }); window.scrollTo(0, 0); }
+    if (r && r.ok) { var irPago = this.state.quiereDestacar && CFG.endpoint && precioSel && cuenta.numero; set({ sending: false, step: irPago ? 10 : 9, avisoId: r.id, numero: r.numero || null, payCode: irPago ? (st.payCode || ('DV-' + Math.floor(1000 + Math.random() * 9000))) : st.payCode }); window.scrollTo(0, 0); }
     else set({ sending: false, sendMsg: (r && r.error) || 'No pudimos enviarlo. Probá de nuevo.' });
   } catch (err) { set({ sending: false, sendMsg: 'No pudimos enviarlo. Revisá tu conexión y probá de nuevo.' }); }
 }

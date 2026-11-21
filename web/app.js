@@ -3,7 +3,7 @@
   "use strict";
   var $app = document.getElementById("app");
   var DATA = [], TERRENOS = [], TODOS = [], ACT = "";
-  var FUENTES = { infocasas: "InfoCasas", remax: "RE/MAX", buscodepto: "BuscoDepto", clasipar: "Clasipar", century21: "Century 21", dondevivo: "DóndeVivo" };
+  var FUENTES = { infocasas: "InfoCasas", remax: "RE/MAX", buscodepto: "BuscoDepto", clasipar: "Clasipar", century21: "Century 21", estate: "Asuncion.estate", dondevivo: "DóndeVivo" };
   function destacado(a) { return !!(a.dh && Date.parse(a.dh) > Date.now()); }
   var EJ = {
     alquiler: ["Tengo un gato y busco un depto en Luque", "Dos habitaciones, una para mi oficina", "Algo para compartir con mi roomie cerca de la facu",

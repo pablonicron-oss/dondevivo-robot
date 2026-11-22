@@ -5,6 +5,6 @@
 window.DV = {
   endpoint: "https://script.google.com/macros/s/AKfycbxzVMle5jtoI35yGDvp8s7jng9twf7V6lw539LDs5i2h2rE8etXrK58w9ZXV9ZdSYQ/exec",
   whatsapp: "595983458755",
-  planes: { 7: 50000, 15: 90000, 30: 130000 },
+  planes: { 7: 25000, 15: 45000, 30: 75000 },
   cuenta: { titular: "Pablo Augusto Ramirez Villagra", banco: "Tu Financiera (cuenta Mango)", numero: "61695439", documento: "4592772" }
 };

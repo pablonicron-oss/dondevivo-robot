@@ -70,6 +70,7 @@
       viejo.parentNode.replaceChild(nuevo, viejo); conectar(nuevo); return;
     }
     if (viejo.nodeType === 3) { if (viejo.nodeValue !== nuevo.nodeValue) viejo.nodeValue = nuevo.nodeValue; return; }
+    if (viejo.hasAttribute("data-keep")) return;   // lo maneja otro script (por ejemplo, el mapa)
     var i, a;
     for (i = viejo.attributes.length - 1; i >= 0; i--) { a = viejo.attributes[i].name; if (!nuevo.hasAttribute(a)) viejo.removeAttribute(a); }
     for (i = 0; i < nuevo.attributes.length; i++) {

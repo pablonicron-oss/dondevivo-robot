@@ -124,12 +124,10 @@ input,select,textarea{font:inherit}
 <label for="pdir" style="font-size: 14px; font-weight: 700">Dirección, calle o referencia</label>
 <input id="pdir" value="{{campos.direccion}}" onInput="{{inp.direccion}}" type="text" placeholder="Ej. Senador Long casi Austria" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
 </div>
-<div style="position: relative; height: 230px; border-radius: 22px; overflow: hidden; background-color: #E8EEF6; background-image: linear-gradient(#D6E0EC 2px, transparent 2px), linear-gradient(90deg, #D6E0EC 2px, transparent 2px); background-size: 46px 46px">
-<div style="position: absolute; left: 0; right: 0; top: 46%; height: 14px; background: #FFFFFF"></div>
-<div style="position: absolute; top: 0; bottom: 0; left: 38%; width: 14px; background: #FFFFFF"></div>
-<div style="position: absolute; left: 44%; top: 22%; width: 120px; height: 120px; border-radius: 999px; background: rgba(31,79,224,.14); border: 2px solid rgba(31,79,224,.4)"></div>
-<div style="position: absolute; left: 50%; top: 35%; transform: translate(-50%, -100%); background: #101828; color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 8px 12px; border-radius: 12px; white-space: nowrap">Tu inmueble está acá</div>
-<div style="position: absolute; left: 12px; bottom: 12px; font-size: 13px; font-weight: 700; color: #475467; background: #FFFFFF; padding: 8px 12px; border-radius: 999px">Arrastrá el mapa para ajustar el punto</div>
+<div style="position: relative; height: 260px; border-radius: 22px; overflow: hidden; background: #E8EEF6">
+<div id="pmapa" data-keep="1" style="position: absolute; inset: 0"></div>
+<div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -100%); z-index: 500; pointer-events: none"><svg width="34" height="44" viewBox="0 0 34 44"><path d="M17 43C17 43 2 26 2 16a15 15 0 0 1 30 0c0 10-15 27-15 27Z" fill="{{accent}}" stroke="#FFFFFF" stroke-width="3"/><circle cx="17" cy="16" r="5.5" fill="#FFFFFF"/></svg></div>
+<div style="position: absolute; left: 12px; bottom: 12px; z-index: 500; pointer-events: none; font-size: 13px; font-weight: 700; color: #475467; background: #FFFFFF; padding: 8px 12px; border-radius: 999px; box-shadow: 0 2px 8px rgba(16,24,40,.12)">Mové el mapa hasta tu inmueble</div>
 </div>
 <div style="display: flex; flex-direction: column; gap: 10px">
 <div style="font-size: 15px; font-weight: 800">¿Cómo mostramos la ubicación?</div>
@@ -138,7 +136,7 @@ input,select,textarea{font:inherit}
 <button class="opt" onClick="{{c.pick}}" style="cursor: pointer; font: inherit; font-weight: 700; font-size: 15px; min-height: 46px; padding: 0 18px; border-radius: 999px; border: 2px solid {{c.bd}}; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
 </sc-for>
 </div>
-<div style="font-size: 14px; color: #475467">Con la ubicación te mostramos solos qué hay cerca, como súper, colegios, hospitales y paradas de bus.</div>
+<div style="font-size: 14px; color: #475467">Con la ubicación te mostramos solo qué hay cerca, como súper, colegios, hospitales y paradas de bus.</div>
 </div>
 </div>
 </sc-if>
@@ -262,17 +260,25 @@ input,select,textarea{font:inherit}
 <div class="in" style="display: flex; flex-direction: column; gap: 20px">
 <h2 style="margin: 0; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.03em; font-weight: 800">Contanos algo más</h2>
 <div style="display: flex; flex-direction: column; gap: 6px">
-<label for="pdesc" style="font-size: 14px; font-weight: 700">Descripción del aviso (opcional)</label>
+<label for="pdesc" style="font-size: 14px; font-weight: 700">Descripción del aviso</label>
 <textarea id="pdesc" value="{{campos.descripcion}}" onInput="{{inp.descripcion}}" rows="3" placeholder="Lo que querés que se lea en tu publicación" style="border: 2px solid #D0D5DD; border-radius: 14px; padding: 14px 16px; font-size: 16px; color: #101828; resize: vertical"></textarea>
 </div>
 <div style="display: flex; flex-direction: column; gap: 8px; border-radius: 22px; padding: 18px; background: #F0F4FF">
-<label for="pia" style="font-size: 16px; font-weight: 800">Ayudá a nuestra IA a encontrar a tu inquilino ideal</label>
+<label for="pia" style="font-size: 16px; font-weight: 800">Ayudá a nuestra IA a encontrar a tu {{iaQuien}} ideal <span style="font-weight: 600; color: #667085">(opcional)</span></label>
 <div style="font-size: 14px; line-height: 1.5; color: #475467">Esto no se publica. Lo usamos para mostrar tu inmueble a quien lo busca con esas palabras.</div>
 <textarea id="pia" value="{{campos.ia}}" onInput="{{inp.ia}}" rows="4" placeholder="Ej. Entra mucha luz a la mañana, la cuadra es tranquila, el súper está a 2 cuadras, ideal para alguien que trabaja desde casa" style="border: 2px solid #C7D7FE; border-radius: 14px; padding: 14px 16px; font-size: 16px; color: #101828; background: #FFFFFF; resize: vertical"></textarea>
 </div>
 <div style="display: flex; flex-direction: column; gap: 6px; max-width: 360px">
 <label for="pwa" style="font-size: 14px; font-weight: 700">WhatsApp para que te escriban</label>
-<input id="pwa" value="{{campos.whatsapp}}" onInput="{{inp.whatsapp}}" type="tel" placeholder="0981 000 000" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 16px; font-size: 16px; color: #101828">
+<div style="display: flex; gap: 8px">
+<select id="pwapais" aria-label="País" value="{{waPais}}" onChange="{{setWaPais}}" style="min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 8px; font-size: 16px; font-weight: 700; color: #101828; background: #FFFFFF">
+<sc-for list="{{waPaises}}" as="wp" hint-placeholder-count="3"><option value="{{wp.id}}">{{wp.label}}</option></sc-for>
+</select>
+<div style="flex: 1; min-width: 0; display: flex; align-items: center; min-height: 52px; border: 2px solid #D0D5DD; border-radius: 14px; padding: 0 0 0 14px; background: #FFFFFF">
+<sc-if value="{{waNueve}}"><span style="font-size: 16px; font-weight: 700; color: #101828; padding-right: 4px">9</span></sc-if>
+<input id="pwa" value="{{waLocal}}" onInput="{{setWa}}" onBlur="{{limpiarWa}}" type="tel" inputmode="numeric" placeholder="{{waEj}}" style="flex: 1; min-width: 0; height: 48px; border: 0; outline: none; padding: 0 12px 0 0; font-size: 16px; color: #101828; background: transparent">
+</div>
+</div>
 </div>
 </div>
 </sc-if>
@@ -297,12 +303,11 @@ input,select,textarea{font:inherit}
 </article>
 <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 12px">
 <div style="font-size: 16px; line-height: 1.5; color: #475467">Revisamos cada inmueble antes de publicarlo para que todo lo que se ve acá sea real. Te avisamos por correo apenas esté aprobado.</div>
-<div style="border-radius: 22px; background: #FEF0C7; border: 2px solid #FDB022; padding: 18px; display: flex; flex-direction: column; gap: 12px">
-<div style="display: flex; flex-direction: column; gap: 4px">
-<span style="align-self: flex-start; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; background: #FDB022; color: #101828; padding: 5px 10px; border-radius: 999px">Recomendado</span>
-<div style="font-size: 21px; font-weight: 800; letter-spacing: -0.02em; color: #101828">Destacá tu aviso desde {{destDesde}}</div>
-<div style="font-size: 14px; line-height: 1.45; color: #475467">Sale primero en las búsquedas, con la etiqueta Destacado.</div>
-</div>
+<div style="border-radius: 16px; background: #FEF0C7; border: 2px solid #FDB022; overflow: hidden; display: flex; flex-direction: column">
+<button onClick="{{toggleDest}}" aria-expanded="{{destAbierto}}" style="cursor: pointer; font: inherit; min-height: 56px; padding: 10px 18px; border: 0; background: transparent; color: #101828; display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left"><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 800">¿Querés destacar tu aviso?</span><span style="font-size: 13px; font-weight: 700; color: #475467">Sale primero en las búsquedas, desde {{destDesde}}</span></span><span style="font-size: 18px; font-weight: 800; transform: rotate({{destGiro}}); transition: transform .2s">⌄</span></button>
+<sc-if value="{{destAbierto}}">
+<div style="padding: 0 18px 18px; display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 14px; line-height: 1.45; color: #475467">Elegí cuántos días. Tu aviso aparece primero y con la etiqueta Destacado.</div>
 <div style="display: flex; flex-wrap: wrap; gap: 8px">
 <sc-for list="{{plans}}" as="pl" hint-placeholder-count="3">
 <button onClick="{{pl.pick}}" style="cursor: pointer; font: inherit; flex: 1 1 0; min-width: 0; text-align: left; border-radius: 14px; padding: 10px 12px; border: 2px solid {{pl.bd}}; background: {{pl.bg}}; color: {{pl.fg}}; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 800">{{pl.days}}</span><span style="font-size: 13px; font-weight: 700">{{pl.reach}}</span></button>
@@ -310,8 +315,10 @@ input,select,textarea{font:inherit}
 </div>
 <button onClick="{{sendDest}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 17px; min-height: 56px; padding: 0 24px; border-radius: 16px; border: 0; background: #101828; color: #FFFFFF; opacity: {{sendOp}}">{{sendDestLabel}}</button>
 </div>
+</sc-if>
+</div>
 <sc-if value="{{sendMsg}}"><div style="font-size: 15px; font-weight: 700; color: #B42318">{{sendMsg}}</div></sc-if>
-<button onClick="{{sendFree}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 16px; min-height: 54px; padding: 0 24px; border-radius: 16px; border: 2px solid #D0D5DD; background: #FFFFFF; color: #101828; opacity: {{sendOp}}">{{sendLabel}}</button>
+<button onClick="{{sendFree}}" style="cursor: pointer; font: inherit; font-weight: 800; font-size: 17px; min-height: 56px; padding: 0 24px; border-radius: 16px; border: 0; background: #1F4FE0; color: #FFFFFF; opacity: {{sendOp}}">{{sendLabel}}</button>
 <button id="dvEnviar" onClick="{{send}}" style="display: none" tabindex="-1" aria-hidden="true"></button>
 </div>
 </div>
@@ -494,7 +501,7 @@ if (ans.mascotas === 'no') badges.push({ t: 'No acepta mascotas', bg: '#FEE4E2',
 badges.push({ t: cnt.hab + (cnt.hab === 1 ? ' habitación' : ' habitaciones'), bg: '#F2F4F7', fg: '#344054' });
 if (ans.amoblado === 'si') badges.push({ t: 'Amoblado', bg: '#F2F4F7', fg: '#344054' });
 badges.push({ t: 'Publicado acá', bg: '#F0F4FF', fg: '#1F4FE0' });
-var planSel = st.plan || 1;
+var planSel = (typeof st.plan === "number") ? st.plan : 1;
 var CFG = window.DV || {};
 var DIAS = [7, 15, 30];
 var precioPlan = (d) => (CFG.planes || {})[d] || null;
@@ -507,7 +514,7 @@ var montoPagar = cupOk ? st.cupMonto : precioSel;
 var canPay = !!(CFG.endpoint && precioSel && cuenta.numero && st.avisoId);
 var campos = st.campos || {};
 var inp = {};
-['nombre', 'email', 'barrio', 'direccion', 'whatsapp', 'descripcion', 'ia'].forEach((k) => { inp[k] = (e) => { this.state.campos = Object.assign({}, this.state.campos || {}, { [k]: e.target.value }); }; });
+['nombre', 'email', 'barrio', 'direccion', 'descripcion', 'ia'].forEach((k) => { inp[k] = (e) => { this.state.campos = Object.assign({}, this.state.campos || {}, { [k]: e.target.value }); }; });
 inp.inf = (e) => { set({ campos: Object.assign({}, this.state.campos || {}, { inf: e.target.checked }), navMsg: '' }); };
 var leerImagen = (file) => new Promise((ok) => {
   var r = new FileReader();
@@ -540,6 +547,10 @@ var post = async (body) => {
   var r = await fetch(CFG.endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
   return r.json();
 };
+var WA = [['PY','🇵🇾 +595','595','9','82 376 352',8],['AR','🇦🇷 +54','54','','11 2345 6789',10],['BR','🇧🇷 +55','55','','11 91234 5678',10],['UY','🇺🇾 +598','598','','94 123 456',8],['BO','🇧🇴 +591','591','','71234567',8],['CL','🇨🇱 +56','56','','9 1234 5678',9],['PE','🇵🇪 +51','51','','912 345 678',9],['CO','🇨🇴 +57','57','','301 234 5678',10],['EC','🇪🇨 +593','593','','99 123 4567',9],['VE','🇻🇪 +58','58','','412 123 4567',10],['MX','🇲🇽 +52','52','','55 1234 5678',10]];
+var waP = WA.filter((w) => w[0] === (st.waPais || 'PY'))[0] || WA[0];
+var waLimpio = (v, w) => { var d = String(v || '').replace(/\D/g, ''); if (d.indexOf(w[2]) === 0 && d.length > w[5]) d = d.slice(w[2].length); d = d.replace(/^0+/, ''); if (w[3] && d.indexOf(w[3]) === 0 && d.length > w[5]) d = d.slice(w[3].length); return d; };
+var waArmar = (loc, w) => loc ? '+' + w[2] + w[3] + loc : '';
 var falta = (desde, hasta) => {   // primer dato que falta entre esos pasos
   var c = this.state.campos || {}, n = (v) => String(v || '').trim().length;
   var reglas = [
@@ -551,7 +562,7 @@ var falta = (desde, hasta) => {   // primer dato que falta entre esos pasos
     [5, !num, 'Escribí el precio.'],
     [6, (this.state.fotos || []).length < 3, 'Sumá al menos 3 fotos.'],
     [7, n(c.descripcion) < 20, 'Contá un poco más de tu inmueble en la descripción.'],
-    [7, String(c.whatsapp || '').replace(/\D/g, '').length < 9, 'Escribí tu WhatsApp para que te puedan contactar.']
+    [7, waLimpio(st.waLocal, waP).length < (waP[0] === 'PY' ? 8 : 7), waP[0] === 'PY' ? 'Escribí tu WhatsApp, los 8 números que van después del 9.' : 'Escribí tu WhatsApp para que te puedan contactar.']
   ];
   for (var i = 0; i < reglas.length; i++) if (reglas[i][0] >= desde && reglas[i][0] <= hasta && reglas[i][1]) return { step: reglas[i][0], msg: reglas[i][2] };
   return null;
@@ -562,7 +573,7 @@ return Object.assign(flags, {
 accent: accent, steps: steps, progress: Math.round(Math.min(step, 9) / 9 * 100),
 dentro: esTerreno ? '¿Cómo es el terreno?' : '¿Cómo es por dentro?', ops: ops, tipos: tipos, quien: quien, ubic: ubic, counters: counters, qs: qs,
 showPets: ans.mascotas === 'si', petOpts: petOpts,
-isRent: rent, isSale: !rent, priceTitle: rent ? 'Precio y lo que se paga para entrar' : 'Precio de venta',
+isRent: rent, isSale: !rent, iaQuien: rent ? 'inquilino' : 'comprador', priceTitle: rent ? 'Precio y lo que se paga para entrar' : 'Precio de venta',
 priceLabel: rent ? 'Alquiler por mes' : 'Precio', priceTxt: priceTxt, curr: curr,
 setPrice: (e) => set({ price: e.target.value }), gar: gar, com: com, fin: fin, entryText: entryText,
 photos: photos, addPhoto: abrir,
@@ -574,6 +585,11 @@ campos: campos, inp: inp, infOn: (st.campos || {}).inf === true, gotPhotos: gotP
 navMsg: st.navMsg || '', sendMsg: st.sendMsg || '', sendLabel: st.sending ? 'Enviando...' : 'o publicá gratis', sendDestLabel: st.sending ? 'Enviando...' : 'Publicar y destacar' + (precioSel ? ' · ' + gsTxt(precioSel) : ''),
 destDesde: gsTxt(Math.min.apply(null, DIAS.map(precioPlan).filter(Boolean).concat([50000]))),
 pasoNum: Math.min(step, 8) + 1, pasoNombre: names[Math.min(step, 8)] || '',
+waPaises: WA.map((w) => ({ id: w[0], label: w[1] })), waPais: waP[0], waNueve: !!waP[3], waEj: waP[4], waLocal: st.waLocal || '',
+setWaPais: (e) => { var w = WA.filter((x) => x[0] === e.target.value)[0] || WA[0]; var loc = waLimpio(this.state.waLocal, w); this.state.campos = Object.assign({}, this.state.campos || {}, { whatsapp: waArmar(loc, w) }); set({ waPais: w[0], navMsg: '' }); },
+limpiarWa: () => { set({ waLocal: waLimpio(this.state.waLocal, waP) }); },
+setWa: (e) => { var loc = waLimpio(e.target.value, waP); this.state.waLocal = e.target.value; this.state.campos = Object.assign({}, this.state.campos || {}, { whatsapp: waArmar(loc, waP) }); },
+destAbierto: !!st.destAbierto, destGiro: st.destAbierto ? '180deg' : '0deg', toggleDest: () => set({ destAbierto: !this.state.destAbierto }),
 sendFree: () => { this.state.quiereDestacar = false; var b = document.getElementById('dvEnviar'); if (b) b.click(); },
 sendDest: () => { this.state.quiereDestacar = true; var b = document.getElementById('dvEnviar'); if (b) b.click(); }, sendOp: st.sending ? 0.6 : 1,
 canPay: canPay, goPay: () => set({ step: 10, payCode: st.payCode || ('DV-' + Math.floor(1000 + Math.random() * 9000)), payMsg: '' }),
@@ -629,7 +645,7 @@ send: async () => {
     var r = await post({
       tipo: 'aviso', web: '', nombre: c.nombre, email: c.email, informe: c.inf === true, whatsapp: c.whatsapp,
       operacion: rent ? 'alquiler' : 'venta', tipo_inmueble: TIPO[tipo] || 'otro', quien: st.quien || 'Soy el dueño',
-      ciudad: city, barrio: c.barrio || null, direccion: c.direccion || null, ubic: st.ubic || 'Solo la zona aproximada',
+      ciudad: city, barrio: c.barrio || null, direccion: c.direccion || null, lat: (window.__dvUbic || {}).lat || null, lng: (window.__dvUbic || {}).lng || null, ubic: st.ubic || 'Solo la zona aproximada',
       region: REGION[city] || (CENTRAL.indexOf(city) >= 0 ? 'central' : 'resto'),
       dormitorios: esTerreno ? null : cnt.hab, banos: esTerreno ? null : cnt.bano, m2: cnt.m2, mascotas: ans.mascotas === 'si' ? 'si' : ans.mascotas === 'no' ? 'no' : null,
       comodidades: si, precio: num || null, moneda: cur === 'USD' ? 'USD' : 'PYG',
@@ -647,6 +663,59 @@ send: async () => {
 }
 }
 DC.montar(Component);
+</script>
+<script>
+(function () {   // mapa real del paso Dónde queda: el pin queda fijo al centro y se mueve el mapa
+  var mapa = null, host = null, ultimaBusqueda = '', tBusca = null;
+  window.__dvUbic = window.__dvUbic || null;
+  var CENTROS = { 'Asunción': [-25.2867, -57.6470] };
+  function cargar(listo) {
+    if (window.L) return listo();
+    var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(l);
+    var a = document.createElement('script'); a.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; a.onload = listo; document.head.appendChild(a);
+  }
+  function guardar() { var c = mapa.getCenter(); window.__dvUbic = { lat: +c.lat.toFixed(6), lng: +c.lng.toFixed(6) }; }
+  function texto() {
+    var ci = (document.getElementById('pcity') || {}).value || 'Asunción';
+    var ba = ((document.getElementById('pbarrio') || {}).value || '').trim();
+    var di = ((document.getElementById('pdir') || {}).value || '').trim();
+    return [di, ba, ci, 'Paraguay'].filter(Boolean).join(', ');
+  }
+  function buscar(forzar) {
+    if (!mapa) return;
+    var q = texto(); if (!forzar && q === ultimaBusqueda) return; ultimaBusqueda = q;
+    var partes = q.split(', '), intentos = [];
+    for (var k = 0; k <= partes.length - 2; k++) { var t = partes.slice(k).join(', '); if (intentos.indexOf(t) < 0) intentos.push(t); }
+    (function probar(i) {
+      if (i >= intentos.length) return;
+      fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=py&q=' + encodeURIComponent(intentos[i]), { headers: { 'Accept-Language': 'es' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { if (d && d[0]) { var n = intentos[i].split(', ').length; mapa.setView([+d[0].lat, +d[0].lon], n >= 4 ? 17 : (n === 3 ? 15 : 13)); guardar(); } else probar(i + 1); })
+        .catch(function () {});
+    })(0);
+  }
+  function montar() {
+    var el = document.getElementById('pmapa');
+    if (!el) { if (mapa) { mapa.remove(); mapa = null; host = null; } return; }
+    if (el === host) return;
+    host = el;
+    cargar(function () {
+      if (mapa) { mapa.remove(); mapa = null; }
+      var u = window.__dvUbic, c = u ? [u.lat, u.lng] : CENTROS['Asunción'];
+      mapa = L.map(el, { zoomControl: true, attributionControl: true }).setView(c, u ? 17 : 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(mapa);
+      mapa.on('moveend', guardar);
+      if (!u) buscar(true); else guardar();
+    });
+  }
+  document.addEventListener('input', function (e) {
+    if (!e.target || ['pbarrio', 'pdir'].indexOf(e.target.id) < 0) return;
+    clearTimeout(tBusca); tBusca = setTimeout(function () { buscar(false); }, 900);
+  });
+  document.addEventListener('change', function (e) { if (e.target && e.target.id === 'pcity') setTimeout(function () { buscar(false); }, 100); });
+  new MutationObserver(montar).observe(document.body, { childList: true, subtree: true });
+  montar();
+})();
 </script>
 </body>
 </html>

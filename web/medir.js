@@ -39,7 +39,8 @@
     var el = e.target && e.target.closest ? e.target.closest("a,button") : null;
     if (!el) return;
     var href = el.getAttribute("href") || "";
-    if (/wa\.me|api\.whatsapp|whatsapp\.com/.test(href)) evento("whatsapp", { donde: location.hash.indexOf("/aviso/") >= 0 ? "aviso" : "otro" });
+    if (el.hasAttribute("data-anuncio")) evento("click_anunciar");
+    else if (/wa\.me|api\.whatsapp|whatsapp\.com/.test(href)) evento("whatsapp", { donde: location.hash.indexOf("/aviso/") >= 0 ? "aviso" : "otro" });
     else if (/publicar\.html|#\/publicar/.test(href)) evento("ir_publicar");
     else if (el.classList && el.classList.contains("cmpb")) evento("agregar_comparar");
   }, true);

@@ -488,6 +488,36 @@
       .map(function (x) { return x[0]; });
   }
 
+  /* ---------- espacio publicitario ----------
+     Aparece a veces, no siempre. En cada búsqueda se decide una vez si sale (40% de las veces)
+     y en qué lugar (entre el aviso 3 y el 8). La decisión se guarda mientras dure la visita,
+     así no salta de lugar al volver o al tocar Ver más. */
+  var ANUNCIO_PROB = 0.4;
+  function anuncioTarjeta() {
+    var n = (window.DV && window.DV.whatsapp) || "595983458755";
+    var txt = "Hola, vi el espacio publicitario en DóndeVivo y me interesa anunciar mi empresa. ¿Me pueden pasar información sobre formatos y tarifas?";
+    return '<a class="tarjeta anuncio" data-anuncio="1" href="https://wa.me/' + n + "?text=" + encodeURIComponent(txt) + '" target="_blank" rel="noopener">' +
+      '<span class="an-tag">Publicidad</span>' +
+      '<span class="an-ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a3 3 0 0 1 0 6"/><path d="M10 8v11a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-5"/><path d="M12 8l4.5-3.8a.9.9 0 0 1 1.5.7V17a.9.9 0 0 1-1.5.7L12 14H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h8"/></svg></span>' +
+      '<span class="an-tit">¿Tenés una empresa?<br>Anunciá acá</span>' +
+      '<span class="an-txt">Llegá a miles de personas que están buscando dónde vivir en Asunción y Gran Asunción.</span>' +
+      '<span class="an-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.3.1.2.1.7-.1 1.3z"/></svg>Quiero anunciar</span></a>';
+  }
+  function conAnuncio(tarjetas, total) {
+    var html = tarjetas.join("");
+    if (total < 4) return html;
+    var clave = "dvAn:" + (location.hash.split("?")[1] || ""), dec = null;
+    try { dec = JSON.parse(sessionStorage.getItem(clave) || "null"); } catch (e) {}
+    if (!dec) {
+      dec = { ver: Math.random() < ANUNCIO_PROB, pos: 3 + Math.floor(Math.random() * 6), medido: false };
+      try { sessionStorage.setItem(clave, JSON.stringify(dec)); } catch (e) {}
+    }
+    if (!dec.ver) return html;
+    var pos = Math.min(dec.pos, tarjetas.length);
+    if (!dec.medido) { dec.medido = true; try { sessionStorage.setItem(clave, JSON.stringify(dec)); } catch (e) {} if (window.dvMedir) window.dvMedir("ver_anunciar"); }
+    return tarjetas.slice(0, pos).join("") + anuncioTarjeta() + tarjetas.slice(pos).join("");
+  }
+
   /* ---------- tarjeta ---------- */
   function tarjeta(a) {
     var tags = [];
@@ -812,7 +842,7 @@
       '<section><form class="rebusca" id="rb"><label for="rbq" class="sr">Tu búsqueda</label><input id="rbq" value="' + esc(f.txt || "") + '" placeholder="Describí lo que buscás, por ejemplo depto con patio en Luque" autocomplete="off"><button class="btn" type="submit">Buscar</button></form>' +
       '<button type="button" class="abrir-fil" id="abrirFil" aria-controls="ff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtros' + (nFil ? ' <b>' + nFil + '</b>' : '') + '</button>' +
       '<div class="cabeza"><h1>' + lista.length.toLocaleString("es-PY") + (f.op === "venta" ? " en venta" : " en alquiler") + (f.ciudad ? " en " + esc(nomCiudad(f.ciudad)) : "") + (f.barrio ? ", " + esc(f.barrio) : "") + (f.cerca ? " c" + esc(cercaDe(f.cerca).slice(1)) : "") + '</h1><a class="volver" href="#/">← Nueva búsqueda</a></div>' +
-      (lista.length ? '<div class="lista">' + lista.slice(0, mostrados).map(tarjeta).join("") + "</div>" + (lista.length > mostrados ? '<button class="mas" id="mas">Ver más</button>' : "")
+      (lista.length ? '<div class="lista">' + conAnuncio(lista.slice(0, mostrados).map(tarjeta), lista.length) + "</div>" + (lista.length > mostrados ? '<button class="mas" id="mas">Ver más</button>' : "")
         : '<div class="vacio">' + (sinCiudad ? "<b>Todavía no tenemos avisos en " + esc(f.ciudad) + ".</b><br>Sumamos avisos nuevos todos los días, volvé a mirar pronto."
           : "<b>Todavía no tenemos avisos con esos filtros.</b><br>Probá sacar alguno. Sumamos avisos nuevos todos los días.") + "</div>") +
       "</section></div>";
@@ -881,9 +911,7 @@
       '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (a.op !== "alquiler" && ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas</div>" : "") + bloques(a, true) + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' + (a.tp === "terreno" ? iconosTerreno(a) : iconos(a)) +
       '<div class="datos">' + [tipoTxt(a.tp), porM2(a), a.mono ? "Monoambiente" : a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.tp === "terreno" ? "" : a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].concat(a.tp === "terreno" ? [] : extras(a)).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
       (a.f === "dondevivo" && a.wa
-        ? '<a class="ir" href="https://wa.me/' + esc(String(a.wa).replace(/\D/g, "")) + "?text=" + encodeURIComponent("¡Hola! 👋 Vi tu aviso en DóndeVivo y me gustaría tener más información.
-" + a.t + "
-https://dondevivo.com.py/#/aviso/" + encodeURIComponent(a.id)) + '" target="_blank" rel="noopener" id="ir">Escribir por WhatsApp</a>'
+        ? '<a class="ir" href="https://wa.me/' + esc(String(a.wa).replace(/\D/g, "")) + "?text=" + encodeURIComponent("¡Hola! 👋 Vi tu aviso en DóndeVivo y me gustaría tener más información.\n" + a.t + "\nhttps://dondevivo.com.py/#/aviso/" + encodeURIComponent(a.id)) + '" target="_blank" rel="noopener" id="ir">Escribir por WhatsApp</a>'
         : '<a class="ir" href="' + esc(seguro(a.u)) + '" target="_blank" rel="noopener nofollow" id="ir">Escribir al anunciante <small>· en ' + esc(fu) + "</small></a>") +
       (a.tp === "terreno" ? "" : '<div class="bloque"><h2>Lo que cuesta entrar</h2>' + costo + "</div>") +
       

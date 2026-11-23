@@ -69,6 +69,17 @@ th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--linea)}th{
 .btn{font:inherit;font-weight:800;font-size:15px;border:0;border-radius:12px;padding:0 16px;min-height:48px;cursor:pointer;background:var(--azul);color:#fff;white-space:nowrap}
 .btn.ok{background:var(--verde)}.btn:disabled{opacity:.5;cursor:default}
 .aviso-txt{font-size:13px;color:var(--suave)}
+.tr-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px}
+.caja-t{background:#fff;border-radius:22px;padding:18px 20px}
+.caja-t h3{margin:0 0 12px;font-size:16px}
+.fila-t{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--linea);font-size:15px}
+.fila-t:last-child{border-bottom:0}.fila-t b{font-family:'Outfit',sans-serif;font-size:18px}
+.barras{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:8px}
+.barras div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11px;color:var(--suave);font-weight:700}
+.barras i{display:block;width:100%;background:var(--azul);border-radius:6px 6px 0 0;min-height:2px}
+.barras em{font-style:normal;color:var(--tinta);font-size:12px}
+.kpi b.vivo{display:flex;align-items:center;gap:10px}.vivo:before{content:"";width:10px;height:10px;border-radius:50%;background:#12B76A;box-shadow:0 0 0 4px #D1FADF}
+.nota-t{font-size:13px;color:var(--suave);margin:4px 0 16px}
 </style>
 </head>
 <body>
@@ -100,6 +111,7 @@ th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--linea)}th{
 
   function pintar() {
     if (vista === "anunciantes") return pintarGente();
+    if (vista === "trafico") return pintarTrafico();
     var av = D.avisos, ahora = new Date(), mes = ahora.getFullYear() + "-" + String(ahora.getMonth() + 1).padStart(2, "0");
     var ventasMes = D.pedidos.filter(function (p) { return p.estado === "confirmado" && String(p.resuelto || p.creado).slice(0, 7) === mes; });
     var pend = D.pedidos.filter(function (p) { return p.estado === "pendiente"; }).length;
@@ -146,7 +158,7 @@ th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--linea)}th{
   }
 
   function tabs() {
-    return '<div class="tabs">' + [["avisos", "Avisos"], ["anunciantes", "Anunciantes"]].map(function (x) {
+    return '<div class="tabs">' + [["avisos", "Avisos"], ["anunciantes", "Anunciantes"], ["trafico", "Tráfico"]].map(function (x) {
       return '<button data-v="' + x[0] + '" aria-pressed="' + (vista === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";
   }
   function enganchar() {
@@ -269,12 +281,69 @@ th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--linea)}th{
       pintarChat();
     }).catch(function () { chat.ocupado = false; chat.error = "No hubo conexión. Probá de nuevo."; pintarChat(); });
   }
+
+  var TR = null, trCargando = false, trError = "";
+  function cargarTrafico(forzar) {
+    if (trCargando) return; trCargando = true;
+    fetch(CFG.endpoint + "?accion=trafico&t=" + encodeURIComponent(T) + (forzar ? "&x=" + Date.now() : "")).then(function (r) { return r.json(); }).then(function (d) {
+      trCargando = false;
+      if (!d.ok) { trError = d.error || "No se pudo leer el tráfico."; } else { TR = d; trError = ""; }
+      if (vista === "trafico") pintarTrafico();
+    }).catch(function () { trCargando = false; trError = "No hubo conexión con el tráfico. Probá recargar."; if (vista === "trafico") pintarTrafico(); });
+  }
+  function n(x) { return String(Math.round(x || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function pct(a, b) { return b ? Math.round(a * 100 / b) + " %" : "0 %"; }
+  function dur(s) { s = Math.round(s || 0); return s < 60 ? s + " seg" : Math.floor(s / 60) + " min " + (s % 60) + " seg"; }
+  function pintarTrafico() {
+    if (!TR) {
+      $.innerHTML = "<h1>Tu panel de DóndeVivo</h1>" + tabs() + '<div class="vacio">' + (trError ? esc(trError) : "Cargando el tráfico de la web…") + "</div>";
+      enganchar(); if (!trCargando && !trError) cargarTrafico(); return;
+    }
+    var h = TR.hoy, w = TR.semana, m = TR.mes, eh = TR.eventosHoy || {}, ew = TR.eventosSemana || {};
+    var max = Math.max.apply(null, (TR.porDia || []).map(function (d) { return d.personas; }).concat([1]));
+    var dias = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+    var barras = (TR.porDia || []).map(function (d) {
+      var f = new Date(d.dia.slice(0, 4) + "-" + d.dia.slice(4, 6) + "-" + d.dia.slice(6, 8) + "T12:00:00");
+      return '<div><em>' + n(d.personas) + '</em><i style="height:' + Math.max(2, Math.round(d.personas * 120 / max)) + 'px"></i>' + dias[f.getDay()] + " " + f.getDate() + "</div>";
+    }).join("");
+    function acc(nombre, clave) { return '<div class="fila-t"><span>' + nombre + "</span><span><b>" + n(ew[clave]) + '</b> <span style="color:var(--suave);font-size:13px">hoy ' + n(eh[clave]) + "</span></span></div>"; }
+    var fuentes = (TR.fuentes || []).map(function (x) { return '<div class="fila-t"><span>' + esc(x.fuente === "(direct)" ? "Entraron directo" : x.fuente) + "</span><b>" + n(x.visitas) + "</b></div>"; }).join("") || '<div class="fila-t"><span>Todavía no hay datos</span></div>';
+    var equipos = (TR.equipos || []).map(function (x) { return '<div class="fila-t"><span>' + esc({ mobile: "Celular", desktop: "Computadora", tablet: "Tablet" }[x.equipo] || x.equipo) + "</span><b>" + pct(x.visitas, w.visitas) + "</b></div>"; }).join("");
+    $.innerHTML = "<h1>Tu panel de DóndeVivo</h1>" + tabs() +
+      '<p class="nota-t">Se actualiza solo cada 5 minutos. Actualizado a las ' + new Date(TR.actualizado).toLocaleTimeString("es-PY", { hour: "2-digit", minute: "2-digit" }) + " h. Los números de hoy pueden tardar unas horas en completarse en Google.</p>" +
+      '<div class="kpis">' +
+        '<div class="kpi ok"><b class="vivo">' + n(TR.ahora) + "</b><span>personas en la web ahora</span></div>" +
+        '<div class="kpi"><b>' + n(h.personas) + "</b><span>personas hoy</span></div>" +
+        '<div class="kpi"><b>' + n(w.personas) + "</b><span>personas en 7 días</span></div>" +
+        '<div class="kpi"><b>' + n(m.personas) + "</b><span>personas en 28 días</span></div>" +
+      "</div>" +
+      '<div class="tr-g">' +
+        '<div class="caja-t"><h3>Cómo se comportan (7 días)</h3>' +
+          '<div class="fila-t"><span>Visitas</span><b>' + n(w.visitas) + "</b></div>" +
+          '<div class="fila-t"><span>Se quedaron buscando</span><b>' + n(w.interesadas) + " · " + pct(w.interesadas, w.visitas) + "</b></div>" +
+          '<div class="fila-t"><span>Entraron de curiosos y se fueron</span><b>' + n(w.curiosas) + " · " + pct(w.curiosas, w.visitas) + "</b></div>" +
+          '<div class="fila-t"><span>Tiempo promedio por visita</span><b>' + dur(w.duracion) + "</b></div>" +
+          '<div class="fila-t"><span>Páginas vistas</span><b>' + n(w.paginas) + "</b></div></div>" +
+        '<div class="caja-t"><h3>Qué hicieron (7 días)</h3>' +
+          acc("Buscaron alquiler", "busqueda_alquiler") + acc("Buscaron para comprar", "busqueda_venta") + acc("Buscaron terrenos", "busqueda_terreno") +
+          acc("Abrieron un aviso", "ver_aviso") + acc("Tocaron WhatsApp", "whatsapp") + acc("Usaron Comparar", "agregar_comparar") +
+          acc("Fueron a Publicá", "ir_publicar") + acc("Publicaron un aviso", "aviso_publicado") + "</div>" +
+      "</div>" +
+      '<div class="caja-t" style="margin-bottom:14px"><h3>Personas por día (últimos 14 días)</h3><div class="barras">' + barras + "</div></div>" +
+      '<div class="tr-g"><div class="caja-t"><h3>De dónde llegan (7 días)</h3>' + fuentes + '</div><div class="caja-t"><h3>Desde qué equipo</h3>' + (equipos || '<div class="fila-t"><span>Todavía no hay datos</span></div>') + "</div></div>";
+    enganchar();
+  }
+  setInterval(function () {
+    if (document.hidden || chat) return;
+    cargarTrafico(true);
+    fetch(CFG.endpoint + "?accion=admin&t=" + encodeURIComponent(T)).then(function (r) { return r.json(); }).then(function (d) { if (d.ok && !chat) { D = d; if (vista !== "trafico") pintar(); } }).catch(function () {});
+  }, 5 * 60 * 1000);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && chat) cerrarChat(); });
 
   if (!T || !CFG.endpoint) { $.innerHTML = '<div class="vacio">Abrí el link de tu panel.</div>'; return; }
   fetch(CFG.endpoint + "?accion=admin&t=" + encodeURIComponent(T)).then(function (r) { return r.json(); }).then(function (d) {
     if (!d.ok) { $.innerHTML = '<div class="vacio">' + esc(d.error || "No se pudo cargar.") + "</div>"; return; }
-    D = d; pintar();
+    D = d; pintar(); cargarTrafico();
   }).catch(function () { $.innerHTML = '<div class="vacio">No pudimos cargar el panel. Probá recargar.</div>'; });
 })();
 </script>

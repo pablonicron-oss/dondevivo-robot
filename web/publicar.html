@@ -27,6 +27,7 @@ input,select,textarea{font:inherit}
 .pasos-mini{display:none}
 @media (max-width:760px){.paso-btn{display:none!important}.pasos-mini{display:flex}.pasos-tit{display:none}.pasos-ayuda{margin-top:4px!important;min-height:36px!important}}
 </style>
+<script src="medir.js?v=__V__"></script>
 </head>
 <body>
 <div id="raiz"></div>
@@ -655,7 +656,7 @@ send: async () => {
       extras: { cocheras: cnt.coch, mascotas_tipo: ans.mascotas === 'si' ? (st.pets || 'Perros y gatos') : null, respuestas: ans },
       fotos: (this.state.fotos || []).map((f) => ({ data: f.data, mime: f.mime }))
     });
-    if (r && r.ok) { var irPago = this.state.quiereDestacar && CFG.endpoint && precioSel && cuenta.numero; set({ sending: false, step: irPago ? 10 : 9, avisoId: r.id, numero: r.numero || null, payCode: irPago ? (st.payCode || ('DV-' + Math.floor(1000 + Math.random() * 9000))) : st.payCode }); window.scrollTo(0, 0); }
+    if (r && r.ok) { if (window.dvMedir) window.dvMedir('aviso_publicado', { destacar: this.state.quiereDestacar ? 'si' : 'no' }); var irPago = this.state.quiereDestacar && CFG.endpoint && precioSel && cuenta.numero; set({ sending: false, step: irPago ? 10 : 9, avisoId: r.id, numero: r.numero || null, payCode: irPago ? (st.payCode || ('DV-' + Math.floor(1000 + Math.random() * 9000))) : st.payCode }); window.scrollTo(0, 0); }
     else set({ sending: false, sendMsg: (r && r.error) || 'No pudimos enviarlo. Probá de nuevo.' });
   } catch (err) { set({ sending: false, sendMsg: 'No pudimos enviarlo. Revisá tu conexión y probá de nuevo.' }); }
 }

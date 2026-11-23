@@ -881,7 +881,9 @@
       '<div class="panel"><div class="precio" style="font-size:30px">' + precio(a) + porMes(a) + "</div>" + (a.op !== "alquiler" && ex ? '<div class="expensas grande">+ ' + esc(ex) + " de expensas</div>" : "") + bloques(a, true) + "<h1>" + esc(a.t) + '</h1><div class="lugar" style="font-size:15px">' + lugar(a) + '</div>' + (a.tp === "terreno" ? iconosTerreno(a) : iconos(a)) +
       '<div class="datos">' + [tipoTxt(a.tp), porM2(a), a.mono ? "Monoambiente" : a.dor ? a.dor + " dormitorios" : "", a.ban ? a.ban + " baños" : "", a.m2 >= 10 ? Math.round(a.m2) + " m²" : "", a.tp === "terreno" ? "" : a.eo === "en_pozo" ? "En pozo" : a.eo === "a_estrenar" ? "A estrenar" : ""].concat(a.tp === "terreno" ? [] : extras(a)).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div>" +
       (a.f === "dondevivo" && a.wa
-        ? '<a class="ir" href="https://wa.me/' + esc(String(a.wa).replace(/\D/g, "")) + "?text=" + encodeURIComponent("Hola, vi tu aviso " + a.t + " en DóndeVivo") + '" target="_blank" rel="noopener" id="ir">Escribir por WhatsApp</a>'
+        ? '<a class="ir" href="https://wa.me/' + esc(String(a.wa).replace(/\D/g, "")) + "?text=" + encodeURIComponent("¡Hola! 👋 Vi tu aviso en DóndeVivo y me gustaría tener más información.
+" + a.t + "
+https://dondevivo.com.py/#/aviso/" + encodeURIComponent(a.id)) + '" target="_blank" rel="noopener" id="ir">Escribir por WhatsApp</a>'
         : '<a class="ir" href="' + esc(seguro(a.u)) + '" target="_blank" rel="noopener nofollow" id="ir">Escribir al anunciante <small>· en ' + esc(fu) + "</small></a>") +
       (a.tp === "terreno" ? "" : '<div class="bloque"><h2>Lo que cuesta entrar</h2>' + costo + "</div>") +
       

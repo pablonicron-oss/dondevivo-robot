@@ -1147,7 +1147,17 @@
       setTimeout(function () { caja.remove(); }, 300);
     }, Math.max(0, falta));
   }
-  fetch("data/avisos.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+  /* Los avisos de dueños aprobados se piden también al script de Google, así salen apenas se aprueban
+     sin esperar la actualización de cada hora. Si el script tarda o falla, la web sigue con la lista de siempre. */
+  var PROPIOS = "https://script.google.com/macros/s/AKfycbxzVMle5jtoI35yGDvp8s7jng9twf7V6lw539LDs5i2h2rE8etXrK58w9ZXV9ZdSYQ/exec?accion=propios";
+  var propiosListos = Promise.race([
+    fetch(PROPIOS).then(function (r) { return r.json(); }).catch(function () { return null; }),
+    new Promise(function (ok) { setTimeout(function () { ok(null); }, 2000); })
+  ]);
+  Promise.all([fetch("data/avisos.json", { cache: "no-cache" }).then(function (r) { return r.json(); }), propiosListos]).then(function (res) {
+    var j = res[0], nuevos = (res[1] && res[1].avisos) || [], ya = {};
+    (j.avisos || []).forEach(function (a) { ya[a.id] = 1; });
+    j.avisos = nuevos.filter(function (a) { return a && a.id && !ya[a.id]; }).concat(j.avisos || []);
     TODOS = (j.avisos || []).filter(function (a) { return a.ph && a.ph.length >= (a.tp === "terreno" ? 1 : 2); });
     TERRENOS = TODOS.filter(function (a) { return a.tp === "terreno"; });
     DATA = TODOS.filter(function (a) { return a.tp !== "terreno"; });

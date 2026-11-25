@@ -5,6 +5,7 @@
   var DATA = [], TERRENOS = [], TODOS = [], ACT = "";
   var FUENTES = { infocasas: "InfoCasas", remax: "RE/MAX", buscodepto: "BuscoDepto", clasipar: "Clasipar", century21: "Century 21", estate: "Asuncion.estate", homy: "Homy", tulugar: "Tu Lugar", dondevivo: "DóndeVivo" };
   function destacado(a) { return !!(a.dh && Date.parse(a.dh) > Date.now()); }
+  function propio(a) { return a.f === "dondevivo"; }   // avisos publicados en DóndeVivo: después de los destacados, antes del resto
   var EJ = {
     alquiler: ["Tengo un gato y busco un depto en Luque", "Dos habitaciones, una para mi oficina", "Algo para compartir con mi roomie cerca de la facu",
       "Monoambiente amoblado cerca de una parada", "Que acepte perros grandes y tenga patio", "Una casa quinta en San Bernardino para el verano",
@@ -481,10 +482,10 @@
     if (l) {                                       // los más cercanos al lugar, ampliando el radio si hay pocos
       var con = out.filter(function (a) { return a.lat && a.lng; }).map(function (a) { return [a, km(a, l)]; }), r = [1.5, 2.5, 4, 6, 9].find(function (x) {
         return con.filter(function (c) { return c[1] <= x; }).length >= 12; }) || 9;
-      return con.filter(function (c) { return c[1] <= r; }).sort(function (x, y) { return (destacado(y[0]) - destacado(x[0])) || (x[1] - y[1]); }).map(function (c) { return c[0]; });
+      return con.filter(function (c) { return c[1] <= r; }).sort(function (x, y) { return (destacado(y[0]) - destacado(x[0])) || (propio(y[0]) - propio(x[0])) || (x[1] - y[1]); }).map(function (c) { return c[0]; });
     }
     return out.map(function (a, i) { return [a, i]; })
-      .sort(function (x, y) { return (destacado(y[0]) - destacado(x[0])) || (x[1] - y[1]); })
+      .sort(function (x, y) { return (destacado(y[0]) - destacado(x[0])) || (propio(y[0]) - propio(x[0])) || (x[1] - y[1]); })
       .map(function (x) { return x[0]; });
   }
 
@@ -1011,7 +1012,7 @@
         var r = RANGOS[f.pr], g = enGs(a);
         return (!f.ciudad || enCiudad(a, f.ciudad)) && (!f.m2 || (a.m2 || 0) >= +f.m2) && (!r || (g !== null && g >= r[0] && g < r[1]));
       })
-      .sort(function (x, y) { return (destacado(y) - destacado(x)) || ((x.c || "").localeCompare(y.c || "")); });
+      .sort(function (x, y) { return (destacado(y) - destacado(x)) || (propio(y) - propio(x)) || ((x.c || "").localeCompare(y.c || "")); });
     lista.forEach(function (a, i) { a._n = i + 1; });
     $app.innerHTML =
       '<section class="terr"><div class="terr-cab"><div class="toggle" role="group" aria-label="Qué buscás"><a class="tgl" href="#/" data-ir="alquiler"><span class="lg">Busco alquilar</span><span class="ct">Alquilar</span></a><a class="tgl" href="#/" data-ir="venta"><span class="lg">Busco comprar</span><span class="ct">Comprar</span></a><button aria-pressed="true"><span class="lg">Busco terreno</span><span class="ct">Terreno</span></button></div>' +

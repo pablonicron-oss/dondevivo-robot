@@ -980,22 +980,22 @@
     return (a.m === "USD" ? "USD " : "₲ ") + String(n).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " el m²";
   }
   var TER = [
-    { k: "agua", n: "Agua", si: "Tiene agua corriente", re: /agua corriente|agua potable|essap|junta de saneamiento| agua /, nore: / sin agua/,
+    { k: "agua", n: "Agua", si: "Tiene agua corriente", no: "No tiene agua corriente", re: /agua corriente|agua potable|essap|junta de saneamiento| agua /, nore: / sin agua/,
       ic: '<path d="M12 3.5s6 6.4 6 10.5a6 6 0 0 1-12 0c0-4.1 6-10.5 6-10.5z"/>' },
-    { k: "luz", n: "Luz", si: "Tiene luz de la ANDE", re: / ande |energia electrica|luz electrica| luz |tendido electrico/, nore: / sin (luz|energia)/,
+    { k: "luz", n: "Luz", si: "Tiene luz de la ANDE", no: "No tiene luz de la ANDE", re: / ande |energia electrica|luz electrica| luz |tendido electrico/, nore: / sin (luz|energia)/,
       ic: '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>' },
-    { k: "asfa", n: "Asfalto", si: "Sobre calle asfaltada o empedrada", re: /asfalt|empedrad|pavimentad|adoquin/, nore: / (calle de tierra|sin asfalto)/,
+    { k: "asfa", n: "Asfalto", si: "Sobre calle asfaltada o empedrada", no: "La calle no es asfaltada", re: /asfalt|empedrad|pavimentad|adoquin/, nore: / (calle de tierra|sin asfalto)/,
       ic: '<path d="M8 3L5 21M16 3l3 18M12 5v2.5M12 10.5v3M12 16.5v3"/>' },
-    { k: "titu", n: "Título", si: "Tiene título de propiedad", re: /titulo|escritura/, nore: / sin (titulo|escritura)/,
+    { k: "titu", n: "Título", si: "Tiene título de propiedad", no: "No tiene título de propiedad", re: /titulo|escritura/, nore: / sin (titulo|escritura)/,
       ic: '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 15.5h5"/>' },
-    { k: "fina", n: "Financiado", si: "Se puede pagar en cuotas", re: /financ|cuotas|entrega inicial|a plazo/, nore: / sin financ|al contado/,
+    { k: "fina", n: "Financiado", si: "Se puede pagar en cuotas", no: "No se paga en cuotas", re: /financ|cuotas|entrega inicial|a plazo/, nore: / sin financ|al contado/,
       ic: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 14.5h3"/>' }
   ];
   function iconosTerreno(a) {
     var t = plano(a.t + " " + a.d);
     return '<div class="comod" role="list">' + TER.map(function (c) {
       var dd = delDueno(a, c.k), v = dd || (c.nore && c.nore.test(t) ? "no" : c.re.test(t) ? "si" : "nd");
-      var txt = v === "si" ? c.si : v === "no" ? "No tiene " + c.n.toLowerCase() : dd ? c.n + ", consultale al dueño" : "El aviso no menciona " + c.n.toLowerCase();
+      var txt = v === "si" ? c.si : v === "no" ? (c.no || "No tiene " + c.n.toLowerCase()) : dd ? c.n + ", consultale al dueño" : "El aviso no menciona " + c.n.toLowerCase();
       return { v: v, h: '<span class="cm ' + v + '" role="listitem" tabindex="0" aria-label="' + esc(txt) + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + c.ic + "</svg>" +
         (v === "no" ? '<i class="x" aria-hidden="true"></i>' : "") + '<b class="tip">' + esc(txt) + "</b></span>" };
     }).sort(function (x, y) { var o = { si: 0, no: 1, nd: 2 }; return o[x.v] - o[y.v]; }).map(function (x) { return x.h; }).join("") + "</div>";

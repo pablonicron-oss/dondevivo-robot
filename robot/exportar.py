@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from .config import SUPABASE_URL, SUPABASE_KEY
 
 CAMPOS = ("id,fuente,url,titulo,descripcion,operacion,tipo,estado_obra,precio,moneda,dormitorios,banos,"
-          "m2,ciudad,barrio,region,lat,lng,fotos,garantia,mascotas,publicado_en,primera_vez,destacado_hasta,contacto")
+          "m2,ciudad,barrio,region,lat,lng,fotos,garantia,mascotas,publicado_en,primera_vez,destacado_hasta,contacto,comodidades")
 
 
 def todos():

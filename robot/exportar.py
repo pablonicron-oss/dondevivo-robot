@@ -86,6 +86,7 @@ def corto(a):
         "lat": a.get("lat"), "lng": a.get("lng"), "ph": (a.get("fotos") or [])[:12],
         "g": a.get("garantia"), "ms": a.get("mascotas"), "n": (a.get("primera_vez") or "")[:19],
         "dh": destacado(a), "wa": a.get("contacto") if propio else None,
+        "co": (a.get("comodidades") or None) if propio else None,
     }
 
 

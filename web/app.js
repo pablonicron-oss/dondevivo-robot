@@ -184,6 +184,9 @@
 
   /* comodidades: sí (verde), no (rojo) o no lo dice (gris) */
   var IC = {
+    titu: '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 15.5h5"/>',
+    fina: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 14.5h3"/>',
+    estr: '<path d="M12 3l2.5 5 5.5.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.5-.8z"/>',
     masc: '<path d="M8.5 13.5c1.6-2.1 5.4-2.1 7 0 1.3 1.7 2.5 3.4 2.5 4.6 0 1.6-1.4 2.4-3 2.1-1.2-.2-2-.7-3-.7s-1.8.5-3 .7c-1.6.3-3-.5-3-2.1 0-1.2 1.2-2.9 2.5-4.6z"/><ellipse cx="6" cy="9.5" rx="1.7" ry="2.2"/><ellipse cx="9.6" cy="5.8" rx="1.7" ry="2.3"/><ellipse cx="14.4" cy="5.8" rx="1.7" ry="2.3"/><ellipse cx="18" cy="9.5" rx="1.7" ry="2.2"/>',
     auto: '<path d="M5 16.5V12l1.8-4.6A2 2 0 0 1 8.7 6h6.6a2 2 0 0 1 1.9 1.4L19 12v4.5"/><path d="M4 12h16v4.5H4z"/><path d="M6.5 16.5V19M17.5 16.5V19"/><circle cx="7.6" cy="14.2" r=".6"/><circle cx="16.4" cy="14.2" r=".6"/>',
     pile: '<path d="M8 15V5.5a2 2 0 0 1 4 0M14 15V5.5a2 2 0 0 1 4 0M8 9h6M8 12.5h6"/><path d="M3 17.5c1.5 0 1.5 1 3 1s1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1"/>',
@@ -214,13 +217,31 @@
     { k: "gym", n: "Gimnasio", si: "Tiene gimnasio", no: "", nd: "", re: /gimnasio| gym |fitness/ },
     { k: "segu", n: "Seguridad", si: "Tiene seguridad o portería", no: "", nd: "", re: /seguridad 24|guardia|vigilancia|porteria|portero|barrio cerrado|condominio cerrado|circuito cerrado/ },
     { k: "asce", n: "Ascensor", si: "Tiene ascensor", no: "No tiene ascensor", nd: "", re: /ascensor/, nore: / sin ascensor/ },
+    { k: "titu", n: "Título", si: "Tiene título de propiedad", no: "No tiene título", nd: "", solo: true },
+    { k: "fina", n: "Financiado", si: "Se puede pagar en cuotas", no: "No se paga en cuotas", nd: "", solo: true },
+    { k: "estr", n: "A estrenar", si: "Es a estrenar", no: "No es a estrenar", nd: "", solo: true },
     { k: "lava", n: "Lavadero", si: "Tiene lavadero", no: "", nd: "", re: /lavadero|lavanderia/ }
   ];
   var NUM = { un: 1, una: 1, dos: 2, tres: 3, cuatro: 4 };
+  /* respuestas del dueño en Publicá (Sí, No o Prefiero no decir), para los avisos publicados en DóndeVivo */
+  var DUENO = { masc: "mascotas", mueb: "amoblado", aire: "aire", balc: "balcon", patio: "patio", quin: "parrilla", pile: "pileta", asce: "ascensor", segu: "seguridad",
+    titu: "titulo", fina: "financiado", estr: "estrenar", agua: "agua", luz: "luz", asfa: "asfalto" };
+  function respuestas(a) {
+    var r = {};
+    if (a.f === "dondevivo" && a.co && a.co.forEach) a.co.forEach(function (x) { var p = String(x).split(":"); if (p[1]) r[p[0]] = p[1] === "ns" ? "nd" : p[1]; });
+    return r;
+  }
+  function delDueno(a, k) { var v = respuestas(a)[DUENO[k]]; return v === "si" || v === "no" || v === "nd" ? v : null; }
   function comodidades(a) {
     var t = plano((a.t + " " + a.d).replace(/\u{1F6AB}|\u274C|\u2716\uFE0F?|\u26D4|\u{1F6B7}/gu, " sin ")), out = [];
     COMOD.forEach(function (c) {
-      var v = "nd", extra = "";
+      var v = "nd", extra = "", dd = delDueno(a, c.k);
+      if (dd) {
+        if (a.tp === "terreno") return;
+        out.push({ k: c.k, v: dd, n: c.n, txt: dd === "si" ? c.si : dd === "no" ? (c.no || "No tiene " + c.n.toLowerCase()) : c.n + ", consultale al dueño" });
+        return;
+      }
+      if (c.solo) return;
       if (c.k === "masc") v = a.ms === "si" ? "si" : a.ms === "no" ? "no" : "nd";
       else if (c.nore && c.nore.test(t)) v = "no";
       else if (c.re.test(t)) v = "si";
@@ -973,8 +994,8 @@
   function iconosTerreno(a) {
     var t = plano(a.t + " " + a.d);
     return '<div class="comod" role="list">' + TER.map(function (c) {
-      var v = c.nore && c.nore.test(t) ? "no" : c.re.test(t) ? "si" : "nd";
-      var txt = v === "si" ? c.si : v === "no" ? "No tiene " + c.n.toLowerCase() : "El aviso no menciona " + c.n.toLowerCase();
+      var dd = delDueno(a, c.k), v = dd || (c.nore && c.nore.test(t) ? "no" : c.re.test(t) ? "si" : "nd");
+      var txt = v === "si" ? c.si : v === "no" ? "No tiene " + c.n.toLowerCase() : dd ? c.n + ", consultale al dueño" : "El aviso no menciona " + c.n.toLowerCase();
       return { v: v, h: '<span class="cm ' + v + '" role="listitem" tabindex="0" aria-label="' + esc(txt) + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + c.ic + "</svg>" +
         (v === "no" ? '<i class="x" aria-hidden="true"></i>' : "") + '<b class="tip">' + esc(txt) + "</b></span>" };
     }).sort(function (x, y) { var o = { si: 0, no: 1, nd: 2 }; return o[x.v] - o[y.v]; }).map(function (x) { return x.h; }).join("") + "</div>";
